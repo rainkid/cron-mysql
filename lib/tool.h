@@ -7,8 +7,8 @@ extern "C" {
 
 char* substr(const char*str,unsigned start, unsigned end);
 time_t GetNowTime();
-size_t Cron_Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
-void Cron_Curl(char * query_url);
+size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
+void Curl_Request(char * query_url);
 
 #ifdef	__cplusplus
 }

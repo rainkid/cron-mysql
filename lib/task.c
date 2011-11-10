@@ -4,23 +4,18 @@
 #include <sys/types.h>
 #include "task.h"
 
-/**
- * 任务初始化
- */
-bool InitializeTaskList(TaskList * tasklist) {
+/* 任务初始化 */
+bool Task_Init(TaskList * tasklist) {
     tasklist = NULL;
-    
     return true;
 }
 
-/**
- * 添加节点到尾部
- */
-bool Add(TaskList * tasklist, TaskItem * taskitem) {
+/* 添加节点到尾部 */
+bool Task_Add(TaskList * tasklist, TaskItem * taskitem) {
     taskitem->next = NULL;
     taskitem->prev = NULL;
     
-    if (false == TaskListIsEmpty(tasklist)) {
+    if (false == Task_IsEmpty(tasklist)) {
         tasklist->tail->next = taskitem;
         taskitem->prev = tasklist->tail;
     }
@@ -34,11 +29,9 @@ bool Add(TaskList * tasklist, TaskItem * taskitem) {
     return true;
 }
 
-/**
- * 更新节点
- */
-bool Update(TaskItem * taskitem, TaskList *tasklist) {
-    if (false == TaskListIsEmpty(tasklist)) {
+/* 更新节点 */
+bool Task_Update(TaskItem * taskitem, TaskList *tasklist) {
+    if (false == Task_IsEmpty(tasklist)) {
         taskitem->next = NULL;
         taskitem->prev = NULL;
 
@@ -70,28 +63,24 @@ bool Update(TaskItem * taskitem, TaskList *tasklist) {
         (tasklist->count)++;
     }
     else {
-        Add(tasklist,taskitem);
+        Task_Add(tasklist,taskitem);
     }
 
     return true;
 }
 
-/**
- * 任务列表是否空
- */
-bool TaskListIsEmpty(const TaskList *tasklist) {
+/* 任务列表是否空 */
+bool Task_IsEmpty(const TaskList *tasklist) {
     return (tasklist->count == 0) ? true : false;
 }
 
-/**
- * 任务列表销毁
- */
-bool TaskListFree(TaskList *tasklist) {
-    if (false == TaskListIsEmpty(tasklist)) {
+/* 任务列表销毁 */
+bool Task_Free(TaskList *tasklist) {
+    if (false == Task_IsEmpty(tasklist)) {
         TaskItem *temp;
         while(NULL != tasklist->head) {
             temp = tasklist->head->next;
-            TaskItemFree(tasklist->head);
+            Item_Free(tasklist->head);
             tasklist->head = temp;
         }
     }
@@ -103,11 +92,8 @@ bool TaskListFree(TaskList *tasklist) {
     return true;
 }
 
-/**
- * 任务节点销毁
- */
-bool TaskItemFree(TaskItem *taskitem) {
+/* 任务节点销毁 */
+bool Item_Free(TaskItem *taskitem) {
     free(taskitem);
-    
     return true;
 }
