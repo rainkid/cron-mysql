@@ -13,6 +13,7 @@
 #include "base64.h"
 #include "send_mail.h"
 
+
 /* 发送请求结构体 */
 struct ResponseStruct {
 	char *responsetext;
@@ -49,18 +50,16 @@ size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	return realsize;
 }
 
-/* 发送邮件 */
-void mailer(){
-    //收件人列表
+void test_mail(){
+    int r =0;
     struct st_char_arry to_addrs[1];
     	to_addrs[0].str_p="15257128383@139.com";
-    //附件列表
-    struct st_char_arry att_files[0];
+    struct st_char_arry att_files[2];
     	att_files[0].str_p="";
     	att_files[1].str_p="";
 	struct st_mail_msg_ mail;
 	init_mail_msg(&mail);
-	//对方服务器要求权限验证
+	//锟皆凤拷锟斤拷锟斤拷锟斤拷要锟斤拷权锟斤拷锟斤拷证
 	mail.authorization=AUTH_SEND_MAIL;
 	//smtp.163.com
 	//ip or server
@@ -68,17 +67,18 @@ void mailer(){
 	mail.port=25;
 	mail.auth_user="289712388@qq.com";
 	mail.auth_passwd="Rainkid,.0.";
-	mail.from="289712388@qq.com";
-	mail.from_subject="just a test !";
+	mail.from="aaaaa";
+	mail.from_subject="no-reply@zhanglihai.com";
 	mail.to_address_ary=to_addrs;
 	mail.to_addr_len=1;
-	mail.content="asfasdfasdfasdfasdf";
-	mail.subject="asdfasdfasdf";
+	mail.content="锟斤拷锟斤拷锟脚碉拷锟斤拷锟斤拷锟斤拷锟角猴拷<b>锟斤拷锟侥碉拷锟斤拷锟斤拷</b>锟斤拷锟斤拷锟脚碉拷锟斤拷锟斤拷锟斤拷锟角猴拷<b>锟斤拷锟侥碉拷锟斤拷锟斤拷</b>锟斤拷锟斤拷锟脚碉拷锟斤拷锟斤拷锟斤拷锟角猴拷<b>锟斤拷锟侥碉拷锟斤拷锟斤拷</b>锟斤拷锟斤拷锟脚碉拷锟斤拷锟斤拷锟斤拷锟角猴拷<b>锟斤拷锟侥碉拷锟斤拷锟斤拷</b>锟斤拷锟斤拷<font color=red>锟脚碉拷锟斤拷锟斤拷</font>锟斤拷锟角猴拷<b>锟斤拷锟侥碉拷锟斤拷锟斤拷</b>";
+	mail.subject="锟斤拷锟斤拷<>锟斤拷锟斤拷!!";
 	mail.mail_style_html=HTML_STYLE_MAIL;
 	mail.priority=3;
 	mail.att_file_len=2;
 	mail.att_file_ary=att_files;
-	send_mail(&mail);
+	r = send_mail(&mail);
+	printf("send mail [%d]\n",r);
 }
 
 /* 发送请求 */
@@ -104,7 +104,6 @@ void Curl_Request(char *query_url) {
 	/* 请求响应处理 */
 	if ((response == CURLE_OK) && chunk.responsetext && (strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
 		fprintf(stderr, "[success]\n");
-		sleep(10);
 	} else {
 		fprintf(stderr, "[fail]\n");
 	}

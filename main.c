@@ -23,11 +23,13 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <math.h>
-
 #include <mysql/mysql.h>
 
 #include "library/task.h"
 #include "library/tool.h"
+
+#include "library/base64.h"
+#include "library/send_mail.h"
 
 #define PIDFILE  "./cron.pid"
 #define VERSION  "1.0"
@@ -518,7 +520,6 @@ int main(int argc, char *argv[], char *envp[]) {
 		fprintf(stderr, "%s\n", "Mysql Connection fails.");
 		mysql_close(&mysql_conn);
 	}
-
 	/* 初始化任务列表 */
 	taskList = (TaskList *) malloc(sizeof(TaskList));
 	assert(NULL != taskList);
