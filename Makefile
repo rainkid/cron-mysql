@@ -1,10 +1,11 @@
 # Makefile for cron 
 CC=gcc
-CFLAGS=-I/usr/include/mysql -L/usr/lib/mysql -lmysqlclient -L/usr/local/curl/lib/ -lcurl -I/usr/local/curl/include/ -g -Wall -lrt -lpthread -lm -lc -lz -fno-builtin-strlen -Bstatic -Bdynamic
+LIBLOAD=-L/usr/lib/mysql -lmysqlclient -L/usr/local/curl/lib/ -lcurl -lrt -lpthread -lm -lc -lz
+INCLUDE= -I/usr/include/mysql -I/usr/local/curl/include/
+CFLAGS= -g -Wall -fno-builtin-strlen -Bstatic -Bdynamic
 
-cron: main.c
-	$(CC) -o cron main.c lib/task.c lib/tool.c $(CFLAGS)
-	
-clean: cron 
-	rm -f cron 
+task: main.c
+	$(CC) -o task main.c library/task.c library/tool.c library/base64.c library/send_mail.c $(LIBLOAD) $(INCLUDE) $(CFLAGS)
 
+clean: task 
+	rm -f task 

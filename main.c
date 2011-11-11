@@ -26,17 +26,11 @@
 
 #include <mysql/mysql.h>
 
-#include "lib/task.h"
-#include "lib/tool.h"
+#include "library/task.h"
+#include "library/tool.h"
 
 #define PIDFILE  "./cron.pid"
 #define VERSION  "1.0"
-#define HELPINFO "author raink.kid@gmail.com\n" \
-                 "-h, --help     display this message then exit.\n" \
-                 "-v, --version  display version information then exit.\n" \
-                 "-l, --loglevel @TODO.\n" \
-                 "-c, --config <path>  read crontab task config.\n" \
-                 "-d, --daemon   run as a daemon.\n"
 
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
@@ -55,6 +49,15 @@ int logLevel = 0;
 MYSQL mysql_conn;
 /* 同步配置时间 */
 int sync_config_time = 60;
+
+static void usage(){
+	printf("author raink.kid@gmail.com\n" \
+		 "-h, --help     display this message then exit.\n" \
+		 "-v, --version  display version information then exit.\n" \
+		 "-l, --loglevel @TODO.\n" \
+		 "-c, --config <path>  read crontab task config.\n" \
+		 "-d, --daemon   run as a daemon.\n\n");
+}
 
 /* 任务处理线程 */
 static void task_worker() {
@@ -136,8 +139,8 @@ static void config_worker() {
 		taskList->count = 0;
 		taskList->head = NULL;
 		taskList->tail = NULL;
-//		task_mysql_load();
-		task_file_load(config_file);
+		task_mysql_load();
+//		task_file_load(config_file);
 		sleep(sync_config_time);
 	}
 }
@@ -406,7 +409,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			break;
 		case 'h':
 		default:
-			printf("%s\n", HELPINFO);
+			usage();
 			exit(EXIT_SUCCESS);
 			break;
 		}
