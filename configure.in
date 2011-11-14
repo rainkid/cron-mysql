@@ -1,0 +1,30 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ([2.67])
+AC_INIT(task, 1.0, raink.kid@gmail.com)
+AC_CONFIG_SRCDIR([main.c])
+#AC_CONFIG_HEADERS([config.h])
+AM_INIT_AUTOMAKE(task,1.0)
+# Checks for programs.
+AC_PROG_CC
+
+# Checks for libraries.
+# FIXME: Replace `main' with a function in `-lpthread':
+AC_CHECK_LIB([pthread], [pthread_rwlock_init],  [curl], [curl_easy_init], [mysqlclient], [mysql_init])
+# Checks for header files.
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h malloc.h netdb.h netinet/in.h stdlib.h string.h sys/param.h sys/socket.h unistd.h curl/curl.h mysql/mysql.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+
+# Checks for library functions.
+AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_FUNC_MKTIME
+AC_FUNC_REALLOC
+AC_CHECK_FUNCS([bzero gethostbyaddr gethostbyname memset socket strchr strdup strstr strncpy memcpy])
+
+AC_OUTPUT(Makefile)

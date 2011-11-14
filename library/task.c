@@ -50,10 +50,6 @@ bool Task_Add(TaskList * tasklist, TaskItem * taskitem) {
     return true;
 }
 
-Task_Next(){
-	
-}
-
 /* 更新节点 */
 bool Task_Update(TaskItem * taskitem, TaskList *tasklist) {
     if (false == Task_IsEmpty(tasklist)) {
