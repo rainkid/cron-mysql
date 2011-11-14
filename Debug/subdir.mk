@@ -3,6 +3,13 @@
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
+O_SRCS += \
+../base64.o \
+../main.o \
+../send_mail.o \
+../task.o \
+../tool.o 
+
 C_SRCS += \
 ../main.c 
 

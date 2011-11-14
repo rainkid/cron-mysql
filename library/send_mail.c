@@ -109,6 +109,8 @@ int send_mail(struct st_mail_msg_ *msg_) {
 		}
 	}
 	char *subject_b6 = NULL;
+	subject_b6 = malloc(strlen(msg_->subject) + 1);
+	memcpy(subject_b6, msg_->subject, strlen(msg_->subject));
 	base64_encoder(msg_->subject, strlen(msg_->subject), &subject_b6);
 	if (subject_b6 == NULL)
 		return SEND_RESULT_FINAL;
@@ -116,6 +118,8 @@ int send_mail(struct st_mail_msg_ *msg_) {
 	fprintf(tmp_fp, "Subject: =?%s?B?%s?=\r\n", msg_->charset, subject_b6);
 	fprintf(tmp_fp, "MIME-Version: 1.0\r\n");
 	fprintf(tmp_fp, "X-Mailer: \r\n");
+
+
 	/* 附件 */
 	if (msg_->att_file_ary) {
 		fprintf(tmp_fp, "Content-Type: multipart/mixed;boundary=\"%s%s\"\r\n",

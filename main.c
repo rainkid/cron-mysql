@@ -67,15 +67,16 @@ void task_file_load(const char *config_file);
 void task_mysql_load();
 static void task_worker();
 static void config_worker();
+static void mail_worker();
 
 // 任务节点
 TaskList *taskList = NULL;
 // 任务配置路径
 char *config_file = NULL;
 // 同步配置时间
-int sync_config_time = 60 * 5;
+int sync_config_time = 60;
 // 邮件队列间隔时间
-int send_mail_time = 60 * 2;
+int send_mail_time = 30 * 1;
 
 //任务信号标识
 pthread_cond_t has_task = PTHREAD_COND_INITIALIZER;
@@ -95,9 +96,9 @@ struct ResponseStruct {
 
 /* 邮件队列结构 */
 struct MAIL_QUEUE_ITEM{   
-    char ukey[BUFSIZ];
-	char subject[MAIL_SUBJECT_LEN];
-	char content[MAIL_CONTENT_LEN];
+    char *ukey;
+	char *subject;
+	char *content;
     TAILQ_ENTRY(MAIL_QUEUE_ITEM) entries;   
 };
 TAILQ_HEAD(, MAIL_QUEUE_ITEM) mail_queue;
@@ -114,18 +115,13 @@ static void usage(){
 /*发送通知邮件*/
 int send_notice_mail(char *subject, char *content){
     int ret =0;
-	char msubject[MAIL_SUBJECT_LEN] = {0x00};
-	char mcontent[MAIL_CONTENT_LEN] = {0x00};
 
-	sprintf(msubject, "%s", subject);
-	sprintf(mcontent, "%s", content);
-
-    struct st_char_arry to_addrs[1];
+    struct st_char_arry to_addrs[0];
 	//收件人列表
     	to_addrs[0].str_p="15257128383@139.com";
     struct st_char_arry att_files[0];
 	//附件列表
-//  	att_files[0].str_p="";
+  	att_files[0].str_p="";
 	struct st_mail_msg_ mail;
 	init_mail_msg(&mail);
 	mail.authorization=AUTH_SEND_MAIL;
@@ -133,24 +129,26 @@ int send_notice_mail(char *subject, char *content){
 	//ip or server
 	mail.server="smtp.qq.com";
 	mail.port=25;
-	mail.auth_user="289712388@qq.com";
-	mail.auth_passwd="Rainkid,.0.";
-	mail.from="289712388@qq.com";
-	mail.from_subject="no-reply289712388@qq.com";
+	mail.auth_user="363643915@qq.com";
+	mail.auth_passwd="wsc512123";
+	mail.from="363643915@qq.com";
+	mail.from_subject="no-reply363643915@qq.com";
 	mail.to_address_ary=to_addrs;
 	mail.to_addr_len=1;
-//	sprintf(mail.subject, "%s", msubject);
-//	sprintf(mail.content, "%s", mcontent);
-	mail.subject = msubject;
-	mail.content = mcontent;
-	//mail.subject="my friend is your friend!";
-	//mail.content="something I'll say : that you are a good people , that we can make a friend first.";
+	//mail.subject = msubject;
+	//mail.content = mcontent;
+	mail.subject="my friend is your friend!";
+	mail.content="something I'll say : that you are a good people , that we can make a friend first.";
+/*	mail.subject = malloc(sizeof(subject) + 1);
+	mail.content = malloc(sizeof(content) + 1);
+
+	memcpy(mail.subject, subject , sizeof(subject));
+	memcpy(mail.content, content , sizeof(content));*/
 	mail.mail_style_html=HTML_STYLE_MAIL;
 	mail.priority=3;
 	mail.att_file_len=2;
 	mail.att_file_ary=att_files;
 	ret = send_mail(&mail);
-//	fprintf(stderr, "\n\n%s\n\n", mail.content);
 	fprintf(stderr, "Has %d mails send.\n", ret);
 	return ret;
 }
@@ -159,19 +157,20 @@ int send_notice_mail(char *subject, char *content){
 size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	size_t realsize = size * nmemb;
 	struct ResponseStruct *mem = (struct ResponseStruct *) data;
-	// 重新分配内存
+	// 分配内存
 	mem->responsetext = realloc(mem->responsetext, mem->size + realsize + 1);
 	if (mem->responsetext == NULL) {
 		fprintf(stderr, "%s\n", "Responsetext malloc error.");
 	}
 	memcpy(&(mem->responsetext[mem->size]), ptr, realsize);
 	mem->size += realsize;
-	mem->responsetext[mem->size] = 0;
+	mem->responsetext[mem->size] = '\0';
 	return realsize;
 }
 
 /* 邮件队列是否唯一 */
 bool mail_queue_exist(char *ukey){
+	bool isexist = false;
 	// 初始化一个邮件
 	struct MAIL_QUEUE_ITEM *tmp_item;
 	tmp_item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
@@ -185,84 +184,103 @@ bool mail_queue_exist(char *ukey){
 //		fprintf(stderr, "\n%d\n", strcmp(tmp_item->ukey, tmp_ukey));
 		// 如果ukey已经存在
 		if(strcmp(tmp_item->ukey, tmp_ukey) == 0){
-			return true;
+			isexist = true;
+			break;
 		}
 		// 下一个
 		tmp_item=TAILQ_NEXT(tmp_item, entries);
 	}
-	return false;
+	return isexist;
 }
 
 /* 发送请求 */
 void Curl_Request(char *query_url) {
-	CURL *curl_handle = NULL;
-	CURLcode response;
-	char *url = strdup(query_url);
-	// 信息结构体
-	struct ResponseStruct chunk;
-	chunk.responsetext = malloc(1);
-	chunk.size = 0;
+		CURL *curl_handle = NULL;
+		CURLcode response;
+		char *url = strdup(query_url);
+		// 信息结构体
+		struct ResponseStruct chunk;
+		chunk.responsetext = NULL;
+		chunk.size = 0;
 
-	// 邮件队列item
-    struct MAIL_QUEUE_ITEM *item;
-	item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
+		// 邮件队列item
+	    struct MAIL_QUEUE_ITEM *item;
+		item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
 
-	fprintf(stderr, "%s", query_url);
-	// curl 选项设置 
-	curl_handle = curl_easy_init();
-	if (curl_handle != NULL) {
-		curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-		// 回调设置
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, Curl_Callback);
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
-		response = curl_easy_perform(curl_handle);
-	}
-
-	// 请求响应处理
-	if ((response == CURLE_OK) && chunk.responsetext && 
-		(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
-		fprintf(stderr, "...success\n");
-	} else {
-		// 队列去重
-		if(false == mail_queue_exist(url)){
-			pthread_mutex_lock(&mail_lock);
-			// 邮件标题和内容处理
-			char ukey[BUFSIZ] = {0x00};
-			char subject[MAIL_SUBJECT_LEN - 20] = {0x00};
-			char content[MAIL_CONTENT_LEN - 10] = {0x00};
-		
-			sprintf(ukey, "%s", url);
-			sprintf(subject, "Task Error With '%s'\n", url);
-			sprintf(content, "Errors : %s\n", chunk.responsetext);
-			
-			memcpy(item->ukey, ukey , strlen(ukey));
-			memcpy(item->subject, subject , strlen(subject));
-			memcpy(item->content, content , strlen(content));
-		
-			// 写入邮件队列
-			TAILQ_INSERT_TAIL(&mail_queue, item, entries);
-			pthread_mutex_unlock(&mail_lock);
-			pthread_cond_signal(&has_mail);
+		fprintf(stderr, "%s", query_url);
+		// curl 选项设置
+		curl_handle = curl_easy_init();
+		if (curl_handle != NULL) {
+			curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 5);
+			// 回调设置
+			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, Curl_Callback);
+			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
+			response = curl_easy_perform(curl_handle);
 		}
-		fprintf(stderr, "...failed\n");
-	}
 
-	// 释放返回信息
-	if (chunk.responsetext) {
-		free(chunk.responsetext);
-	}
-	// 释放curl句柄
-	curl_easy_cleanup(curl_handle);
-	free(url);
+		// 请求响应处理
+		if ((response == CURLE_OK) && chunk.responsetext &&
+			(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
+			fprintf(stderr, "...success\n");
+		} else {
+			// 队列去重
+			if(false == mail_queue_exist(url)){
+				char *ukey;
+				char *subject;
+				char *content;
+
+				ukey = malloc(strlen(url) + 1);
+				subject = malloc(strlen(url) + 50);
+				content = malloc(strlen(chunk.responsetext) + 50);
+
+				sprintf(ukey, "%s", url);
+				sprintf(subject, "Task Error With '%s'\n", url);
+				sprintf(content, "Errors : %s\n", chunk.responsetext);
+
+				// 邮件队列item
+				struct MAIL_QUEUE_ITEM *item;
+				item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
+
+				item->ukey = malloc(strlen(ukey) + 1);
+				item->subject = malloc(strlen(subject) + 1);
+				item->content = malloc(strlen(content) + 1);
+
+				memcpy(item->ukey, ukey , strlen(ukey));
+				memcpy(item->subject, subject , strlen(subject));
+				memcpy(item->content, content , strlen(content));
+
+				pthread_mutex_lock(&mail_lock);
+				// 写入邮件队列
+				TAILQ_INSERT_TAIL(&mail_queue, item, entries);
+
+				pthread_mutex_unlock(&mail_lock);
+				pthread_cond_signal(&has_mail);
+				free(ukey);
+				free(subject);
+				free(content);
+			}
+			fprintf(stderr, "...failed\n");
+		}
+
+		// 释放返回信息
+		if (chunk.responsetext) {
+			free(chunk.responsetext);
+		}
+		// 释放curl句柄
+		curl_easy_cleanup(curl_handle);
+		curl_global_cleanup();
+		free(url);
 }
 
 /* 任务处理线程 */
 static void task_worker() {
-	//pthread_detach(pthread_self());
+//	pthread_detach(pthread_self());
 
 	// 开始处理
 	int delay = 1;
 	TaskItem *temp;
+	char command[BUFSIZ] = { 0x00 };
 	while(1){
 		pthread_mutex_lock(&task_lock);
 		// 等待任务处理信号
@@ -284,8 +302,9 @@ static void task_worker() {
 				break;
 			}
 			// 执行任务
-			//system(temp->command);
-			Curl_Request(temp->command);
+			sprintf(command, "%s", temp->command);
+			//system(command);
+			Curl_Request(command);
 
 			(temp->runTimes)++;
 			if (temp->next) {
@@ -304,13 +323,13 @@ static void task_worker() {
 					// 重新添加
 					Task_Update(temp, taskList);
 				} else {
-					free(temp);
+					Item_Free(temp);
 					temp = NULL;
 				}
 			} else {
 				// 如果已经达到执行次数,抛出队列
 				if (temp->times > 0 && temp->runTimes > temp->times) {
-					free(temp);
+					Item_Free(temp);
 					temp = NULL;
 					taskList->head = NULL;
 					taskList->tail = NULL;
@@ -335,14 +354,11 @@ static void task_worker() {
 
 /* 邮件队列线程 */
 static void mail_worker(){
-	//pthread_detach(pthread_self());
+//	pthread_detach(pthread_self());
 	
 	// 邮件结构
 	struct MAIL_QUEUE_ITEM *tmp_item;
-	tmp_item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
-
-	char subject[MAIL_SUBJECT_LEN] = {0x00};
-	char content[MAIL_CONTENT_LEN] = {0x00};
+	tmp_item = malloc(sizeof(tmp_item));
 
 	while(1){
 		pthread_mutex_lock(&mail_lock);
@@ -353,16 +369,23 @@ static void mail_worker(){
 			pthread_cond_wait(&has_mail, &mail_lock);
 		}
 		if(NULL != tmp_item){
-			//fprintf(stderr, "ukey:%s\nsubjct:%s\ncontent:%s\n", tmp_item->ukey, tmp_item->subject, tmp_item->content);
-			sprintf(subject, "%s", tmp_item->subject);
-			sprintf(content, "%s", tmp_item->content);
 
-			fprintf(stderr, "%s", subject);
-			if(send_notice_mail(subject, content)){
-				// 踢出除队列
-				TAILQ_REMOVE(&mail_queue, tmp_item, entries);
-				tmp_item=TAILQ_NEXT(tmp_item, entries);		
-			};
+			char *subject;
+			char *content;
+
+			subject = malloc(strlen(tmp_item->subject) + 1);
+			content = malloc(strlen(tmp_item->content) + 1);
+
+			strncpy(subject, tmp_item->subject, strlen(tmp_item->subject));
+			strncpy(content, tmp_item->content, strlen(tmp_item->content));
+			//发送邮件
+			send_notice_mail("aaaaa", "bbbbbb");
+			// 踢出除队列
+			TAILQ_REMOVE(&mail_queue, tmp_item, entries);
+			tmp_item=TAILQ_NEXT(tmp_item, entries);
+
+			free(subject);
+			free(content);
 		}
 		pthread_mutex_unlock(&mail_lock);
 		sleep(send_mail_time);
@@ -371,15 +394,16 @@ static void mail_worker(){
 
 /* 同步配置线程 */
 static void config_worker() {
-	//pthread_detach(pthread_self());
+//	pthread_detach(pthread_self());
+
 	// 重新初始化队列
 	taskList->count = 0;
 	taskList->head = NULL;
 	taskList->tail = NULL;
 
 	while(1) {
-//		task_mysql_load();
-		task_file_load(config_file);
+		task_mysql_load();
+//		task_file_load(config_file);
 		sleep(sync_config_time);
 	}
 }
@@ -390,23 +414,25 @@ static void kill_signal_master(const int signal) {
 	if (0 == access(PIDFILE, F_OK)) {
 		remove(PIDFILE);
 	}
+	//销毁配置文件内存分配
+	if (NULL != config_file) {
+		free(config_file);
+		config_file = NULL;
+	}
 	exit(EXIT_SUCCESS);
 }
 
 /*子进程信号处理*/
 static void kill_signal_worker(const int signal) {
 
-	//销毁配置文件内存分配
-	if (NULL != config_file) {
-		free(config_file);
-		config_file = NULL;
-	}
 	//销毁任务
 	if (NULL != taskList) {
 		Task_Free(taskList);
 		taskList = NULL;
 	}
-	
+	//释放子进程
+	pthread_exit(0);
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -430,7 +456,6 @@ void task_file_load(const char *config_file) {
 		// 创建并初始化一个新节点
 		TaskItem *taskItem;
 		taskItem = (TaskItem *) malloc(sizeof(TaskItem));
-		assert(NULL != taskItem);
 
 		taskItem->next = NULL;
 		taskItem->prev = NULL;
@@ -452,7 +477,7 @@ void task_file_load(const char *config_file) {
 		_stime.tm_mon -= 1;
 		_etime.tm_mon -= 1;
 
-		taskItem->frequency = taskItem->frequency * 60;
+		taskItem->frequency = taskItem->frequency * 20;
 
 		taskItem->startTime = mktime(&_stime);
 		taskItem->endTime = mktime(&_etime);
@@ -462,13 +487,13 @@ void task_file_load(const char *config_file) {
 
 		// 如果已经结束直接下一个
 		if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
+			Item_Free(taskItem);
 			continue;
 		}
 
 		// 计算下次运行点
 		if (taskItem->nextTime == 0) {
-			int st =
-					ceil((nowTime - taskItem->startTime) / taskItem->frequency);
+			int st = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
 			taskItem->nextTime = taskItem->startTime + ((st + 1)
 					* taskItem->frequency);
 		}
@@ -491,18 +516,8 @@ void task_file_load(const char *config_file) {
 /* mysql任务加载 */
 void task_mysql_load() {
 
-	// mysql相关参数
-	char * host, *user, *passwd, *dbname;
-	int port;
-
-	host = strdup("127.0.0.1");
-	user = strdup("root");
-	passwd = strdup("root");
-	dbname = strdup("test");
-	port = 3306;
-
-	// mysql连接
 	MYSQL mysql_conn;
+	// mysql连接
 	MYSQL_RES *mysql_result;
 	MYSQL_ROW mysql_row;
 	char sql[BUFSIZ] = {0x00};
@@ -514,6 +529,10 @@ void task_mysql_load() {
 	int frequency = 0;
 	int times = 0;
 
+	if (mysql_library_init(0, NULL, NULL)) {
+	    fprintf(stderr, "could not initialize MySQL library\n");
+	 }
+
 	// mysql 初始化连接
 	if (mysql_init(&mysql_conn) == NULL) {
 		fprintf(stderr, "%s\n", "Mysql Initialization fails.");
@@ -521,7 +540,7 @@ void task_mysql_load() {
 	}
 
 	// mysql连接
-	if (mysql_real_connect(&mysql_conn, host, user, passwd, dbname, port, NULL, 128)== NULL) {
+	if (mysql_real_connect(&mysql_conn, "127.0.0.1", "root", "root", "test", 3306, NULL, 128) == NULL) {
 		fprintf(stderr, "%s\n", "Mysql Connection fails.");
 		mysql_close(&mysql_conn);
 	}
@@ -542,7 +561,10 @@ void task_mysql_load() {
 	// 创建并初始化一个新节点
 	TaskItem *taskItem;
 	taskItem = (TaskItem *) malloc(sizeof(TaskItem));
-	assert(NULL != taskItem);
+	if(taskItem == NULL){
+		fprintf(stderr, "%s\n", "taskItem malloc failed.");
+		free(taskItem);
+	}
 
 	taskItem->next = NULL;
 	taskItem->prev = NULL;
@@ -581,7 +603,7 @@ void task_mysql_load() {
 		frequency = atoi(mysql_row[3]);
 		times = atoi(mysql_row[8]);
 
-		taskItem->frequency = frequency * 60;
+		taskItem->frequency = frequency;
 		taskItem->times = times;
 
 		// 转化为时间戳
@@ -626,6 +648,7 @@ void task_mysql_load() {
 	// 关闭mysql连接
 	mysql_close(&mysql_conn);
 
+	mysql_library_end();
 }
 
 /* 主模块 */
@@ -653,7 +676,9 @@ int main(int argc, char *argv[], char *envp[]) {
 			daemon = true;
 			break;
 		case 'c':
-			config_file = strdup(optarg);
+			config_file = malloc( strlen( optarg ) + 1 );
+			assert( config_file != NULL );
+			strcpy( config_file, optarg );
 			break;
 		case 'v':
 			printf("%s\n\n", VERSION);
@@ -761,8 +786,11 @@ int main(int argc, char *argv[], char *envp[]) {
 	// 初始化任务列表
 	taskList = (TaskList *) malloc(sizeof(TaskList));
 	if(NULL == taskList){
-		fprintf(stderr, "%s\n", "malloc tasklist failed.");
+		fprintf(stderr, "%s\n", "tasklist malloc failed.");
 	};
+	taskList->count = 0;
+	taskList->head = NULL;
+	taskList->tail = NULL;
 
 	// 初始化邮件队列
 	TAILQ_INIT(&mail_queue);
@@ -778,7 +806,9 @@ int main(int argc, char *argv[], char *envp[]) {
 	pthread_join ( config_tid, NULL );
 	pthread_join ( task_tid, NULL );
 	pthread_join ( mail_tid, NULL );
-	
+
+	pthread_exit(0);
+
 	return 0;
 }
 
