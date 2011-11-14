@@ -1,10 +1,3 @@
-/* 
- * File:   list.h
- * Author: venkman
- *
- * Created on 2010年12月20日, 上午9:21
- */
-
 #ifndef TASK_H
 #define	TASK_H
 

@@ -1,5 +1,23 @@
-#include "send_mail.h"
-#include "base64.h"
+/*
+ * send_mail.c
+ * This file is part of <task> 
+ *
+ * Copyright (C) 2011 - raink.kid@gmail.com
+ *
+ * <task> is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * 
+ * <task> is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -14,6 +32,10 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+#include "send_mail.h"
+#include "base64.h"
+
+/* 发送邮件 */
 int send_mail(struct st_mail_msg_ *msg_) {
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
@@ -36,10 +58,11 @@ int send_mail(struct st_mail_msg_ *msg_) {
 	bcopy((char *) server->h_addr, (char *) &serv_addr.sin_addr.s_addr,
 			server->h_length);
 
+	//发起socked连接
 	if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
 		return SEND_RESULT_CONNECT_FINAL;
 	}
-
+	//发送邮件头
 	if (!send_mail_header(sockfd, msg_))
 		return SEND_RESULT_FINAL;
 	//开始处理正文
@@ -60,6 +83,8 @@ int send_mail(struct st_mail_msg_ *msg_) {
 			msg_->from_subject ? msg_->from_subject : msg_->from);
 	struct st_char_arry *char_arry_p = NULL;
 	int i_addr_p = 0;
+
+	/* 收件人 */
 	for (char_arry_p = msg_->to_address_ary; char_arry_p
 			< (msg_->to_address_ary + msg_->to_addr_len); char_arry_p++, i_addr_p++) {
 		if (i_addr_p == 0)
@@ -70,10 +95,10 @@ int send_mail(struct st_mail_msg_ *msg_) {
 		if (i_addr_p == msg_->to_addr_len - 1)
 			fprintf(tmp_fp, "\r\n");
 	}
-	//抄送
+	/* 抄送 */
 	if (msg_->cc_address_ary) {
 		for (i_addr_p = 0, char_arry_p = msg_->cc_address_ary; char_arry_p
-				< (msg_->cc_address_ary + msg_->cc_addr_len); char_arry_p++, i_addr_p++) {
+				< (msg_->cc_address_ary + msg_->cc_addr_len); char_arry_p++, i_addr_p++){
 			if (i_addr_p == 0)
 				fprintf(tmp_fp, "To: ");
 			fprintf(tmp_fp, "%s", char_arry_p->str_p);
@@ -87,18 +112,18 @@ int send_mail(struct st_mail_msg_ *msg_) {
 	base64_encoder(msg_->subject, strlen(msg_->subject), &subject_b6);
 	if (subject_b6 == NULL)
 		return SEND_RESULT_FINAL;
+	
 	fprintf(tmp_fp, "Subject: =?%s?B?%s?=\r\n", msg_->charset, subject_b6);
 	fprintf(tmp_fp, "MIME-Version: 1.0\r\n");
-	fprintf(tmp_fp,
-			"X-Mailer: <!--Cheung SendMail Beta1.0 http://www.zhanglihai.com-->\r\n");
-	//atts
+	fprintf(tmp_fp, "X-Mailer: \r\n");
+	/* 附件 */
 	if (msg_->att_file_ary) {
 		fprintf(tmp_fp, "Content-Type: multipart/mixed;boundary=\"%s%s\"\r\n",
 				bound_id_prefix, bound_id);
 		fprintf(tmp_fp, "\r\n\r\n");
 		fprintf(tmp_fp, "--%s%s\r\n", bound_id_prefix, bound_id);
 	}
-	//信体......
+	/* 信体 */
 	fprintf(tmp_fp,
 			"Content-Type: Multipart/Alternative; boundary=\"%s%s_body\"\r\n",
 			bound_id_prefix, bound_id);
@@ -130,7 +155,7 @@ int send_mail(struct st_mail_msg_ *msg_) {
 	subject_b6 = NULL;
 	free(content_b6);
 	content_b6 = NULL;
-	//add file.
+	/* 附件发送 */
 	if (msg_->att_file_ary) {
 		for (i_addr_p = 0, char_arry_p = msg_->att_file_ary; char_arry_p
 				< (msg_->att_file_ary + msg_->att_file_len); char_arry_p++, i_addr_p++) {
@@ -169,18 +194,11 @@ int send_mail(struct st_mail_msg_ *msg_) {
 				fprintf(tmp_fp, "--%s%s--\r\n", bound_id_prefix, bound_id);
 		}
 	}
-	///开始发送
+	/* 开始发送 */
 	char buffer[READ_FILE_LEN];
-	/********************
-	 此方法不行
-	 fseek(tmp_fp,0,SEEK_SET);
-	 while(!feof(tmp_fp))
-	 {
-	 if(fgets(buffer,READ_FILE_LEN,tmp_fp))
-	 write(sockfd,buffer,strlen(buffer));
-	 }
-	 ****************/
+	/* 关闭文件句柄 */
 	fclose(tmp_fp);
+	
 	int frwp_tmp = open(tmp_file_str, O_RDONLY);
 
 	if (frwp_tmp == -1) {
@@ -188,20 +206,23 @@ int send_mail(struct st_mail_msg_ *msg_) {
 	}
 	size_t byte_len = -1;
 	while ((byte_len = read(frwp_tmp, buffer, sizeof(buffer))) > 0) {
-		write(sockfd, buffer, byte_len);
+		if(write(sockfd, buffer, byte_len)){
+			continue;		
+		};
 	}
 	close(frwp_tmp);
-	/**********************/
-	//发送文件结束
+
+	// 发送邮件结束
 	if (!cmd_msg(sockfd, "\r\n.\r\n", "250"))
 		return SEND_RESULT_FINAL;
+	//关闭sokdfd
 	close(sockfd);
-	//删除临时文件
+	// 删除临时文件
+	remove(tmp_file_str);
 	return SEND_RESULT_SUCCESS;
 }
-/*********************
- 发送信体头信息
- *********************/
+
+/* 发送信体头信息 */
 int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 	cmd_msg(sockfd, NULL, NULL);
 	if (msg->authorization == AUTH_SEND_MAIL) {
@@ -298,12 +319,15 @@ int cmd_msg(int sockfd, const char *cmd, const char *flag) {
 	int buf_len = 1024;
 	char buffer[buf_len];
 	if (cmd) {
+		//发送buffer
 		r_result = write(sockfd, cmd, strlen(cmd));
 		if (r_result < 0)
 			return 0;
 	}
+	//读取返回信息
 	if ((r_len = read(sockfd, buffer, buf_len)) < 0)
 		return 0;
+	fprintf(stderr, "%s", buffer);
 	if (flag && strstr(buffer, flag)) {
 		return 1;
 	}
