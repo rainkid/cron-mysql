@@ -52,12 +52,9 @@
 #define PIDFILE  "./cron.pid"
 #define VERSION  "1.0"
 
-#define MAIL_SUBJECT_LEN  BUFSIZ
-#define MAIL_CONTENT_LEN  BUFSIZ * 5
-
 // 函数声明
 size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
-void Curl_Request(char * query_url);
+void Curl_Request(int key, char *command, int timeout);
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
 void task_file_load(const char *config_file);
@@ -65,6 +62,16 @@ void task_mysql_load();
 static void task_worker();
 static void config_worker();
 static void mail_worker();
+void task_log(int ukey, char *result, int run_time);
+
+/*********************************************/
+char sms_url[BUFSIZ] = "http://market/sms.php";
+char host[BUFSIZ] = "127.0.0.1";
+char username[BUFSIZ] = "root";
+char passwd[BUFSIZ] = "root";
+char dbname[BUFSIZ] = "test";
+int port = 3306;
+/*********************************************/
 
 // 任务节点
 TaskList *taskList = NULL;
@@ -90,6 +97,7 @@ struct ResponseStruct {
 	char *responsetext;
 	size_t size;
 };
+
 
 /* 邮件队列结构 */
 struct MAIL_QUEUE_ITEM{   
@@ -149,29 +157,35 @@ bool mail_queue_exist(char *ukey){
 	return isexist;
 }
 
+void task_log(int ukey, char *result, int run_time){
+	
+}
+
 /* 发送请求 */
-void Curl_Request(char *query_url) {
+void Curl_Request(int key, char *command, int timeout) {
 		CURL *curl_handle = NULL;
 		CURLcode response;
 		char *url;
+		int ukey;
 		//请求地址
-		url = malloc(strlen(query_url)+1);
-		strncpy(url, query_url, strlen(query_url));
+		url = malloc(strlen(command)+1);
+		strncpy(url, command, strlen(command));
 		// 信息结构体
 		struct ResponseStruct chunk;
 		chunk.responsetext = NULL;
 		chunk.size = 0;
 
 		// 邮件队列item
-	    struct MAIL_QUEUE_ITEM *item;
+	    	struct MAIL_QUEUE_ITEM *item;
 		item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
 
-		fprintf(stderr, "%s", query_url);
+		fprintf(stderr, "%s", url);
+		time_t s_nowTime = GetNowTime();
 		// curl 选项设置
 		curl_handle = curl_easy_init();
 		if (curl_handle != NULL) {
 			curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 5);
+			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, timeout);
 			// 回调设置
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, Curl_Callback);
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
@@ -215,13 +229,14 @@ void Curl_Request(char *query_url) {
 
 				pthread_mutex_unlock(&mail_lock);
 				pthread_cond_signal(&has_mail);
-				free(ukey);
 				free(subject);
 				free(content);
 			}
 			fprintf(stderr, "...failed\n");
 		}
-
+		//记录日志
+		time_t e_nowTime = GetNowTime();
+		task_log(ukey, chunk.responsetext, 1);
 		// 释放返回信息
 		if (chunk.responsetext) {
 			free(chunk.responsetext);
@@ -239,7 +254,6 @@ static void task_worker() {
 	// 开始处理
 	int delay = 1;
 	TaskItem *temp;
-	char command[BUFSIZ] = { 0x00 };
 	while(1){
 		pthread_mutex_lock(&task_lock);
 		// 等待任务处理信号
@@ -261,9 +275,8 @@ static void task_worker() {
 				break;
 			}
 			// 执行任务
-			sprintf(command, "%s", temp->command);
 			//system(command);
-			Curl_Request(command);
+			Curl_Request(temp->ukey, temp->command, temp->timeout);
 
 			(temp->runTimes)++;
 			if (temp->next) {
@@ -485,8 +498,6 @@ void task_mysql_load() {
 	char start_time[BUFSIZ] = {0x00};
 	char end_time[BUFSIZ] = {0x00};
 	char command[BUFSIZ] = {0x00};
-	int frequency = 0;
-	int times = 0;
 
 	if (mysql_library_init(0, NULL, NULL)) {
 	    fprintf(stderr, "could not initialize MySQL library\n");
@@ -499,7 +510,7 @@ void task_mysql_load() {
 	}
 
 	// mysql连接
-	if (mysql_real_connect(&mysql_conn, "127.0.0.1", "root", "root", "test", 3306, NULL, 128) == NULL) {
+	if (mysql_real_connect(&mysql_conn, host, username, passwd, dbname, port, NULL, 128) == NULL) {
 		fprintf(stderr, "%s\n", "Mysql Connection fails.");
 		mysql_close(&mysql_conn);
 	}
@@ -559,11 +570,10 @@ void task_mysql_load() {
 		sprintf(command, "%s", mysql_row[5]);
 		sprintf(taskItem->command, "%s", command);
 
-		frequency = atoi(mysql_row[3]);
-		times = atoi(mysql_row[8]);
-
-		taskItem->frequency = frequency * 60;
-		taskItem->times = times;
+		taskItem->frequency = atoi(mysql_row[3]) * 60;
+		taskItem->times = atoi(mysql_row[8]);
+		taskItem->ukey = atoi(mysql_row[0]);
+		taskItem->timeout = atoi(mysql_row[7]);
 
 		// 转化为时间戳
 		_stime.tm_year -= 1900;

@@ -11,10 +11,12 @@ extern "C" {
     
 //ITEM
 typedef struct _taskItem {
+    int ukey;
     time_t startTime;
     time_t endTime;
     time_t nextTime;
     int  frequency;
+    int timeout;
     int times;
     int runTimes;
     char command[BUFSIZ];
