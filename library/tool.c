@@ -30,6 +30,9 @@
 #include "base64.h"
 #include "send_mail.h"
 
+#include <curl/curl.h>
+#include <curl/easy.h>
+
 /* 字符串截取函数 */
 char* substr(const char*str, unsigned start, unsigned end) {
 	unsigned n = end - start;
@@ -44,4 +47,73 @@ time_t GetNowTime() {
 	time_t nowTime;
 	time(&nowTime);
 	return nowTime;
+}
+
+/*发送通知邮件*/
+int send_notice_mail(char *subject, char *content){
+    int ret =0;
+
+    struct st_char_arry to_addrs[0];
+	//收件人列表
+    	to_addrs[0].str_p="15257128383@139.com";
+    struct st_char_arry att_files[0];
+	//附件列表
+  	att_files[0].str_p="";
+	struct st_mail_msg_ mail;
+	init_mail_msg(&mail);
+	mail.authorization=AUTH_SEND_MAIL;
+	//smtp.163.com
+	//ip or server
+	mail.server="smtp.qq.com";
+	mail.port=25;
+	mail.auth_user="363643915@qq.com";
+	mail.auth_passwd="wsc512123";
+	mail.from="363643915@qq.com";
+	mail.from_subject="no-reply363643915@qq.com";
+	mail.to_address_ary=to_addrs;
+	mail.to_addr_len=1;
+
+	mail.subject = malloc(sizeof(subject) + 1);
+	mail.content = malloc(sizeof(content) + 1);
+
+	memcpy(mail.subject, subject , sizeof(subject));
+	memcpy(mail.content, content , sizeof(content));
+
+	mail.mail_style_html=HTML_STYLE_MAIL;
+	mail.priority=3;
+	mail.att_file_len=2;
+	mail.att_file_ary=att_files;
+	ret = send_mail(&mail);
+	fprintf(stderr, "Has %d mails send.\n", ret);
+	return ret;
+}
+
+//发送短信
+int send_notice_sms(char *subject, char *content){
+	int ret = 0;
+	CURL *curl_handle = NULL;
+	CURLcode response;
+	char hash[BUFSIZ] = "fR7lP3nNlZYdYwnq08=";
+	char sms_url[BUFSIZ] = "http://market/sms.php";
+
+	char *post_data;
+	post_data = malloc(strlen(subject) + strlen(content) + 50);
+
+	sprintf(post_data, "subject=%s&content=%s&hash=%s", subject, content, hash);
+	curl_handle = curl_easy_init();
+	if(curl_handle){
+		curl_easy_setopt(curl_handle, CURLOPT_URL, sms_url);
+		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 5);
+		curl_easy_setopt(curl_handle, CURLOPT_POST, 1);
+		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, post_data);
+		response = curl_easy_perform(curl_handle);
+	}
+
+	if (response == CURLE_OK){
+		fprintf(stderr, "%s\n\n", post_data);
+		ret = 1;
+	}
+	curl_easy_cleanup(curl_handle);
+	curl_global_cleanup();
+	return ret;
 }

@@ -49,9 +49,6 @@
 #include "library/task.h"
 #include "library/tool.h"
 
-#include "library/base64.h"
-#include "library/send_mail.h"
-
 #define PIDFILE  "./cron.pid"
 #define VERSION  "1.0"
 
@@ -74,9 +71,9 @@ TaskList *taskList = NULL;
 // 任务配置路径
 char *config_file = NULL;
 // 同步配置时间
-int sync_config_time = 60;
+int sync_config_time = 60 * 5;
 // 邮件队列间隔时间
-int send_mail_time = 30 * 1;
+int send_mail_time = 60 * 5;
 
 //任务信号标识
 pthread_cond_t has_task = PTHREAD_COND_INITIALIZER;
@@ -110,47 +107,6 @@ static void usage(){
 		 "-v, --version  display version information then exit.\n" \
 		 "-c, --config <path>  task config file path.\n" \
 		 "-d, --daemon  run as a daemon.\n\n");
-}
-
-/*发送通知邮件*/
-int send_notice_mail(char *subject, char *content){
-    int ret =0;
-
-    struct st_char_arry to_addrs[0];
-	//收件人列表
-    	to_addrs[0].str_p="15257128383@139.com";
-    struct st_char_arry att_files[0];
-	//附件列表
-  	att_files[0].str_p="";
-	struct st_mail_msg_ mail;
-	init_mail_msg(&mail);
-	mail.authorization=AUTH_SEND_MAIL;
-	//smtp.163.com
-	//ip or server
-	mail.server="smtp.qq.com";
-	mail.port=25;
-	mail.auth_user="363643915@qq.com";
-	mail.auth_passwd="wsc512123";
-	mail.from="363643915@qq.com";
-	mail.from_subject="no-reply363643915@qq.com";
-	mail.to_address_ary=to_addrs;
-	mail.to_addr_len=1;
-	//mail.subject = msubject;
-	//mail.content = mcontent;
-	mail.subject="my friend is your friend!";
-	mail.content="something I'll say : that you are a good people , that we can make a friend first.";
-/*	mail.subject = malloc(sizeof(subject) + 1);
-	mail.content = malloc(sizeof(content) + 1);
-
-	memcpy(mail.subject, subject , sizeof(subject));
-	memcpy(mail.content, content , sizeof(content));*/
-	mail.mail_style_html=HTML_STYLE_MAIL;
-	mail.priority=3;
-	mail.att_file_len=2;
-	mail.att_file_ary=att_files;
-	ret = send_mail(&mail);
-	fprintf(stderr, "Has %d mails send.\n", ret);
-	return ret;
 }
 
 /* Curl回调处理函数 */
@@ -197,7 +153,10 @@ bool mail_queue_exist(char *ukey){
 void Curl_Request(char *query_url) {
 		CURL *curl_handle = NULL;
 		CURLcode response;
-		char *url = strdup(query_url);
+		char *url;
+		//请求地址
+		url = malloc(strlen(query_url)+1);
+		strncpy(url, query_url, strlen(query_url));
 		// 信息结构体
 		struct ResponseStruct chunk;
 		chunk.responsetext = NULL;
@@ -235,8 +194,8 @@ void Curl_Request(char *query_url) {
 				content = malloc(strlen(chunk.responsetext) + 50);
 
 				sprintf(ukey, "%s", url);
-				sprintf(subject, "Task Error With '%s'\n", url);
-				sprintf(content, "Errors : %s\n", chunk.responsetext);
+				sprintf(subject, "Task Error With %s", url);
+				sprintf(content, "Errors : %s", chunk.responsetext);
 
 				// 邮件队列item
 				struct MAIL_QUEUE_ITEM *item;
@@ -378,8 +337,8 @@ static void mail_worker(){
 
 			strncpy(subject, tmp_item->subject, strlen(tmp_item->subject));
 			strncpy(content, tmp_item->content, strlen(tmp_item->content));
-			//发送邮件
-			send_notice_mail("aaaaa", "bbbbbb");
+			//发送短信
+			send_notice_sms(subject, content);
 			// 踢出除队列
 			TAILQ_REMOVE(&mail_queue, tmp_item, entries);
 			tmp_item=TAILQ_NEXT(tmp_item, entries);
@@ -477,7 +436,7 @@ void task_file_load(const char *config_file) {
 		_stime.tm_mon -= 1;
 		_etime.tm_mon -= 1;
 
-		taskItem->frequency = taskItem->frequency * 20;
+		taskItem->frequency = taskItem->frequency * 60;
 
 		taskItem->startTime = mktime(&_stime);
 		taskItem->endTime = mktime(&_etime);
@@ -603,7 +562,7 @@ void task_mysql_load() {
 		frequency = atoi(mysql_row[3]);
 		times = atoi(mysql_row[8]);
 
-		taskItem->frequency = frequency;
+		taskItem->frequency = frequency * 60;
 		taskItem->times = times;
 
 		// 转化为时间戳
