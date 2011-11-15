@@ -32,7 +32,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-#include "send_mail.h"
+#include "mail.h"
 #include "base64.h"
 
 /* 发送邮件 */
@@ -310,13 +310,7 @@ int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 	return 1;
 }
 
-/******************
- sockfd : socket文件描述符
- cmd	 : 要发送的字符
- flag   : 读取的字符中是否含有flag
- return 1: 成功
- 0：失败
- ************************/
+/*sockfd : socket文件描述符*/
 int cmd_msg(int sockfd, const char *cmd, const char *flag) {
 	int r_result;
 	int r_len;

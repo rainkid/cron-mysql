@@ -48,7 +48,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_ctask_OBJECTS = main.$(OBJEXT) task.$(OBJEXT) send_mail.$(OBJEXT) \
+am_ctask_OBJECTS = main.$(OBJEXT) task.$(OBJEXT) mail.$(OBJEXT) \
 	base64.$(OBJEXT) tool.$(OBJEXT)
 ctask_OBJECTS = $(am_ctask_OBJECTS)
 ctask_LDADD = $(LDADD)
@@ -164,7 +164,7 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 AUTOMAKE_OPTIONS = foreign
-ctask_SOURCES = main.c library/task.c library/task.h library/send_mail.c library/send_mail.h library/base64.c library/base64.h library/tool.c library/tool.h
+ctask_SOURCES = main.c library/task.c library/task.h library/mail.c library/mail.h library/base64.c library/base64.h library/tool.c library/tool.h
 ctask_LDFLAGS = -Lusr/local/lib
 INCLUDES = -I/usr/local/include/
 all: all-am
@@ -253,8 +253,8 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include ./$(DEPDIR)/base64.Po
+include ./$(DEPDIR)/mail.Po
 include ./$(DEPDIR)/main.Po
-include ./$(DEPDIR)/send_mail.Po
 include ./$(DEPDIR)/task.Po
 include ./$(DEPDIR)/tool.Po
 
@@ -286,19 +286,19 @@ task.obj: library/task.c
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o task.obj `if test -f 'library/task.c'; then $(CYGPATH_W) 'library/task.c'; else $(CYGPATH_W) '$(srcdir)/library/task.c'; fi`
 
-send_mail.o: library/send_mail.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT send_mail.o -MD -MP -MF $(DEPDIR)/send_mail.Tpo -c -o send_mail.o `test -f 'library/send_mail.c' || echo '$(srcdir)/'`library/send_mail.c
-	$(am__mv) $(DEPDIR)/send_mail.Tpo $(DEPDIR)/send_mail.Po
-#	source='library/send_mail.c' object='send_mail.o' libtool=no \
+mail.o: library/mail.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mail.o -MD -MP -MF $(DEPDIR)/mail.Tpo -c -o mail.o `test -f 'library/mail.c' || echo '$(srcdir)/'`library/mail.c
+	$(am__mv) $(DEPDIR)/mail.Tpo $(DEPDIR)/mail.Po
+#	source='library/mail.c' object='mail.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o send_mail.o `test -f 'library/send_mail.c' || echo '$(srcdir)/'`library/send_mail.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mail.o `test -f 'library/mail.c' || echo '$(srcdir)/'`library/mail.c
 
-send_mail.obj: library/send_mail.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT send_mail.obj -MD -MP -MF $(DEPDIR)/send_mail.Tpo -c -o send_mail.obj `if test -f 'library/send_mail.c'; then $(CYGPATH_W) 'library/send_mail.c'; else $(CYGPATH_W) '$(srcdir)/library/send_mail.c'; fi`
-	$(am__mv) $(DEPDIR)/send_mail.Tpo $(DEPDIR)/send_mail.Po
-#	source='library/send_mail.c' object='send_mail.obj' libtool=no \
+mail.obj: library/mail.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mail.obj -MD -MP -MF $(DEPDIR)/mail.Tpo -c -o mail.obj `if test -f 'library/mail.c'; then $(CYGPATH_W) 'library/mail.c'; else $(CYGPATH_W) '$(srcdir)/library/mail.c'; fi`
+	$(am__mv) $(DEPDIR)/mail.Tpo $(DEPDIR)/mail.Po
+#	source='library/mail.c' object='mail.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o send_mail.obj `if test -f 'library/send_mail.c'; then $(CYGPATH_W) 'library/send_mail.c'; else $(CYGPATH_W) '$(srcdir)/library/send_mail.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mail.obj `if test -f 'library/mail.c'; then $(CYGPATH_W) 'library/mail.c'; else $(CYGPATH_W) '$(srcdir)/library/mail.c'; fi`
 
 base64.o: library/base64.c
 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT base64.o -MD -MP -MF $(DEPDIR)/base64.Tpo -c -o base64.o `test -f 'library/base64.c' || echo '$(srcdir)/'`library/base64.c

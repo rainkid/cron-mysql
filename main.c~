@@ -739,12 +739,15 @@ int main(int argc, char *argv[], char *envp[]) {
 	// 派生子进程（工作进程）
 	pid_t worker_pid_wait;
 	pid_t worker_pid = fork();
+	send_notice_mail("aaaaaaaaaa", "asdfasdfasdfasdf");
+	exit(0);
 
 	// 如果派生进程失败，则退出程序
 	if (worker_pid < 0) {
 		fprintf(stderr, "Error: %s:%d\n", __FILE__, __LINE__);
 		exit(EXIT_FAILURE);
 	}
+
 
 	// 父进程内容
 	if (worker_pid > 0) {

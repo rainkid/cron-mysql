@@ -28,11 +28,11 @@
 #include <errno.h>
 
 #include "base64.h"
-#include "send_mail.h"
+#include "mail.h"
 
 #include <curl/curl.h>
 #include <curl/easy.h>
-
+/*******************************************************************/
 /* 字符串截取函数 */
 char* substr(const char*str, unsigned start, unsigned end) {
 	unsigned n = end - start;
@@ -41,14 +41,20 @@ char* substr(const char*str, unsigned start, unsigned end) {
 	stbuf[n] = 0;
 	return stbuf;
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 获取当前时间戳 */
 time_t GetNowTime() {
 	time_t nowTime;
 	time(&nowTime);
 	return nowTime;
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /*发送通知邮件*/
 int send_notice_mail(char *subject, char *content){
     int ret =0;
@@ -64,21 +70,16 @@ int send_notice_mail(char *subject, char *content){
 	mail.authorization=AUTH_SEND_MAIL;
 	//smtp.163.com
 	//ip or server
-	mail.server="smtp.qq.com";
-	mail.port=25;
-	mail.auth_user="363643915@qq.com";
-	mail.auth_passwd="wsc512123";
-	mail.from="363643915@qq.com";
-	mail.from_subject="no-reply363643915@qq.com";
+	mail.server="smtp.163.com";
+	mail.port=466;
+	mail.auth_user="rainkid@163.com";
+	mail.auth_passwd="raink.kid";
+	mail.from="rainkid@163.com";
+	mail.from_subject="no-replyrainkid@163.com";
 	mail.to_address_ary=to_addrs;
 	mail.to_addr_len=1;
-
-	mail.subject = malloc(sizeof(subject) + 1);
-	mail.content = malloc(sizeof(content) + 1);
-
-	memcpy(mail.subject, subject , sizeof(subject));
-	memcpy(mail.content, content , sizeof(content));
-
+	mail.subject = "aaaaa";
+	mail.content = "aaaaaaaaaaaaa";
 	mail.mail_style_html=HTML_STYLE_MAIL;
 	mail.priority=3;
 	mail.att_file_len=2;
@@ -87,7 +88,10 @@ int send_notice_mail(char *subject, char *content){
 	fprintf(stderr, "Has %d mails send.\n", ret);
 	return ret;
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 //发送短信
 int send_notice_sms(char *url, char *subject, char *content){
 	int ret = 0;

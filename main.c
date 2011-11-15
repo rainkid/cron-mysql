@@ -52,6 +52,7 @@
 #define PIDFILE  "./cron.pid"
 #define VERSION  "1.0"
 
+/*******************************************************************/
 // 函数声明
 size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
 void Curl_Request(int task_id, char *command, int timeout);
@@ -63,15 +64,16 @@ static void task_worker();
 static void config_worker();
 static void mail_worker();
 void task_log(int id, int ret, char* msg);
+/*******************************************************************/
 
-/*********************************************/
+/*******************************************************************/
 char sms_url[BUFSIZ] = "http://www.market.test/sms.php";
 char host[BUFSIZ] = "10.249.198.235";
 char username[BUFSIZ] = "root";
 char passwd[BUFSIZ] = "123456";
 char dbname[BUFSIZ] = "market_test";
 int port = 3306;
-/*********************************************/
+/*******************************************************************/
 
 // 任务节点
 TaskList *taskList = NULL;
@@ -81,6 +83,7 @@ char *config_file = NULL;
 int sync_config_time = 60 * 5;
 // 邮件队列间隔时间
 int send_mail_time = 60 * 5;
+/*******************************************************************/
 
 //任务信号标识
 pthread_cond_t has_task = PTHREAD_COND_INITIALIZER;
@@ -91,7 +94,7 @@ pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t has_mail = PTHREAD_COND_INITIALIZER;
 //邮件锁
 pthread_mutex_t mail_lock = PTHREAD_MUTEX_INITIALIZER;
-
+/*******************************************************************/
 /* 请求返回数据结构 */
 struct ResponseStruct {
 	char *responsetext;
@@ -107,7 +110,10 @@ struct MAIL_QUEUE_ITEM{
     TAILQ_ENTRY(MAIL_QUEUE_ITEM) entries;   
 };
 TAILQ_HEAD(, MAIL_QUEUE_ITEM) mail_queue;
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 帮助信息 */
 static void usage(){
 	printf("author raink.kid@gmail.com\n" \
@@ -116,7 +122,10 @@ static void usage(){
 		 "-c, --config <path>  task config file path.\n" \
 		 "-d, --daemon  run as a daemon.\n\n");
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* Curl回调处理函数 */
 size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	size_t realsize = size * nmemb;
@@ -131,7 +140,10 @@ size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	mem->responsetext[mem->size] = '\0';
 	return realsize;
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 邮件队列是否唯一 */
 bool mail_queue_exist(char *ukey){
 	bool isexist = false;
@@ -156,7 +168,10 @@ bool mail_queue_exist(char *ukey){
 	}
 	return isexist;
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 //记录日志
 void task_log(int task_id, int ret, char* msg){
 	
@@ -202,7 +217,10 @@ void task_log(int task_id, int ret, char* msg){
 
 	mysql_library_end();
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 发送请求 */
 void Curl_Request(int task_id, char *command, int timeout) {
 		int ret = 0;
@@ -287,7 +305,10 @@ void Curl_Request(int task_id, char *command, int timeout) {
 		curl_global_cleanup();
 		free(url);
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 任务处理线程 */
 static void task_worker() {
 //	pthread_detach(pthread_self());
@@ -334,15 +355,15 @@ static void task_worker() {
 					temp->next = NULL;
 					temp->nextTime = nowTime + temp->frequency;
 					// 重新添加
-					Task_Update(temp, taskList);
+					task_update(temp, taskList);
 				} else {
-					Item_Free(temp);
+					item_free(temp);
 					temp = NULL;
 				}
 			} else {
 				// 如果已经达到执行次数,抛出队列
 				if (temp->times > 0 && temp->runTimes > temp->times) {
-					Item_Free(temp);
+					item_free(temp);
 					temp = NULL;
 					taskList->head = NULL;
 					taskList->tail = NULL;
@@ -364,7 +385,10 @@ static void task_worker() {
 		}
 	}
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 邮件队列线程 */
 static void mail_worker(){
 //	pthread_detach(pthread_self());
@@ -404,7 +428,10 @@ static void mail_worker(){
 		sleep(send_mail_time);
 	}
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 同步配置线程 */
 static void config_worker() {
 //	pthread_detach(pthread_self());
@@ -420,7 +447,10 @@ static void config_worker() {
 		sleep(sync_config_time);
 	}
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 父进程信号处理 */
 static void kill_signal_master(const int signal) {
 	//删除PID
@@ -434,13 +464,16 @@ static void kill_signal_master(const int signal) {
 	}
 	exit(EXIT_SUCCESS);
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /*子进程信号处理*/
 static void kill_signal_worker(const int signal) {
 
 	//销毁任务
 	if (NULL != taskList) {
-		Task_Free(taskList);
+		task_free(taskList);
 		taskList = NULL;
 	}
 	//释放子进程
@@ -448,7 +481,10 @@ static void kill_signal_worker(const int signal) {
 
 	exit(EXIT_SUCCESS);
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 文件配置计划任务加载 */
 void task_file_load(const char *config_file) {
 	FILE *fp;
@@ -500,7 +536,7 @@ void task_file_load(const char *config_file) {
 
 		// 如果已经结束直接下一个
 		if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
-			Item_Free(taskItem);
+			item_free(taskItem);
 			continue;
 		}
 
@@ -519,13 +555,16 @@ void task_file_load(const char *config_file) {
 		 taskItem->frequency, taskItem->command);*/
 		// 更新到任务链表
 		pthread_mutex_lock(&task_lock);
-		Task_Update(taskItem, taskList);
+		task_update(taskItem, taskList);
 		pthread_mutex_unlock(&task_lock);
 		pthread_cond_signal(&has_task);
 	}
 	fclose(fp);
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* mysql任务加载 */
 void task_mysql_load() {
 
@@ -648,7 +687,7 @@ void task_mysql_load() {
 				taskItem->frequency, taskItem->command);*/
 		// 更新到任务链表
 		pthread_mutex_lock(&task_lock);
-		Task_Update(taskItem, taskList);
+		task_update(taskItem, taskList);
 		pthread_mutex_unlock(&task_lock);
 		pthread_cond_signal(&has_task);
 	}
@@ -659,7 +698,10 @@ void task_mysql_load() {
 
 	mysql_library_end();
 }
+/*******************************************************************/
 
+
+/*******************************************************************/
 /* 主模块 */
 int main(int argc, char *argv[], char *envp[]) {
 	bool daemon = false;
@@ -746,6 +788,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		exit(EXIT_FAILURE);
 	}
 
+
 	// 父进程内容
 	if (worker_pid > 0) {
 		// 处理父进程接收到的kill信号
@@ -820,4 +863,4 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	return 0;
 }
-
+/*******************************************************************/
