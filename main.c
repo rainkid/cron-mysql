@@ -226,7 +226,7 @@ void Curl_Request(int task_id, char *command, int timeout) {
 		curl_handle = curl_easy_init();
 		if (curl_handle != NULL) {
 			curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, timeout);
+			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, timeout * 60);
 			// 回调设置
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, Curl_Callback);
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
