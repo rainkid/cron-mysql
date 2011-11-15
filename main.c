@@ -80,7 +80,7 @@ char *config_file = NULL;
 // 同步配置时间
 int sync_config_time = 60 * 5;
 // 邮件队列间隔时间
-int send_mail_time = 10 * 1;
+int send_mail_time = 60 * 5;
 
 //任务信号标识
 pthread_cond_t has_task = PTHREAD_COND_INITIALIZER;
@@ -610,7 +610,7 @@ void task_mysql_load() {
 		sprintf(command, "%s", mysql_row[5]);
 		sprintf(taskItem->command, "%s", command);
 
-		taskItem->frequency = atoi(mysql_row[3])/* * 60*/;
+		taskItem->frequency = atoi(mysql_row[3]) * 60;
 		taskItem->times = atoi(mysql_row[8]);
 		taskItem->task_id = atoi(mysql_row[0]);
 		taskItem->timeout = atoi(mysql_row[7]);
