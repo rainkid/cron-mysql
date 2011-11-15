@@ -672,10 +672,10 @@ int main(int argc, char *argv[], char *envp[]) {
 			{ "version", 0, 0, 'v' },
 			{ 0, 0, 0, 0 } };
 
-	if (1 == argc) {
+	/*if (1 == argc) {
 		fprintf(stderr, "Please use %s --help\n", argv[0]);
 		exit(1);
-	}
+	}*/
 
 	// 读取参数
 	int c;
@@ -708,10 +708,10 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 
 	// 读取任务配置文件
-	if (NULL == config_file || -1 == access(config_file, F_OK)) {
+	/*if (NULL == config_file || -1 == access(config_file, F_OK)) {
 		fprintf(stderr,	"Please use task config: -c <path> or --config <path>\n\n");
 		exit(EXIT_FAILURE);
-	}
+	}*/
 
 	// 如果加了-d参数，以守护进程运行
 	if (daemon == true) {
