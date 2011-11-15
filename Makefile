@@ -16,10 +16,10 @@
 
 
 
-pkgdatadir = $(datadir)/task
-pkgincludedir = $(includedir)/task
-pkglibdir = $(libdir)/task
-pkglibexecdir = $(libexecdir)/task
+pkgdatadir = $(datadir)/ctask
+pkgincludedir = $(includedir)/ctask
+pkglibdir = $(libdir)/ctask
+pkglibexecdir = $(libexecdir)/ctask
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 install_sh_DATA = $(install_sh) -c -m 644
 install_sh_PROGRAM = $(install_sh) -c
@@ -32,7 +32,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = task$(EXEEXT)
+bin_PROGRAMS = ctask$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/configure depcomp \
@@ -48,12 +48,12 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_task_OBJECTS = main.$(OBJEXT) task.$(OBJEXT) send_mail.$(OBJEXT) \
+am_ctask_OBJECTS = main.$(OBJEXT) task.$(OBJEXT) send_mail.$(OBJEXT) \
 	base64.$(OBJEXT) tool.$(OBJEXT)
-task_OBJECTS = $(am_task_OBJECTS)
-task_LDADD = $(LDADD)
-task_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(task_LDFLAGS) $(LDFLAGS) \
-	-o $@
+ctask_OBJECTS = $(am_ctask_OBJECTS)
+ctask_LDADD = $(LDADD)
+ctask_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(ctask_LDFLAGS) \
+	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -62,8 +62,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(task_SOURCES)
-DIST_SOURCES = $(task_SOURCES)
+SOURCES = $(ctask_SOURCES)
+DIST_SOURCES = $(ctask_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -89,7 +89,7 @@ CFLAGS = -g -O2
 CPP = gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"task\" -DPACKAGE_TARNAME=\"task\" -DPACKAGE_VERSION=\"1.0\" -DPACKAGE_STRING=\"task\ 1.0\" -DPACKAGE_BUGREPORT=\"raink.kid@gmail.com\" -DPACKAGE_URL=\"\" -DPACKAGE=\"task\" -DVERSION=\"1.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ARPA_INET_H=1 -DHAVE_FCNTL_H=1 -DHAVE_MALLOC_H=1 -DHAVE_NETDB_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_PARAM_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_UNISTD_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_MYSQL_MYSQL_H=1 -DHAVE__BOOL=1 -DHAVE_STDBOOL_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_SYS_TIME_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ALARM=1 -DHAVE_STDLIB_H=1 -DHAVE_REALLOC=1 -DHAVE_BZERO=1 -DHAVE_GETHOSTBYADDR=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_MEMSET=1 -DHAVE_SOCKET=1 -DHAVE_STRCHR=1 -DHAVE_STRDUP=1 -DHAVE_STRSTR=1 -DHAVE_STRNCPY=1 -DHAVE_MEMCPY=1
+DEFS = -DPACKAGE_NAME=\"ctask\" -DPACKAGE_TARNAME=\"ctask\" -DPACKAGE_VERSION=\"1.0\" -DPACKAGE_STRING=\"ctask\ 1.0\" -DPACKAGE_BUGREPORT=\"raink.kid@gmail.com\" -DPACKAGE_URL=\"\" -DPACKAGE=\"ctask\" -DVERSION=\"1.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ARPA_INET_H=1 -DHAVE_FCNTL_H=1 -DHAVE_MALLOC_H=1 -DHAVE_NETDB_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_PARAM_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_UNISTD_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_MYSQL_MYSQL_H=1 -DHAVE__BOOL=1 -DHAVE_STDBOOL_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_SYS_TIME_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ALARM=1 -DHAVE_STDLIB_H=1 -DHAVE_REALLOC=1 -DHAVE_BZERO=1 -DHAVE_GETHOSTBYADDR=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_MEMSET=1 -DHAVE_SOCKET=1 -DHAVE_STRCHR=1 -DHAVE_STRDUP=1 -DHAVE_STRSTR=1 -DHAVE_STRNCPY=1 -DHAVE_MEMCPY=1
 DEPDIR = .deps
 ECHO_C = 
 ECHO_N = -n
@@ -104,16 +104,16 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS = 
 LIBOBJS = 
-LIBS = -lcurl -lmysqlclient -lrt -lpthread -Wl -lm -lc -lz -O2 -fno-stack-protector -fnomudflap -U_FORTIFY_SOURCE
+LIBS = -lcurl -lmysqlclient -lrt -lpthread -Wl -lm -lc -lz -O2 
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/rainkid/workspace/task/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
-PACKAGE = task
+PACKAGE = ctask
 PACKAGE_BUGREPORT = raink.kid@gmail.com
-PACKAGE_NAME = task
-PACKAGE_STRING = task 1.0
-PACKAGE_TARNAME = task
+PACKAGE_NAME = ctask
+PACKAGE_STRING = ctask 1.0
+PACKAGE_TARNAME = ctask
 PACKAGE_URL = 
 PACKAGE_VERSION = 1.0
 PATH_SEPARATOR = :
@@ -164,8 +164,8 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 AUTOMAKE_OPTIONS = foreign
-task_SOURCES = main.c library/task.c library/task.h library/send_mail.c library/send_mail.h library/base64.c library/base64.h library/tool.c library/tool.h
-task_LDFLAGS = -Lusr/local/lib
+ctask_SOURCES = main.c library/task.c library/task.h library/send_mail.c library/send_mail.h library/base64.c library/base64.h library/tool.c library/tool.h
+ctask_LDFLAGS = -Lusr/local/lib
 INCLUDES = -I/usr/local/include/
 all: all-am
 
@@ -242,9 +242,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-task$(EXEEXT): $(task_OBJECTS) $(task_DEPENDENCIES) 
-	@rm -f task$(EXEEXT)
-	$(task_LINK) $(task_OBJECTS) $(task_LDADD) $(LIBS)
+ctask$(EXEEXT): $(ctask_OBJECTS) $(ctask_DEPENDENCIES) 
+	@rm -f ctask$(EXEEXT)
+	$(ctask_LINK) $(ctask_OBJECTS) $(ctask_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

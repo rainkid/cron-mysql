@@ -2,10 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT(task, 1.0, raink.kid@gmail.com)
+AC_INIT(ctask, 1.0, raink.kid@gmail.com)
 AC_CONFIG_SRCDIR([main.c])
 #AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE(task,1.0)
+AM_INIT_AUTOMAKE(ctask,1.0)
 # Checks for programs.
 AC_PROG_CC
 
