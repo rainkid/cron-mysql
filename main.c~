@@ -189,7 +189,7 @@ void task_log(int task_id, int ret, char* msg){
 	}
 	// 查询sql
 	sprintf(sql, "INSERT INTO mk_timeproc_log VALUES('', %d,%d,'%s' ,'%d-%d-%d %d:%d:%d')", task_id, ret, msg, (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
-	fprintf(stderr, "%s\n", sql);
+//	fprintf(stderr, "%s\n", sql);
 	// 查询结果
 	if (mysql_query(&mysql_conn, sql) != 0) {
 		fprintf(stderr, "%s\n", "Mysql Query fails.");
@@ -211,8 +211,8 @@ void Curl_Request(int task_id, char *command, int timeout) {
 		char *url;
 		int ukey;
 		//请求地址
-		url = malloc(strlen(command)+1);
-		strncpy(url, command, strlen(command));
+		url = malloc(strlen(command));
+		sprintf(url, "%s", command);
 		// 信息结构体
 		struct ResponseStruct chunk;
 		chunk.responsetext = NULL;
@@ -392,7 +392,7 @@ static void mail_worker(){
 			strncpy(subject, tmp_item->subject, strlen(tmp_item->subject));
 			strncpy(content, tmp_item->content, strlen(tmp_item->content));
 			//发送短信
-			send_notice_sms(sms_url, subject, content);
+			send_notice_sms(subject, content);
 			// 踢出除队列
 			TAILQ_REMOVE(&mail_queue, tmp_item, entries);
 			tmp_item=TAILQ_NEXT(tmp_item, entries);
