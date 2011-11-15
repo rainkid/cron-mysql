@@ -94,7 +94,10 @@ int send_notice_sms(char *url,char *subject, char *content){
 	CURL *curl_handle = NULL;
 	CURLcode response;
 	char hash[BUFSIZ] = "fR7lP3nNlZYdYwnq08=";
-	char sms_url[BUFSIZ] = "http://market/sms.php";
+	char *sms_url;
+
+	sms_url = malloc(strlen(url) + 1);
+	strncpy(sms_url, url, strlen(url));
 
 	char *post_data;
 	post_data = malloc(strlen(subject) + strlen(content) + 50);
@@ -113,6 +116,7 @@ int send_notice_sms(char *url,char *subject, char *content){
 		fprintf(stderr, "%s\n\n", post_data);
 		ret = 1;
 	}
+	free(sms_url);
 	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();
 	return ret;

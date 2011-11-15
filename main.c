@@ -54,7 +54,7 @@
 
 // 函数声明
 size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
-void Curl_Request(int key, char *command, int timeout);
+void Curl_Request(int task_id, char *command, int timeout);
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
 void task_file_load(const char *config_file);
@@ -62,14 +62,14 @@ void task_mysql_load();
 static void task_worker();
 static void config_worker();
 static void mail_worker();
-void task_log(int ukey, char *result, int run_time);
+void task_log(int id, int ret, char* msg);
 
 /*********************************************/
 char sms_url[BUFSIZ] = "http://market/sms.php";
-char host[BUFSIZ] = "127.0.0.1";
+char host[BUFSIZ] = "10.249.198.235";
 char username[BUFSIZ] = "root";
-char passwd[BUFSIZ] = "root";
-char dbname[BUFSIZ] = "test";
+char passwd[BUFSIZ] = "123456";
+char dbname[BUFSIZ] = "market_test";
 int port = 3306;
 /*********************************************/
 
@@ -80,7 +80,7 @@ char *config_file = NULL;
 // 同步配置时间
 int sync_config_time = 60 * 5;
 // 邮件队列间隔时间
-int send_mail_time = 60 * 5;
+int send_mail_time = 10 * 1;
 
 //任务信号标识
 pthread_cond_t has_task = PTHREAD_COND_INITIALIZER;
@@ -157,12 +157,55 @@ bool mail_queue_exist(char *ukey){
 	return isexist;
 }
 
-void task_log(int ukey, char *result, int run_time){
+//记录日志
+void task_log(int task_id, int ret, char* msg){
 	
+	// mysql连接
+	MYSQL mysql_conn;
+	char sql[BUFSIZ] = {0x00};
+	char *mmsg;
+
+	struct tm *p;
+	time_t timep;
+	time(&timep);
+	p=localtime(&timep); /*取得当地时间*/
+	mmsg = malloc(strlen(msg) + 1);
+	strncpy(mmsg, msg, strlen(msg));
+
+	if (mysql_library_init(0, NULL, NULL)) {
+	    fprintf(stderr, "could not initialize MySQL library\n");
+	 }
+
+	// mysql 初始化连接
+	if (mysql_init(&mysql_conn) == NULL) {
+		fprintf(stderr, "%s\n", "Mysql Initialization fails.");
+		mysql_close(&mysql_conn);
+	}
+
+	// mysql连接
+	if (mysql_real_connect(&mysql_conn, host, username, passwd, dbname, port, NULL, 128) == NULL) {
+		fprintf(stderr, "%s\n", "Mysql Connection fails.");
+		mysql_close(&mysql_conn);
+	}
+	// 查询sql
+	sprintf(sql, "INSERT INTO mk_timeproc_log VALUES('', %d,%d,'%s' ,'%d-%d-%d %d:%d:%d')", task_id, ret, msg, (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+	fprintf(stderr, "%s\n", sql);
+	// 查询结果
+	if (mysql_query(&mysql_conn, sql) != 0) {
+		fprintf(stderr, "%s\n", "Mysql Query fails.");
+		mysql_close(&mysql_conn);
+		return;
+	}
+	free(mmsg);
+	// 关闭mysql连接
+	mysql_close(&mysql_conn);
+
+	mysql_library_end();
 }
 
 /* 发送请求 */
-void Curl_Request(int key, char *command, int timeout) {
+void Curl_Request(int task_id, char *command, int timeout) {
+		int ret = 0;
 		CURL *curl_handle = NULL;
 		CURLcode response;
 		char *url;
@@ -174,13 +217,11 @@ void Curl_Request(int key, char *command, int timeout) {
 		struct ResponseStruct chunk;
 		chunk.responsetext = NULL;
 		chunk.size = 0;
-
 		// 邮件队列item
 	    	struct MAIL_QUEUE_ITEM *item;
 		item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
 
 		fprintf(stderr, "%s", url);
-		time_t s_nowTime = GetNowTime();
 		// curl 选项设置
 		curl_handle = curl_easy_init();
 		if (curl_handle != NULL) {
@@ -196,6 +237,7 @@ void Curl_Request(int key, char *command, int timeout) {
 		if ((response == CURLE_OK) && chunk.responsetext &&
 			(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
 			fprintf(stderr, "...success\n");
+			ret = 1;
 		} else {
 			// 队列去重
 			if(false == mail_queue_exist(url)){
@@ -235,8 +277,7 @@ void Curl_Request(int key, char *command, int timeout) {
 			fprintf(stderr, "...failed\n");
 		}
 		//记录日志
-		time_t e_nowTime = GetNowTime();
-		task_log(ukey, chunk.responsetext, 1);
+		task_log(task_id, ret, chunk.responsetext);
 		// 释放返回信息
 		if (chunk.responsetext) {
 			free(chunk.responsetext);
@@ -263,7 +304,7 @@ static void task_worker() {
 		// 现在时间
 		time_t nowTime = GetNowTime();
 		while (NULL != (temp = taskList->head)) {
-			/*fprintf(
+/*			fprintf(
 					stderr,
 					"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s\n",
 					temp->prev, temp->next, temp, temp->startTime,
@@ -276,7 +317,7 @@ static void task_worker() {
 			}
 			// 执行任务
 			//system(command);
-			Curl_Request(temp->ukey, temp->command, temp->timeout);
+			Curl_Request(temp->task_id, temp->command, temp->timeout);
 
 			(temp->runTimes)++;
 			if (temp->next) {
@@ -502,7 +543,6 @@ void task_mysql_load() {
 	if (mysql_library_init(0, NULL, NULL)) {
 	    fprintf(stderr, "could not initialize MySQL library\n");
 	 }
-
 	// mysql 初始化连接
 	if (mysql_init(&mysql_conn) == NULL) {
 		fprintf(stderr, "%s\n", "Mysql Initialization fails.");
@@ -570,9 +610,9 @@ void task_mysql_load() {
 		sprintf(command, "%s", mysql_row[5]);
 		sprintf(taskItem->command, "%s", command);
 
-		taskItem->frequency = atoi(mysql_row[3]) * 60;
+		taskItem->frequency = atoi(mysql_row[3])/* * 60*/;
 		taskItem->times = atoi(mysql_row[8]);
-		taskItem->ukey = atoi(mysql_row[0]);
+		taskItem->task_id = atoi(mysql_row[0]);
 		taskItem->timeout = atoi(mysql_row[7]);
 
 		// 转化为时间戳
@@ -600,12 +640,12 @@ void task_mysql_load() {
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
-//		fprintf(
-//				stderr,
-//				"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s\n",
-//				taskItem->prev, taskItem->next, taskItem, taskItem->startTime,
-//				taskItem->endTime, taskItem->nextTime, taskItem->times,
-//				taskItem->frequency, taskItem->command);
+		/*fprintf(
+				stderr,
+				"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s\n",
+				taskItem->prev, taskItem->next, taskItem, taskItem->startTime,
+				taskItem->endTime, taskItem->nextTime, taskItem->times,
+				taskItem->frequency, taskItem->command);*/
 		// 更新到任务链表
 		pthread_mutex_lock(&task_lock);
 		Task_Update(taskItem, taskList);
