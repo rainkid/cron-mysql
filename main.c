@@ -65,7 +65,7 @@ static void mail_worker();
 void task_log(int id, int ret, char* msg);
 
 /*********************************************/
-char sms_url[BUFSIZ] = "http://market/sms.php";
+char sms_url[BUFSIZ] = "http://www.market.test/sms.php";
 char host[BUFSIZ] = "10.249.198.235";
 char username[BUFSIZ] = "root";
 char passwd[BUFSIZ] = "123456";
@@ -392,7 +392,7 @@ static void mail_worker(){
 			strncpy(subject, tmp_item->subject, strlen(tmp_item->subject));
 			strncpy(content, tmp_item->content, strlen(tmp_item->content));
 			//发送短信
-			send_notice_sms(subject, content);
+			send_notice_sms(sms_url, subject, content);
 			// 踢出除队列
 			TAILQ_REMOVE(&mail_queue, tmp_item, entries);
 			tmp_item=TAILQ_NEXT(tmp_item, entries);
@@ -611,7 +611,7 @@ void task_mysql_load() {
 		sprintf(taskItem->command, "%s", command);
 
 		taskItem->frequency = atoi(mysql_row[3]) * 60;
-		taskItem->times = atoi(mysql_row[8]);
+		//taskItem->times = atoi(mysql_row[8]);
 		taskItem->task_id = atoi(mysql_row[0]);
 		taskItem->timeout = atoi(mysql_row[7]);
 

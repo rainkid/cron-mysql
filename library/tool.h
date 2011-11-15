@@ -8,7 +8,7 @@ extern "C" {
 char* substr(const char*str,unsigned start, unsigned end);
 time_t GetNowTime();
 int send_notice_mail(char *subject, char *content);
-int send_notice_sms(char *subject, char *content);
+int send_notice_sms(char *url, char *subject, char *content);
 
 #ifdef	__cplusplus
 }

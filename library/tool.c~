@@ -89,7 +89,7 @@ int send_notice_mail(char *subject, char *content){
 }
 
 //发送短信
-int send_notice_sms(char *url,char *subject, char *content){
+int send_notice_sms(char *url, char *subject, char *content){
 	int ret = 0;
 	CURL *curl_handle = NULL;
 	CURLcode response;
