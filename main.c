@@ -191,6 +191,7 @@ void task_log(int task_id, int ret, char* msg){
 	// mysql连接
 	MYSQL mysql_conn;
 	char sql[BUFSIZ] = {0x00};
+	char upsql[BUFSIZ] = {0x00};
 	char *mmsg;
 
 	struct tm *p;
@@ -217,13 +218,18 @@ void task_log(int task_id, int ret, char* msg){
 	}
 	// 查询sql
 	sprintf(sql, "INSERT INTO mk_timeproc_log VALUES('', %d,%d,'%s' ,'%d-%d-%d %d:%d:%d')", task_id, ret, msg, (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
-//	fprintf(stderr, "%s\n", sql);
-	// 查询结果
+	// 记录日志
 	if (mysql_query(&mysql_conn, sql) != 0) {
 		fprintf(stderr, "%s\n", "Mysql Query fails.");
 		mysql_close(&mysql_conn);
-		return;
 	}
+	//更新数据
+	sprintf(upsql, "UPDATE mk_timeproc SET last_run_time='%d-%d-%d %d:%d:%d' WHERE id=%d", (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, task_id);
+//	fprintf(stderr, "%s\n", upsql);
+	if (mysql_query(&mysql_conn, upsql) != 0) {
+			fprintf(stderr, "%s\n", "Mysql Query fails.");
+			mysql_close(&mysql_conn);
+		}
 	free(mmsg);
 	// 关闭mysql连接
 	mysql_close(&mysql_conn);
