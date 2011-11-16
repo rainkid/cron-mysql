@@ -70,12 +70,12 @@ int send_notice_mail(char *subject, char *content){
 	mail.authorization=AUTH_SEND_MAIL;
 	//smtp.163.com
 	//ip or server
-	mail.server="smtp.163.com";
-	mail.port=466;
-	mail.auth_user="rainkid@163.com";
-	mail.auth_passwd="raink.kid";
-	mail.from="rainkid@163.com";
-	mail.from_subject="no-replyrainkid@163.com";
+	mail.server="email.alibaba-inc.com";
+	mail.port=587;
+	mail.auth_user="hu.liaoh@alibaba-inc.com";
+	mail.auth_passwd="Rainkid,.0.";
+	mail.from="hu.liaoh@alibaba-inc.com";
+	mail.from_subject="no-reply";
 	mail.to_address_ary=to_addrs;
 	mail.to_addr_len=1;
 	mail.subject = "aaaaa";
@@ -85,7 +85,11 @@ int send_notice_mail(char *subject, char *content){
 	mail.att_file_len=2;
 	mail.att_file_ary=att_files;
 	ret = send_mail(&mail);
-	fprintf(stderr, "Has %d mails send.\n", ret);
+	if(ret != 0){
+		fprintf(stderr, "Send mail with error : %d.\n", ret);
+	}else{
+		fprintf(stderr, "Send mail success.\n");
+	}
 	return ret;
 }
 /*******************************************************************/

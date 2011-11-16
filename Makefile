@@ -49,7 +49,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_ctask_OBJECTS = main.$(OBJEXT) task.$(OBJEXT) mail.$(OBJEXT) \
-	base64.$(OBJEXT) tool.$(OBJEXT)
+	base64.$(OBJEXT) tool.$(OBJEXT) config.$(OBJEXT)
 ctask_OBJECTS = $(am_ctask_OBJECTS)
 ctask_LDADD = $(LDADD)
 ctask_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(ctask_LDFLAGS) \
@@ -164,7 +164,7 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 AUTOMAKE_OPTIONS = foreign
-ctask_SOURCES = main.c library/task.c library/task.h library/mail.c library/mail.h library/base64.c library/base64.h library/tool.c library/tool.h
+ctask_SOURCES = main.c library/task.c library/task.h library/mail.c library/mail.h library/base64.c library/base64.h library/tool.c library/tool.h library/config.c library/config.h
 ctask_LDFLAGS = -Lusr/local/lib
 INCLUDES = -I/usr/local/include/
 all: all-am
@@ -253,6 +253,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include ./$(DEPDIR)/base64.Po
+include ./$(DEPDIR)/config.Po
 include ./$(DEPDIR)/mail.Po
 include ./$(DEPDIR)/main.Po
 include ./$(DEPDIR)/task.Po
@@ -327,6 +328,20 @@ tool.obj: library/tool.c
 #	source='library/tool.c' object='tool.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tool.obj `if test -f 'library/tool.c'; then $(CYGPATH_W) 'library/tool.c'; else $(CYGPATH_W) '$(srcdir)/library/tool.c'; fi`
+
+config.o: library/config.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT config.o -MD -MP -MF $(DEPDIR)/config.Tpo -c -o config.o `test -f 'library/config.c' || echo '$(srcdir)/'`library/config.c
+	$(am__mv) $(DEPDIR)/config.Tpo $(DEPDIR)/config.Po
+#	source='library/config.c' object='config.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o config.o `test -f 'library/config.c' || echo '$(srcdir)/'`library/config.c
+
+config.obj: library/config.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT config.obj -MD -MP -MF $(DEPDIR)/config.Tpo -c -o config.obj `if test -f 'library/config.c'; then $(CYGPATH_W) 'library/config.c'; else $(CYGPATH_W) '$(srcdir)/library/config.c'; fi`
+	$(am__mv) $(DEPDIR)/config.Tpo $(DEPDIR)/config.Po
+#	source='library/config.c' object='config.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o config.obj `if test -f 'library/config.c'; then $(CYGPATH_W) 'library/config.c'; else $(CYGPATH_W) '$(srcdir)/library/config.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

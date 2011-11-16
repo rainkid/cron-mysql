@@ -48,6 +48,7 @@
 
 #include "library/task.h"
 #include "library/tool.h"
+#include "library/config.h"
 
 #define PIDFILE  "./cron.pid"
 #define VERSION  "1.0"
@@ -58,31 +59,37 @@ size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
 void Curl_Request(int task_id, char *command, int timeout);
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
-void task_file_load(const char *config_file);
+void task_file_load(const char *g_task_file);
 void task_mysql_load();
 static void task_worker();
 static void config_worker();
 static void mail_worker();
 void task_log(int id, int ret, char* msg);
-/*******************************************************************/
 
 /*******************************************************************/
-char sms_url[BUFSIZ] = "http://www.market.test/sms.php";
-char host[BUFSIZ] = "10.249.198.235";
-char username[BUFSIZ] = "root";
-char passwd[BUFSIZ] = "123456";
-char dbname[BUFSIZ] = "market_test";
-int port = 3306;
-/*******************************************************************/
 
+//运行方式
+char run_type[BUFSIZ] = {0x00};
+char notice_type[BUFSIZ] = {0x00};
+char sms_url[BUFSIZ] = {0x00};
+char host[BUFSIZ] = {0x00};
+char username[BUFSIZ] = {0x00};
+char passwd[BUFSIZ] = {0x00};
+char dbname[BUFSIZ] = {0x00};
+int port = 0;
+
+/*******************************************************************/
 // 任务节点
 TaskList *taskList = NULL;
 // 任务配置路径
-char *config_file = NULL;
+char *g_task_file = NULL;
 // 同步配置时间
 int sync_config_time = 60 * 5;
 // 邮件队列间隔时间
 int send_mail_time = 60 * 5;
+//配置全局路径
+char *g_config_file = NULL;
+
 /*******************************************************************/
 
 //任务信号标识
@@ -94,7 +101,9 @@ pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t has_mail = PTHREAD_COND_INITIALIZER;
 //邮件锁
 pthread_mutex_t mail_lock = PTHREAD_MUTEX_INITIALIZER;
+
 /*******************************************************************/
+
 /* 请求返回数据结构 */
 struct ResponseStruct {
 	char *responsetext;
@@ -110,10 +119,11 @@ struct MAIL_QUEUE_ITEM{
     TAILQ_ENTRY(MAIL_QUEUE_ITEM) entries;   
 };
 TAILQ_HEAD(, MAIL_QUEUE_ITEM) mail_queue;
-/*******************************************************************/
 
 
 /*******************************************************************/
+
+
 /* 帮助信息 */
 static void usage(){
 	printf("author raink.kid@gmail.com\n" \
@@ -122,10 +132,11 @@ static void usage(){
 		 "-c, --config <path>  task config file path.\n" \
 		 "-d, --daemon  run as a daemon.\n\n");
 }
-/*******************************************************************/
 
 
 /*******************************************************************/
+
+
 /* Curl回调处理函数 */
 size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	size_t realsize = size * nmemb;
@@ -140,10 +151,11 @@ size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	mem->responsetext[mem->size] = '\0';
 	return realsize;
 }
-/*******************************************************************/
 
 
 /*******************************************************************/
+
+
 /* 邮件队列是否唯一 */
 bool mail_queue_exist(char *ukey){
 	bool isexist = false;
@@ -168,10 +180,11 @@ bool mail_queue_exist(char *ukey){
 	}
 	return isexist;
 }
-/*******************************************************************/
 
 
 /*******************************************************************/
+
+
 //记录日志
 void task_log(int task_id, int ret, char* msg){
 	
@@ -217,10 +230,10 @@ void task_log(int task_id, int ret, char* msg){
 
 	mysql_library_end();
 }
-/*******************************************************************/
 
 
 /*******************************************************************/
+
 /* 发送请求 */
 void Curl_Request(int task_id, char *command, int timeout) {
 		int ret = 0;
@@ -275,9 +288,9 @@ void Curl_Request(int task_id, char *command, int timeout) {
 				struct MAIL_QUEUE_ITEM *item;
 				item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
 
-				item->ukey = malloc(strlen(ukey) + 1);
-				item->subject = malloc(strlen(subject) + 1);
-				item->content = malloc(strlen(content) + 1);
+				item->ukey = malloc(strlen(ukey));
+				item->subject = malloc(strlen(subject));
+				item->content = malloc(strlen(content));
 
 				memcpy(item->ukey, ukey , strlen(ukey));
 				memcpy(item->subject, subject , strlen(subject));
@@ -305,10 +318,10 @@ void Curl_Request(int task_id, char *command, int timeout) {
 		curl_global_cleanup();
 		free(url);
 }
-/*******************************************************************/
 
 
 /*******************************************************************/
+
 /* 任务处理线程 */
 static void task_worker() {
 //	pthread_detach(pthread_self());
@@ -385,10 +398,10 @@ static void task_worker() {
 		}
 	}
 }
+
 /*******************************************************************/
 
 
-/*******************************************************************/
 /* 邮件队列线程 */
 static void mail_worker(){
 //	pthread_detach(pthread_self());
@@ -415,8 +428,12 @@ static void mail_worker(){
 
 			strncpy(subject, tmp_item->subject, strlen(tmp_item->subject));
 			strncpy(content, tmp_item->content, strlen(tmp_item->content));
-			//发送短信
-			send_notice_sms(sms_url, subject, content);
+			//发送通知
+			if(strcmp(notice_type, "mail") == 0){
+				send_notice_mail(subject, content);
+			}else if(strcmp(notice_type, "sms") == 0){
+				send_notice_sms(sms_url, subject, content);
+			}
 			// 踢出除队列
 			TAILQ_REMOVE(&mail_queue, tmp_item, entries);
 			tmp_item=TAILQ_NEXT(tmp_item, entries);
@@ -428,10 +445,10 @@ static void mail_worker(){
 		sleep(send_mail_time);
 	}
 }
+
 /*******************************************************************/
 
 
-/*******************************************************************/
 /* 同步配置线程 */
 static void config_worker() {
 //	pthread_detach(pthread_self());
@@ -442,32 +459,43 @@ static void config_worker() {
 	taskList->tail = NULL;
 
 	while(1) {
-		task_mysql_load();
-//		task_file_load(config_file);
+		if(strcmp(run_type, "file") == 0){
+			task_file_load(g_task_file);
+		}else if(strcmp(run_type, "mysql") == 0){
+			task_mysql_load();
+		}
 		sleep(sync_config_time);
 	}
 }
-/*******************************************************************/
 
 
 /*******************************************************************/
+
+
 /* 父进程信号处理 */
 static void kill_signal_master(const int signal) {
 	//删除PID
 	if (0 == access(PIDFILE, F_OK)) {
 		remove(PIDFILE);
 	}
+	//销毁计划任务配置文件内存分配
+	if (NULL != g_task_file) {
+		free(g_task_file);
+		g_task_file = NULL;
+	}
+
 	//销毁配置文件内存分配
-	if (NULL != config_file) {
-		free(config_file);
-		config_file = NULL;
+	if (NULL != g_config_file) {
+		free(g_config_file);
+		g_config_file = NULL;
 	}
 	exit(EXIT_SUCCESS);
 }
-/*******************************************************************/
 
 
 /*******************************************************************/
+
+
 /*子进程信号处理*/
 static void kill_signal_worker(const int signal) {
 
@@ -481,14 +509,14 @@ static void kill_signal_worker(const int signal) {
 
 	exit(EXIT_SUCCESS);
 }
+
 /*******************************************************************/
 
 
-/*******************************************************************/
 /* 文件配置计划任务加载 */
-void task_file_load(const char *config_file) {
+void task_file_load(const char *g_task_file) {
 	FILE *fp;
-	fp = fopen(config_file, "r");
+	fp = fopen(g_task_file, "r");
 	if(NULL == fp){
 		fprintf(stderr, "%s\n", "Open config file faild.");
 	}
@@ -561,10 +589,9 @@ void task_file_load(const char *config_file) {
 	}
 	fclose(fp);
 }
-/*******************************************************************/
-
 
 /*******************************************************************/
+
 /* mysql任务加载 */
 void task_mysql_load() {
 
@@ -698,10 +725,11 @@ void task_mysql_load() {
 
 	mysql_library_end();
 }
-/*******************************************************************/
 
 
 /*******************************************************************/
+
+
 /* 主模块 */
 int main(int argc, char *argv[], char *envp[]) {
 	bool daemon = false;
@@ -711,13 +739,14 @@ int main(int argc, char *argv[], char *envp[]) {
 			{ "daemon", 0, 0, 'd' },
 			{ "help", 0, 0,	'h' },
 			{ "config", 1, 0, 'c' },
+			{ "tasklist", 0, 0, 't' },
 			{ "version", 0, 0, 'v' },
 			{ 0, 0, 0, 0 } };
 
-	/*if (1 == argc) {
+	if (1 == argc) {
 		fprintf(stderr, "Please use %s --help\n", argv[0]);
 		exit(1);
-	}*/
+	}
 
 	// 读取参数
 	int c;
@@ -727,9 +756,14 @@ int main(int argc, char *argv[], char *envp[]) {
 			daemon = true;
 			break;
 		case 'c':
-			config_file = malloc( strlen( optarg ) + 1 );
-			assert( config_file != NULL );
-			strcpy( config_file, optarg );
+			g_config_file = malloc( strlen( optarg ) + 1 );
+			assert( g_config_file != NULL );
+			strcpy( g_config_file, optarg );
+			break;
+		case 't':
+			g_task_file = malloc( strlen( optarg ) + 1 );
+			assert( g_task_file != NULL );
+			strcpy( g_task_file, optarg );
 			break;
 		case 'v':
 			printf("%s\n\n", VERSION);
@@ -749,11 +783,40 @@ int main(int argc, char *argv[], char *envp[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	// 读取任务配置文件
-	/*if (NULL == config_file || -1 == access(config_file, F_OK)) {
-		fprintf(stderr,	"Please use task config: -c <path> or --config <path>\n\n");
+	//配置选项检查-运行方式
+	sprintf(run_type, "%s", c_get_string("main", "run", g_config_file));
+	if(strcmp(run_type, "file") != 0 && strcmp(run_type, "mysql") !=0 ){
+		fprintf(stderr, "error run type : %s, it's is mysql or file\n", run_type);
 		exit(EXIT_FAILURE);
-	}*/
+	}
+
+	//配置选项检查-通知方式
+	sprintf(notice_type, "%s", c_get_string("main", "notice", g_config_file));
+	if(strcmp(notice_type, "sms") != 0 && strcmp(notice_type, "mail") !=0 && strcmp(notice_type, "no") !=0){
+		fprintf(stderr, "error notice type : %s, it's is mysql or file\n", notice_type);
+		exit(EXIT_FAILURE);
+	}
+
+	//通知类型判断
+	if(strcmp(notice_type, "sms") == 0){
+		sprintf(sms_url, "%s", c_get_string("sms", "smsurl", g_config_file));
+	}else if(strcmp(notice_type, "mail") == 0){
+
+	}
+
+	// 读取任务配置文件
+	if(strcmp(run_type, "file") == 0){
+		if (NULL == g_task_file || -1 == access(g_task_file, F_OK)) {
+			fprintf(stderr,	"Please use task config: -c <path> or --config <path>\n\n");
+			exit(EXIT_FAILURE);
+		}
+	}else if(strcmp(run_type, "mysql") == 0){
+		sprintf(host, "%s", c_get_string("mysql", "host", g_config_file));
+		sprintf(username, "%s", c_get_string("mysql", "username", g_config_file));
+		sprintf(passwd, "%s", c_get_string("mysql", "passwd", g_config_file));
+		sprintf(dbname, "%s", c_get_string("mysql", "dbname", g_config_file));
+		port = c_get_init("mysql", "port", g_config_file);
+	}
 
 	// 如果加了-d参数，以守护进程运行
 	if (daemon == true) {
@@ -787,7 +850,6 @@ int main(int argc, char *argv[], char *envp[]) {
 		fprintf(stderr, "Error: %s:%d\n", __FILE__, __LINE__);
 		exit(EXIT_FAILURE);
 	}
-
 
 	// 父进程内容
 	if (worker_pid > 0) {
@@ -863,4 +925,3 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	return 0;
 }
-/*******************************************************************/
