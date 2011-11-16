@@ -15,6 +15,9 @@ AC_CHECK_LIB([pthread], [pthread_rwlock_init],  [curl], [curl_easy_init], [mysql
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h malloc.h netdb.h netinet/in.h stdlib.h string.h sys/param.h sys/socket.h unistd.h curl/curl.h mysql/mysql.h])
 
+AC_ARG_WITH(curl,AS_HELP_STRING([--with-curl],[root of the Curl installation]))
+AC_ARG_WITH(mysql,AS_HELP_STRING([--with-mysql],[root of the MySQL installation]))
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_TYPE_PID_T
