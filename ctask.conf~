@@ -1,0 +1,35 @@
+#运行方式
+#run为file : 以后[file]选项生效，为mysql时，[mysql]选项生效
+[main]
+run=mysql
+#run=mysql
+
+#notice 为sms时，以下[sms]选项配置生效,为mail时[mail]时生效，为no时关闭通知
+notice=no
+#notice=sms
+#notice=mail
+
+#短信通知
+[sms]
+smsurl=http://www.market.test/sms.php
+
+#邮件通知
+[mail]
+server=smtp.aliyun-inc.com
+port=25
+user=hu.liaoh
+passwd=123456
+to=15257128383@139.com
+
+#任务来自文件
+[file]
+file=tasks.conf
+
+#任务来自mysql 
+[mysql]
+host=10.249.198.235
+username=root
+passwd=123456
+dbname=market_test
+port=3306
+

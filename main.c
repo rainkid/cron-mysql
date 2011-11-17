@@ -706,8 +706,8 @@ int main(int argc, char *argv[], char *envp[]) {
 			{ "config", 1, 0, 'c' },
 			{ "tasklist", 0, 0, 't' },
 			{ "version", 0, 0, 'v' },
-			{ "help", 0, 0,	'h' },
-			{ 0, 0, 0, 0 } };
+			{ "help", 0, 0, 'h' },
+			{ NULL, 0, 0, 0 }};
 
 	if (1 == argc) {
 		fprintf(stderr, "Please use %s --help\n", argv[0]);
@@ -716,18 +716,18 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	// 读取参数
 	int c;
-	while ((c = getopt_long(argc, argv, "dhc:v", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "d:v:t:c:h", long_options, NULL)) != -1) {
 		switch (c) {
 		case 'd':
 			daemon = true;
 			break;
 		case 'c':
-			g_config_file = malloc( strlen( optarg ) + 1 );
+			g_config_file = malloc( strlen( optarg ));
 			assert( g_config_file != NULL );
 			strcpy( g_config_file, optarg );
 			break;
 		case 't':
-			g_task_file = malloc( strlen( optarg ) + 1 );
+			g_task_file = malloc( strlen( optarg ));
 			assert( g_task_file != NULL );
 			strcpy( g_task_file, optarg );
 			break;
@@ -773,7 +773,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	// 读取任务配置文件
 	if(strcmp(g_run_type, "file") == 0){
 		if (NULL == g_task_file || -1 == access(g_task_file, F_OK)) {
-			fprintf(stderr,	"Please use task config: -c <path> or --config <path>\n\n");
+			fprintf(stderr,	"Please use tasks config: -t <path>\n");
 			exit(EXIT_FAILURE);
 		}
 	}else if(strcmp(g_run_type, "mysql") == 0){
@@ -788,7 +788,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	if (daemon == true) {
 		pid_t pid = fork();
 		if (pid < 0) {
-			fprintf(stderr, "Fork failured\n\n");
+			fprintf(stderr, "Fork failured\n");
 			exit(EXIT_FAILURE);
 		}
 		if (pid > 0) {
