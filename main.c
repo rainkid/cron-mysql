@@ -298,7 +298,9 @@ void Curl_Request(int task_id, char *command, int timeout) {
 			fprintf(stderr, "...failed\n");
 		}
 		//记录日志
-		task_log(task_id, ret, chunk.responsetext);
+		if(strcmp(g_run_type, "mysql") == 0){
+			task_log(task_id, ret, chunk.responsetext);
+		}
 		if (chunk.responsetext) {
 			free(chunk.responsetext);
 		}
@@ -561,12 +563,15 @@ void task_file_load(const char *g_task_file, TaskList * n_task_list) {
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
-		/*fprintf(stderr, "prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,frequency=%d,command=%s\n",
+		fprintf(stderr, "prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,frequency=%d,command=%s\n",
 		 taskItem->prev, taskItem->next, taskItem, taskItem->startTime,
 	 taskItem->endTime, taskItem->nextTime, taskItem->times,
-		 taskItem->frequency, taskItem->command);*/
+		 taskItem->frequency, taskItem->command);
 		// 更新到任务链表
+	    pthread_mutex_lock(&task_lock);
 		task_update(taskItem, n_task_list);
+		pthread_mutex_unlock(&task_lock);
+		pthread_cond_signal(&has_task);
 	}
 	fclose(fp);
 }
