@@ -351,7 +351,6 @@ static void task_worker() {
 			}
 			// 执行任务
 			//system(command);
-			fprintf(stderr, "%ld : %ld\n", nowTime, temp->nextTime);
 			Curl_Request(temp->task_id, temp->command, temp->timeout);
 
 			(temp->runTimes)++;
