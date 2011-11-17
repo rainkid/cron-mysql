@@ -26,8 +26,8 @@
 #include "task.h"
 /*******************************************************************/
 /* 任务初始化 */
-bool task_init(TaskList * tasklist) {
-    tasklist = NULL;
+bool task_init(TaskList * task_list) {
+    task_list = NULL;
     return true;
 }
 /*******************************************************************/
@@ -35,20 +35,20 @@ bool task_init(TaskList * tasklist) {
 
 /*******************************************************************/
 /* 添加节点到尾部 */
-bool Task_Add(TaskList * tasklist, TaskItem * taskitem) {
-    taskitem->next = NULL;
-    taskitem->prev = NULL;
+bool task_add(TaskList * task_list, TaskItem * task_item) {
+    task_item->next = NULL;
+    task_item->prev = NULL;
     
-    if (false == task_isempty(tasklist)) {
-        tasklist->tail->next = taskitem;
-        taskitem->prev = tasklist->tail;
+    if (false == task_isempty(task_list)) {
+        task_list->tail->next = task_item;
+        task_item->prev = task_list->tail;
     }
     else {
-        tasklist->head = taskitem;
+        task_list->head = task_item;
     }
 
-    tasklist->tail = taskitem;
-    (tasklist->count)++;
+    task_list->tail = task_item;
+    (task_list->count)++;
     
     return true;
 }
@@ -57,40 +57,40 @@ bool Task_Add(TaskList * tasklist, TaskItem * taskitem) {
 
 /*******************************************************************/
 /* 更新节点 */
-bool task_update(TaskItem * taskitem, TaskList *tasklist) {
-    if (false == task_isempty(tasklist)) {
-        taskitem->next = NULL;
-        taskitem->prev = NULL;
+bool task_update(TaskItem * task_item, TaskList *task_list) {
+    if (false == task_isempty(task_list)) {
+        task_item->next = NULL;
+        task_item->prev = NULL;
 
-        if (taskitem->nextTime >= tasklist->head->nextTime) {
-            if (taskitem->nextTime < tasklist->tail->nextTime) {
-                TaskItem *temp = tasklist->head;
+        if (task_item->nextTime >= task_list->head->nextTime) {
+            if (task_item->nextTime < task_list->tail->nextTime) {
+                TaskItem *temp = task_list->head;
                 while(NULL != temp) {
-                    if (taskitem->nextTime < temp->nextTime) {
-                        taskitem->prev = temp->prev;
-                        temp->prev->next = taskitem;
-                        temp->prev = taskitem;
-                        taskitem->next = temp;
+                    if (task_item->nextTime < temp->nextTime) {
+                        task_item->prev = temp->prev;
+                        temp->prev->next = task_item;
+                        temp->prev = task_item;
+                        task_item->next = temp;
                         break;
                     }
                     temp = temp->next;
                 }
             }
             else {
-                taskitem->prev = tasklist->tail;
-                tasklist->tail->next = taskitem;
-                tasklist->tail = taskitem;
+                task_item->prev = task_list->tail;
+                task_list->tail->next = task_item;
+                task_list->tail = task_item;
             }
         }
         else {
-            taskitem->next = tasklist->head;
-            tasklist->head->prev = taskitem;
-            tasklist->head = taskitem;
+            task_item->next = task_list->head;
+            task_list->head->prev = task_item;
+            task_list->head = task_item;
         }
-        (tasklist->count)++;
+        (task_list->count)++;
     }
     else {
-        Task_Add(tasklist,taskitem);
+        task_add(task_list,task_item);
     }
 
     return true;
@@ -100,27 +100,27 @@ bool task_update(TaskItem * taskitem, TaskList *tasklist) {
 
 /*******************************************************************/
 /* 任务列表是否空 */
-bool task_isempty(const TaskList *tasklist) {
-    return (tasklist->count == 0) ? true : false;
+bool task_isempty(const TaskList *task_list) {
+    return (task_list->count == 0) ? true : false;
 }
 /*******************************************************************/
 
 
 /*******************************************************************/
 /* 任务列表销毁 */
-bool task_free(TaskList *tasklist) {
-    if (false == task_isempty(tasklist)) {
+bool task_free(TaskList *task_list) {
+    if (false == task_isempty(task_list)) {
         TaskItem *temp;
-        while(NULL != tasklist->head) {
-            temp = tasklist->head->next;
-            item_free(tasklist->head);
-            tasklist->head = temp;
+        while(NULL != task_list->head) {
+            temp = task_list->head->next;
+            item_free(task_list->head);
+            task_list->head = temp;
         }
     }
-    tasklist->count = 0;
-    tasklist->head = NULL;
-    tasklist->tail = NULL;
-    free(tasklist);
+    task_list->count = 0;
+    task_list->head = NULL;
+    task_list->tail = NULL;
+    free(task_list);
     
     return true;
 }
@@ -129,7 +129,7 @@ bool task_free(TaskList *tasklist) {
 
 /*******************************************************************/
 /* 任务节点销毁 */
-bool item_free(TaskItem *taskitem) {
-    free(taskitem);
+bool item_free(TaskItem *task_item) {
+    free(task_item);
     return true;
 }

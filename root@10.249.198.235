@@ -59,8 +59,8 @@ size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
 void Curl_Request(int task_id, char *command, int timeout);
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
-void task_file_load(const char *g_task_file, TaskList * n_task_list);
-void task_mysql_load(TaskList * n_task_list);
+void task_file_load(const char *g_task_file);
+void task_mysql_load();
 static void task_worker();
 static void config_worker();
 static void mail_worker();
@@ -80,11 +80,11 @@ int port = 0;
 
 /*******************************************************************/
 // 任务节点
-TaskList *task_list = NULL;
+TaskList *taskList = NULL;
 // 任务配置路径
 char *g_task_file = NULL;
 // 同步配置时间
-int sync_config_time = 60 * 2;
+int sync_config_time = 60 * 5;
 // 邮件队列间隔时间
 int send_mail_time = 60 * 5;
 //配置全局路径
@@ -338,12 +338,18 @@ static void task_worker() {
 	while(1){
 		pthread_mutex_lock(&task_lock);
 		// 等待任务处理信号
-		if(NULL == task_list->head) {
+		if(NULL == taskList->head) {
 			pthread_cond_wait(&has_task, &task_lock);
 		}
 		// 现在时间
 		time_t nowTime = GetNowTime();
-		while (NULL != (temp = task_list->head)) {
+		while (NULL != (temp = taskList->head)) {
+/*			fprintf(
+					stderr,
+					"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s\n",
+					temp->prev, temp->next, temp, temp->startTime,
+					temp->endTime, temp->nextTime, temp->times,
+					temp->frequency, temp->command);*/
 			// 大于当前时间跳出
 			if (nowTime < temp->nextTime) {
 				delay = temp->nextTime - nowTime;
@@ -351,30 +357,25 @@ static void task_worker() {
 			}
 			// 执行任务
 			//system(command);
-			fprintf(stderr, "%ld : %ld\n", nowTime, temp->nextTime);
 			Curl_Request(temp->task_id, temp->command, temp->timeout);
 
 			(temp->runTimes)++;
+			temp->frequency = temp->frequency * 60;
 			if (temp->next) {
 				// 删除头部 
-				task_list->head = temp->next;
+				taskList->head = temp->next;
 				temp->next->prev = NULL;
 				// 尾巴 
-				if (temp == task_list->tail) {
-					task_list->tail = temp->prev;
+				if (temp == taskList->tail) {
+					taskList->tail = temp->prev;
 				}
 				// 添加 
 				if (0 == temp->times || temp->runTimes < temp->times) {
 					temp->prev = NULL;
 					temp->next = NULL;
-					temp->nextTime += temp->frequency;
+					temp->nextTime = nowTime + temp->frequency;
 					// 重新添加
-					task_update(temp, task_list);
-					/*fprintf(stderr,
-					"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s, now=%ld\n",
-					temp->prev, temp->next, temp, temp->startTime,
-					temp->endTime, temp->nextTime, temp->times,
-					temp->frequency, temp->command, nowTime);*/
+					task_update(temp, taskList);
 				} else {
 					item_free(temp);
 					temp = NULL;
@@ -384,20 +385,20 @@ static void task_worker() {
 				if (temp->times > 0 && temp->runTimes > temp->times) {
 					item_free(temp);
 					temp = NULL;
-					task_list->head = NULL;
-					task_list->tail = NULL;
-					free(task_list);
-					task_list = NULL;
+					taskList->head = NULL;
+					taskList->tail = NULL;
+					free(taskList);
+					taskList = NULL;
 					delay = 1;
 				} else {
-					temp->nextTime += temp->frequency;
+					temp->nextTime = nowTime + temp->frequency;
 					delay = temp->frequency;
 				}
 				break;
 			}
 		}
 		pthread_mutex_unlock(&task_lock);
-		if (NULL != task_list) {
+		if (NULL != taskList) {
 			sleep(delay);
 		} else {
 			break;
@@ -411,7 +412,7 @@ static void task_worker() {
 /* 邮件队列线程 */
 static void mail_worker(){
 //	pthread_detach(pthread_self());
-
+	
 	// 邮件结构
 	struct MAIL_QUEUE_ITEM *tmp_item;
 	tmp_item = malloc(sizeof(tmp_item));
@@ -458,32 +459,18 @@ static void mail_worker(){
 /* 同步配置线程 */
 static void config_worker() {
 //	pthread_detach(pthread_self());
+
+	// 重新初始化队列
+	taskList->count = 0;
+	taskList->head = NULL;
+	taskList->tail = NULL;
+
 	while(1) {
-		// 新建任务列表
-		TaskList *n_task_list;
-		n_task_list = (TaskList *) malloc(sizeof(TaskList));
-		if(NULL == n_task_list){
-			fprintf(stderr, "%s\n", "tasklist malloc failed.");
-		};
-
-		n_task_list->count = 0;
-		n_task_list->head = NULL;
-		n_task_list->tail = NULL;
-
-		//加载任务到新建列表中
 		if(strcmp(run_type, "file") == 0){
-			task_file_load(g_task_file, n_task_list);
+			task_file_load(g_task_file);
 		}else if(strcmp(run_type, "mysql") == 0){
-			task_mysql_load(n_task_list);
+			task_mysql_load();
 		}
-
-		//如果新建任务列表成功，否则等待下次新建
-		if(n_task_list != NULL){
-			task_free(task_list);
-			task_list = NULL;
-			task_list = n_task_list;
-		}
-
 		sleep(sync_config_time);
 	}
 }
@@ -520,12 +507,12 @@ static void kill_signal_master(const int signal) {
 static void kill_signal_worker(const int signal) {
 
 	//销毁任务
-	if (NULL != task_list) {
-		task_free(task_list);
-		task_list = NULL;
+	if (NULL != taskList) {
+		task_free(taskList);
+		taskList = NULL;
 	}
 	//释放子进程
-	pthread_exit(NULL);
+	pthread_exit(0);
 
 	exit(EXIT_SUCCESS);
 }
@@ -534,7 +521,7 @@ static void kill_signal_worker(const int signal) {
 
 
 /* 文件配置计划任务加载 */
-void task_file_load(const char *g_task_file, TaskList * n_task_list) {
+void task_file_load(const char *g_task_file) {
 	FILE *fp;
 	fp = fopen(g_task_file, "r");
 	if(NULL == fp){
@@ -589,8 +576,11 @@ void task_file_load(const char *g_task_file, TaskList * n_task_list) {
 		}
 
 		// 计算下次运行点
-		int st = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
-		taskItem->nextTime = taskItem->startTime + ((st + 1) * taskItem->frequency);
+		if (taskItem->nextTime == 0) {
+			int st = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
+			taskItem->nextTime = taskItem->startTime + ((st + 1)
+					* taskItem->frequency);
+		}
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
@@ -599,7 +589,10 @@ void task_file_load(const char *g_task_file, TaskList * n_task_list) {
 	 taskItem->endTime, taskItem->nextTime, taskItem->times,
 		 taskItem->frequency, taskItem->command);*/
 		// 更新到任务链表
-		task_update(taskItem, n_task_list);
+		pthread_mutex_lock(&task_lock);
+		task_update(taskItem, taskList);
+		pthread_mutex_unlock(&task_lock);
+		pthread_cond_signal(&has_task);
 	}
 	fclose(fp);
 }
@@ -607,7 +600,7 @@ void task_file_load(const char *g_task_file, TaskList * n_task_list) {
 /*******************************************************************/
 
 /* mysql任务加载 */
-void task_mysql_load(TaskList * n_task_list) {
+void task_mysql_load() {
 
 	MYSQL mysql_conn;
 	// mysql连接
@@ -713,21 +706,22 @@ void task_mysql_load(TaskList * n_task_list) {
 		}
 
 		// 计算下次运行点
-		int st = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
-		taskItem->nextTime = taskItem->startTime + ((st + 1) * taskItem->frequency);
-
+		if (taskItem->nextTime == 0) {
+			int perst = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
+			taskItem->nextTime = taskItem->startTime + ((perst + 1) * taskItem->frequency);
+		}
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
 		/*fprintf(
-			stderr,
-			"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s, now=%ld\n",
-			taskItem->prev, taskItem->next, taskItem, taskItem->startTime,
-			taskItem->endTime, taskItem->nextTime, taskItem->times,
-			taskItem->frequency, taskItem->command, nowTime);*/
+				stderr,
+				"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s\n",
+				taskItem->prev, taskItem->next, taskItem, taskItem->startTime,
+				taskItem->endTime, taskItem->nextTime, taskItem->times,
+				taskItem->frequency, taskItem->command);*/
 		// 更新到任务链表
 		pthread_mutex_lock(&task_lock);
-		task_update(taskItem, n_task_list);
+		task_update(taskItem, taskList);
 		pthread_mutex_unlock(&task_lock);
 		pthread_cond_signal(&has_task);
 	}
@@ -910,17 +904,17 @@ int main(int argc, char *argv[], char *envp[]) {
 	// 处理段错误信号
 	signal(SIGSEGV, kill_signal_worker);
 
-	// 初始化邮件队列
-	TAILQ_INIT(&mail_queue);
-
 	// 初始化任务列表
-	task_list = (TaskList *) malloc(sizeof(TaskList));
-	if(NULL == task_list){
+	taskList = (TaskList *) malloc(sizeof(TaskList));
+	if(NULL == taskList){
 		fprintf(stderr, "%s\n", "tasklist malloc failed.");
 	};
-	task_list->count = 0;
-	task_list->head = NULL;
-	task_list->tail = NULL;
+	taskList->count = 0;
+	taskList->head = NULL;
+	taskList->tail = NULL;
+
+	// 初始化邮件队列
+	TAILQ_INIT(&mail_queue);
 
 	pthread_t config_tid, task_tid, mail_tid;
 	// 定时加载配置张线程
