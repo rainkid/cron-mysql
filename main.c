@@ -721,7 +721,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	// 读取参数
 	int c;
-	while ((c = getopt_long(argc, argv, "d:v:t:c:h", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "dv:t:c:h", long_options, NULL)) != -1) {
 		switch (c) {
 		case 'd':
 			daemon = true;
