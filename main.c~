@@ -55,16 +55,16 @@
 
 /*******************************************************************/
 // 函数声明
-size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
-void Curl_Request(int task_id, char *command, int timeout);
+static size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
+static void Curl_Request(int task_id, char *command, int timeout);
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
-void task_file_load(const char *g_task_file, TaskList * n_task_list);
-void task_mysql_load(TaskList * n_task_list);
+static void task_file_load(const char *g_task_file, TaskList * n_task_list);
+static void task_mysql_load(TaskList * n_task_list);
 static void task_worker();
 static void config_worker();
 static void mail_worker();
-void task_log(int id, int ret, char* msg);
+static void task_log(int id, int ret, char* msg);
 
 /*******************************************************************/
 
@@ -134,7 +134,7 @@ static void usage(){
 /*******************************************************************/
 
 /* Curl回调处理函数 */
-size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
+static size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	size_t realsize = size * nmemb;
 	struct ResponseStruct *mem = (struct ResponseStruct *) data;
 	mem->responsetext = realloc(mem->responsetext, mem->size + realsize + 1);
@@ -150,18 +150,18 @@ size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
 /*******************************************************************/
 
 /* 邮件队列是否唯一 */
-bool mail_queue_exist(char *ukey){
+static bool mail_queue_exist(char *url){
 	bool isexist = false;
 
 	struct MAIL_QUEUE_ITEM *tmp_item;
 	tmp_item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
 
-	char tmp_ukey[BUFSIZ] = {0x00};
-	sprintf(tmp_ukey, "%s", ukey);
+	char tmp_url[BUFSIZ] = {0x00};
+	sprintf(tmp_url, "%s", url);
 	
 	tmp_item = TAILQ_FIRST(&mail_queue);
 	while(NULL != tmp_item){
-		if(strcmp(tmp_item->ukey, tmp_ukey) == 0){
+		if(strcmp(tmp_item->ukey, tmp_url) == 0){
 			isexist = true;
 			break;
 		}
@@ -175,7 +175,7 @@ bool mail_queue_exist(char *ukey){
 
 
 //记录日志
-void task_log(int task_id, int ret, char* msg){
+static void task_log(int task_id, int ret, char* msg){
 	
 	MYSQL mysql_conn;
 	char sql[BUFSIZ] = {0x00};
@@ -226,7 +226,7 @@ void task_log(int task_id, int ret, char* msg){
 /*******************************************************************/
 
 /* 发送请求 */
-void Curl_Request(int task_id, char *command, int timeout) {
+static void Curl_Request(int task_id, char *command, int timeout) {
 		int ret = 0;
 		CURL *curl_handle = NULL;
 		CURLcode response;
@@ -248,7 +248,8 @@ void Curl_Request(int task_id, char *command, int timeout) {
 		curl_handle = curl_easy_init();
 		if (curl_handle != NULL) {
 			curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, timeout * 60);
+			curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, timeout);
+			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, timeout);
 			// 回调设置
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, Curl_Callback);
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
@@ -282,16 +283,16 @@ void Curl_Request(int task_id, char *command, int timeout) {
 				item->subject = malloc(strlen(subject));
 				item->content = malloc(strlen(content));
 
-				memcpy(item->ukey, ukey , strlen(ukey));
-				memcpy(item->subject, subject , strlen(subject));
-				memcpy(item->content, content , strlen(content));
+				sprintf(item->ukey, "%s", ukey);
+				sprintf(item->subject, "%s", subject);
+				sprintf(item->content, "%s", content);
 
 				pthread_mutex_lock(&mail_lock);
 				//入邮件队列
 				TAILQ_INSERT_TAIL(&mail_queue, item, entries);
-
 				pthread_mutex_unlock(&mail_lock);
 				pthread_cond_signal(&has_mail);
+
 				free(subject);
 				free(content);
 			}
@@ -503,7 +504,7 @@ static void kill_signal_worker(const int signal) {
 /*******************************************************************/
 
 /* 文件配置计划任务加载 */
-void task_file_load(const char *g_task_file, TaskList * n_task_list) {
+static void task_file_load(const char *g_task_file, TaskList * n_task_list) {
 	FILE *fp;
 	fp = fopen(g_task_file, "r");
 	if(NULL == fp){
@@ -579,7 +580,7 @@ void task_file_load(const char *g_task_file, TaskList * n_task_list) {
 /*******************************************************************/
 
 /* mysql任务加载 */
-void task_mysql_load(TaskList * n_task_list) {
+static void task_mysql_load(TaskList * n_task_list) {
 
 	MYSQL mysql_conn;
 	// mysql连接
@@ -651,7 +652,7 @@ void task_mysql_load(TaskList * n_task_list) {
 		sprintf(taskItem->command, "%s", command);
 
 		taskItem->times = 0;
-		taskItem->frequency = atoi(mysql_row[3]) * 60;
+		taskItem->frequency = atoi(mysql_row[3]) * 2;
 		taskItem->task_id = atoi(mysql_row[0]);
 		taskItem->timeout = atoi(mysql_row[7]);
 
@@ -721,7 +722,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	// 读取参数
 	int c;
-	while ((c = getopt_long(argc, argv, "d:v:t:c:h", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "dv:t:c:h", long_options, NULL)) != -1) {
 		switch (c) {
 		case 'd':
 			daemon = true;
@@ -782,13 +783,12 @@ int main(int argc, char *argv[], char *envp[]) {
 			exit(EXIT_FAILURE);
 		}
 	}else if(strcmp(g_run_type, "mysql") == 0){
-		sprintf(g_host, "%s", c_get_string("mysql", "g_host", g_config_file));
-		sprintf(g_username, "%s", c_get_string("mysql", "g_username", g_config_file));
-		sprintf(g_passwd, "%s", c_get_string("mysql", "g_passwd", g_config_file));
-		sprintf(g_dbname, "%s", c_get_string("mysql", "g_dbname", g_config_file));
+		sprintf(g_host, "%s", c_get_string("mysql", "host", g_config_file));
+		sprintf(g_username, "%s", c_get_string("mysql", "username", g_config_file));
+		sprintf(g_passwd, "%s", c_get_string("mysql", "passwd", g_config_file));
+		sprintf(g_dbname, "%s", c_get_string("mysql", "dbname", g_config_file));
 		g_port = c_get_init("mysql", "g_port", g_config_file);
 	}
-
 	// 如果加了-d参数，以守护进程运行
 	if (daemon == true) {
 		pid_t pid = fork();
