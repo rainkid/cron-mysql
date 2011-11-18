@@ -55,8 +55,8 @@
 
 /*******************************************************************/
 // 函数声明
-static size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data);
-static void Curl_Request(int task_id, char *command, int timeout);
+static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data);
+static void curl_request(int task_id, char *command, int timeout);
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
 static void task_file_load(const char *g_task_file, TaskList * n_task_list);
@@ -134,7 +134,7 @@ static void usage(){
 /*******************************************************************/
 
 /* Curl回调处理函数 */
-static size_t Curl_Callback(void *ptr, size_t size, size_t nmemb, void *data) {
+static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	size_t realsize = size * nmemb;
 	struct ResponseStruct *mem = (struct ResponseStruct *) data;
 	mem->responsetext = realloc(mem->responsetext, mem->size + realsize + 1);
@@ -226,7 +226,7 @@ static void task_log(int task_id, int ret, char* msg){
 /*******************************************************************/
 
 /* 发送请求 */
-static void Curl_Request(int task_id, char *command, int timeout) {
+static void curl_request(int task_id, char *command, int timeout) {
 		int ret = 0;
 		CURL *curl_handle = NULL;
 		CURLcode response;
@@ -252,7 +252,7 @@ static void Curl_Request(int task_id, char *command, int timeout) {
 			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, timeout);
 			//curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, true);
 			// 回调设置
-			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, Curl_Callback);
+			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_callback);
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
 			response = curl_easy_perform(curl_handle);
 		}
@@ -270,19 +270,12 @@ static void Curl_Request(int task_id, char *command, int timeout) {
 
 				ukey = malloc(strlen(url) + 1);
 				subject = malloc(strlen(url) + 50);
-				if(chunk.responsetext != NULL){
-					content = malloc(strlen(chunk.responsetext) + 50);
-				}else{
-					content = malloc(20);
-				}
+				content = malloc(strlen(chunk.responsetext) + 50);
 				
 				sprintf(ukey, "%s", url);
 				sprintf(subject, "Task Error With %s", url);
-				if(chunk.responsetext != NULL){
-					sprintf(content, "Errors : %s", chunk.responsetext);
-				}else{
-					sprintf(content, "Errors : NULL");
-				}
+				sprintf(content, "Errors : %s", chunk.responsetext);
+
 				//邮件队列处理
 				struct MAIL_QUEUE_ITEM *item;
 				item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
@@ -341,7 +334,7 @@ static void task_worker() {
 			}
 			// 执行任务
 			//system(command);
-			Curl_Request(temp->task_id, temp->command, temp->timeout);
+			curl_request(temp->task_id, temp->command, temp->timeout);
 
 			(temp->runTimes)++;
 			if (temp->next) {
@@ -573,10 +566,10 @@ static void task_file_load(const char *g_task_file, TaskList * n_task_list) {
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
-		fprintf(stderr, "prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,frequency=%d,command=%s\n",
+		/*fprintf(stderr, "prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,frequency=%d,command=%s\n",
 		 taskItem->prev, taskItem->next, taskItem, taskItem->startTime,
 	 taskItem->endTime, taskItem->nextTime, taskItem->times,
-		 taskItem->frequency, taskItem->command);
+		 taskItem->frequency, taskItem->command);*/
 		// 更新到任务链表
 	    pthread_mutex_lock(&task_lock);
 		task_update(taskItem, n_task_list);
