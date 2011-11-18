@@ -661,7 +661,7 @@ static void task_mysql_load(TaskList * n_task_list) {
 		sprintf(taskItem->command, "%s", command);
 
 		taskItem->times = 0;
-		taskItem->frequency = atoi(mysql_row[3]) * 2;
+		taskItem->frequency = atoi(mysql_row[3]) * 60;
 		taskItem->task_id = atoi(mysql_row[0]);
 		taskItem->timeout = atoi(mysql_row[7]);
 
