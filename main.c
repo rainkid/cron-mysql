@@ -237,7 +237,7 @@ static void Curl_Request(int task_id, char *command, int timeout) {
 		sprintf(url, "%s", command);
 
 		struct ResponseStruct chunk;
-		chunk.responsetext = NULL;
+		chunk.responsetext = malloc(1);
 		chunk.size = 0;
 
 	    	struct MAIL_QUEUE_ITEM *item;
@@ -250,18 +250,18 @@ static void Curl_Request(int task_id, char *command, int timeout) {
 			curl_easy_setopt(curl_handle, CURLOPT_URL, url);
 			curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, timeout);
 			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, timeout);
+			//curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, true);
 			// 回调设置
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, Curl_Callback);
 			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
 			response = curl_easy_perform(curl_handle);
 		}
-
 		// 请求响应处理
 		if ((response == CURLE_OK) && chunk.responsetext &&
 			(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
 			fprintf(stderr, "...success\n");
 			ret = 1;
-		} else {
+		}else{
 			// 队列去重
 			if(false == mail_queue_exist(url)){
 				char *ukey;
@@ -270,11 +270,19 @@ static void Curl_Request(int task_id, char *command, int timeout) {
 
 				ukey = malloc(strlen(url) + 1);
 				subject = malloc(strlen(url) + 50);
-				content = malloc(strlen(chunk.responsetext) + 50);
-
+				if(chunk.responsetext != NULL){
+					content = malloc(strlen(chunk.responsetext) + 50);
+				}else{
+					content = malloc(20);
+				}
+				
 				sprintf(ukey, "%s", url);
 				sprintf(subject, "Task Error With %s", url);
-				sprintf(content, "Errors : %s", chunk.responsetext);
+				if(chunk.responsetext != NULL){
+					sprintf(content, "Errors : %s", chunk.responsetext);
+				}else{
+					sprintf(content, "Errors : NULL");
+				}
 				//邮件队列处理
 				struct MAIL_QUEUE_ITEM *item;
 				item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
@@ -298,6 +306,7 @@ static void Curl_Request(int task_id, char *command, int timeout) {
 			}
 			fprintf(stderr, "...failed\n");
 		}
+
 		//记录日志
 		if(strcmp(g_run_type, "mysql") == 0){
 			task_log(task_id, ret, chunk.responsetext);
