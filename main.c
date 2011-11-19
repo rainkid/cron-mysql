@@ -70,8 +70,6 @@ static void task_log(int id, int ret, char* msg);
 
 //全局变量
 char g_run_type[BUFSIZ] = {0x00};
-char g_notice_type[BUFSIZ] = {0x00};
-char g_sms_url[BUFSIZ] = {0x00};
 char g_host[BUFSIZ] = {0x00};
 char g_username[BUFSIZ] = {0x00};
 char g_passwd[BUFSIZ] = {0x00};
@@ -110,10 +108,10 @@ struct ResponseStruct {
 
 
 /* 邮件队列结构 */
-struct MAIL_QUEUE_ITEM{   
-    char *ukey;
-	char *subject;
-	char *content;
+struct MAIL_QUEUE_ITEM{
+	int m_id;
+    char *m_url;
+	char *m_msg;
     TAILQ_ENTRY(MAIL_QUEUE_ITEM) entries;   
 };
 TAILQ_HEAD(, MAIL_QUEUE_ITEM) mail_queue;
@@ -150,18 +148,15 @@ static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data) {
 /*******************************************************************/
 
 /* 邮件队列是否唯一 */
-static bool mail_queue_exist(char *url){
+static bool mail_queue_exist(int task_id){
 	bool isexist = false;
 
 	struct MAIL_QUEUE_ITEM *tmp_item;
 	tmp_item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
-
-	char tmp_url[BUFSIZ] = {0x00};
-	sprintf(tmp_url, "%s", url);
 	
 	tmp_item = TAILQ_FIRST(&mail_queue);
 	while(NULL != tmp_item){
-		if(strcmp(tmp_item->ukey, tmp_url) == 0){
+		if(tmp_item->m_id == task_id){
 			isexist = true;
 			break;
 		}
@@ -240,7 +235,7 @@ static void curl_request(int task_id, char *command, int timeout) {
 		chunk.responsetext = malloc(1);
 		chunk.size = 0;
 
-	    	struct MAIL_QUEUE_ITEM *item;
+	    struct MAIL_QUEUE_ITEM *item;
 		item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
 
 		fprintf(stderr, "%s", url);
@@ -263,39 +258,24 @@ static void curl_request(int task_id, char *command, int timeout) {
 			ret = 1;
 		}else{
 			// 队列去重
-			if(false == mail_queue_exist(url)){
-				char *ukey;
-				char *subject;
-				char *content;
-
-				ukey = malloc(strlen(url) + 1);
-				subject = malloc(strlen(url) + 50);
-				content = malloc(strlen(chunk.responsetext) + 50);
-				
-				sprintf(ukey, "%s", url);
-				sprintf(subject, "Task Error With %s", url);
-				sprintf(content, "Errors : %s", chunk.responsetext);
+			if(false == mail_queue_exist(task_id)){
 
 				//邮件队列处理
 				struct MAIL_QUEUE_ITEM *item;
 				item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
 
-				item->ukey = malloc(strlen(ukey));
-				item->subject = malloc(strlen(subject));
-				item->content = malloc(strlen(content));
+				item->m_url = malloc(strlen(url));
+				item->m_msg = malloc(strlen(chunk.responsetext));
 
-				sprintf(item->ukey, "%s", ukey);
-				sprintf(item->subject, "%s", subject);
-				sprintf(item->content, "%s", content);
+				item->m_id = task_id;
+				sprintf(item->m_url, "%s", url);
+				sprintf(item->m_msg, "%s", chunk.responsetext);
 
 				pthread_mutex_lock(&mail_lock);
 				//入邮件队列
 				TAILQ_INSERT_TAIL(&mail_queue, item, entries);
 				pthread_mutex_unlock(&mail_lock);
 				pthread_cond_signal(&has_mail);
-
-				free(subject);
-				free(content);
 			}
 			fprintf(stderr, "...failed\n");
 		}
@@ -402,25 +382,22 @@ static void mail_worker(){
 		}
 		if(NULL != tmp_item){
 
-			char *subject;
+			char subject[BUFSIZ] = {0x00};
 			char *content;
 
-			subject = malloc(strlen(tmp_item->subject) + 1);
-			content = malloc(strlen(tmp_item->content) + 1);
+			content = malloc(strlen(tmp_item->m_msg) + 50);
 
-			strncpy(subject, tmp_item->subject, strlen(tmp_item->subject));
-			strncpy(content, tmp_item->content, strlen(tmp_item->content));
+			sprintf(subject, "ctask has error with : %d\n", tmp_item->m_id);
+			sprintf(content, "url : %s\n msg : %s\n", tmp_item->m_url, tmp_item->m_msg);
+
+			fprintf(stderr, "\n\n%s\n%s\n", tmp_item->m_url, tmp_item->m_msg);
+
 			//发送通知
-			if(strcmp(g_notice_type, "mail") == 0){
-				send_notice_mail(subject, content);
-			}else if(strcmp(g_notice_type, "sms") == 0){
-				send_notice_sms(g_sms_url, subject, content);
-			}
+			send_notice_mail(subject, content);
 			// 踢出除队列
 			TAILQ_REMOVE(&mail_queue, tmp_item, entries);
 			tmp_item=TAILQ_NEXT(tmp_item, entries);
 
-			free(subject);
 			free(content);
 		}
 		pthread_mutex_unlock(&mail_lock);
@@ -483,6 +460,9 @@ static void kill_signal_master(const int signal) {
 		free(g_config_file);
 		g_config_file = NULL;
 	}
+	/* 给进程组发送SIGTERM信号，结束子进程 */
+	kill(0, SIGTERM);
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -497,9 +477,6 @@ static void kill_signal_worker(const int signal) {
 		task_free(task_list);
 		task_list = NULL;
 	}
-	//释放子进程
-	pthread_exit(NULL);
-
 	exit(EXIT_SUCCESS);
 }
 
@@ -751,31 +728,20 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 	}
 
+	send_notice_mail("aaaaaaa", "aaaaaaaaa");
+	exit(0);
+
 	// 参数判断
 	if (optind != argc) {
 		fprintf(stderr,	"Too many arguments\nTry `%s --help' for more information.\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
-	//配置选项检查-运行方式
+	// 配置选项检查-运行方式
 	sprintf(g_run_type, "%s", c_get_string("main", "run", g_config_file));
 	if(strcmp(g_run_type, "file") != 0 && strcmp(g_run_type, "mysql") !=0 ){
 		fprintf(stderr, "error run type : %s, it's is mysql or file\n", g_run_type);
 		exit(EXIT_FAILURE);
-	}
-
-	//配置选项检查-通知方式
-	sprintf(g_notice_type, "%s", c_get_string("main", "notice", g_config_file));
-	if(strcmp(g_notice_type, "sms") != 0 && strcmp(g_notice_type, "mail") !=0 && strcmp(g_notice_type, "no") !=0){
-		fprintf(stderr, "error notice type : %s, it's is mysql or file\n", g_notice_type);
-		exit(EXIT_FAILURE);
-	}
-
-	//通知类型判断
-	if(strcmp(g_notice_type, "sms") == 0){
-		sprintf(g_sms_url, "%s", c_get_string("sms", "smsurl", g_config_file));
-	}else if(strcmp(g_notice_type, "mail") == 0){
-
 	}
 
 	// 读取任务配置文件
@@ -791,6 +757,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		sprintf(g_dbname, "%s", c_get_string("mysql", "dbname", g_config_file));
 		g_port = c_get_init("mysql", "g_port", g_config_file);
 	}
+
 	// 如果加了-d参数，以守护进程运行
 	if (daemon == true) {
 		pid_t pid = fork();

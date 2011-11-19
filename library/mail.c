@@ -239,6 +239,8 @@ int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 
 		char *b6_user = NULL;
 		char *b6_pswd = NULL;
+
+
 		base64_encoder(msg->auth_user, strlen(msg->auth_user), &b6_user);
 		if (b6_user == NULL)
 			return 0;
@@ -247,6 +249,7 @@ int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 			free(b6_user);
 			return 0;
 		}
+		fprintf(stderr, "\n\n %s:%s\n\n", b6_user, b6_pswd);
 		char b6_user_cmd[strlen(b6_user) + 3];
 		char b6_pswd_cmd[strlen(b6_pswd) + 3];
 		sprintf(b6_user_cmd, "%s\r\n", b6_user);

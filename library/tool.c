@@ -70,12 +70,12 @@ int send_notice_mail(char *subject, char *content){
 	mail.authorization=AUTH_SEND_MAIL;
 	//smtp.163.com
 	//ip or server
-	mail.server="email.alibaba-inc.com";
-	mail.port=587;
-	mail.auth_user="hu.liaoh@alibaba-inc.com";
-	mail.auth_passwd="Rainkid,.0.";
-	mail.from="hu.liaoh@alibaba-inc.com";
-	mail.from_subject="no-reply";
+	mail.server="123.58.178.203";
+	mail.port=25;
+	mail.auth_user="rainkid@163.com";
+	mail.auth_passwd="raink.kid";
+	mail.from="rainkid@163.com";
+	mail.from_subject="no-reply@rainkid@163.com";
 	mail.to_address_ary=to_addrs;
 	mail.to_addr_len=1;
 	mail.subject = "aaaaa";
@@ -90,42 +90,5 @@ int send_notice_mail(char *subject, char *content){
 	}else{
 		fprintf(stderr, "Send mail success.\n");
 	}
-	return ret;
-}
-/*******************************************************************/
-
-
-/*******************************************************************/
-//发送短信
-int send_notice_sms(char *url, char *subject, char *content){
-	int ret = 0;
-	CURL *curl_handle = NULL;
-	CURLcode response;
-	char hash[BUFSIZ] = "fR7lP3nNlZYdYwnq08=";
-	char *sms_url;
-
-	sms_url = malloc(strlen(url) + 1);
-	strncpy(sms_url, url, strlen(url));
-
-	char *post_data;
-	post_data = malloc(strlen(subject) + strlen(content) + 50);
-
-	sprintf(post_data, "subject=%s&content=%s&hash=%s", subject, content, hash);
-	curl_handle = curl_easy_init();
-	if(curl_handle){
-		curl_easy_setopt(curl_handle, CURLOPT_URL, sms_url);
-		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 5);
-		curl_easy_setopt(curl_handle, CURLOPT_POST, 1);
-		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, post_data);
-		response = curl_easy_perform(curl_handle);
-	}
-
-	if (response == CURLE_OK){
-		fprintf(stderr, "%s\n\n", post_data);
-		ret = 1;
-	}
-	free(sms_url);
-	curl_easy_cleanup(curl_handle);
-	curl_global_cleanup();
 	return ret;
 }
