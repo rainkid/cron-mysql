@@ -148,7 +148,6 @@ int send_mail(struct st_mail_msg_ *msg_) {
 		free(subject_b6);
 		return SEND_RESULT_FINAL;
 	}
-	// fprintf(tmp_fp,content_b6);
 	fprintf(tmp_fp, "%s", content_b6);
 	fprintf(tmp_fp, "\r\n");
 	fprintf(tmp_fp, "--%s%s_body--\r\n", bound_id_prefix, bound_id);
@@ -198,9 +197,9 @@ int send_mail(struct st_mail_msg_ *msg_) {
 				fprintf(tmp_fp, "--%s%s--\r\n", bound_id_prefix, bound_id);
 		}
 	}
-	/* 开始发送 */
+	// 开始发送
 	char buffer[READ_FILE_LEN];
-	/* 关闭文件句柄 */
+	// 关闭文件句柄
 	fclose(tmp_fp);
 	
 	int frwp_tmp = open(tmp_file_str, O_RDONLY);
@@ -226,6 +225,8 @@ int send_mail(struct st_mail_msg_ *msg_) {
 	return SEND_RESULT_SUCCESS;
 }
 
+/*******************************************************************/
+
 /* 发送信体头信息 */
 int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 	cmd_msg(sockfd, NULL, NULL);
@@ -249,7 +250,6 @@ int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 			free(b6_user);
 			return 0;
 		}
-		fprintf(stderr, "\n\n %s:%s\n\n", b6_user, b6_pswd);
 		char b6_user_cmd[strlen(b6_user) + 3];
 		char b6_pswd_cmd[strlen(b6_pswd) + 3];
 		sprintf(b6_user_cmd, "%s\r\n", b6_user);
@@ -279,7 +279,7 @@ int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 	if (!msg->from)
 		return 0;
 	char from_cmd[13 + strlen(msg->from)];
-	sprintf(from_cmd, "MAIL FROM:%s\r\n", msg->from);
+	sprintf(from_cmd, "MAIL FROM:<%s>\r\n", msg->from);
 	if (!cmd_msg(sockfd, from_cmd, "250"))
 		return 0;
 	if (!msg->to_address_ary)
@@ -290,7 +290,7 @@ int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 	for (char_arry_p = msg->to_address_ary; char_arry_p < (msg->to_address_ary
 			+ msg->to_addr_len); char_arry_p++) {
 		char to_addr_cmd[12 + strlen(char_arry_p->str_p)];
-		sprintf(to_addr_cmd, "RCPT TO:%s\r\n", char_arry_p->str_p);
+		sprintf(to_addr_cmd, "RCPT TO:<%s>\r\n", char_arry_p->str_p);
 		if (!cmd_msg(sockfd, to_addr_cmd, "250"))
 			return 0;
 	}
@@ -313,7 +313,8 @@ int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 	return 1;
 }
 
-/*sockfd : socket文件描述符*/
+/*******************************************************************/
+
 int cmd_msg(int sockfd, const char *cmd, const char *flag) {
 	int r_result;
 	int r_len;
@@ -328,12 +329,13 @@ int cmd_msg(int sockfd, const char *cmd, const char *flag) {
 	//读取返回信息
 	if ((r_len = read(sockfd, buffer, buf_len)) < 0)
 		return 0;
-	fprintf(stderr, "%s", buffer);
 	if (flag && strstr(buffer, flag)) {
 		return 1;
 	}
 	return 0;
 }
+
+/*******************************************************************/
 
 void init_mail_msg(struct st_mail_msg_ *msg) {
 	msg->att_file_len = 0;

@@ -49,6 +49,9 @@
 #include "library/task.h"
 #include "library/tool.h"
 #include "library/config.h"
+#include "library/base64.h"
+#include "library/mail.h"
+
 
 #define PIDFILE  "./cron.pid"
 #define VERSION  "1.0"
@@ -65,16 +68,27 @@ static void task_worker();
 static void config_worker();
 static void mail_worker();
 static void task_log(int id, int ret, char* msg);
+static int send_notice_mail(char *subject, char *content);
 
 /*******************************************************************/
 
 //全局变量
 char g_run_type[BUFSIZ] = {0x00};
-char g_host[BUFSIZ] = {0x00};
-char g_username[BUFSIZ] = {0x00};
-char g_passwd[BUFSIZ] = {0x00};
-char g_dbname[BUFSIZ] = {0x00};
-int g_port = 0;
+//mysql参数
+char g_mysql_host[BUFSIZ] = {0x00};
+char g_mysql_username[BUFSIZ] = {0x00};
+char g_mysql_passwd[BUFSIZ] = {0x00};
+char g_mysql_dbname[BUFSIZ] = {0x00};
+int g_mysql_port = 0;
+
+char g_notice[BUFSIZ] = {0x00};
+
+//邮件参数
+char g_mail_server[BUFSIZ] = {0x00};
+char g_mail_user[BUFSIZ] = {0x00};
+char g_mail_passwd[BUFSIZ] = {0x00};
+char g_mail_to[BUFSIZ] = {0x00};
+int g_mail_port = 0;
 
 /*******************************************************************/
 // 任务节点
@@ -82,9 +96,9 @@ TaskList *task_list = NULL;
 // 任务配置路径
 char *g_task_file = NULL;
 // 同步配置时间
-int sync_config_time = 60 * 5;
+int sync_config_time = 5 * 60;
 // 邮件队列间隔时间
-int send_mail_time = 60 * 5;
+int send_mail_time = 5 * 60;
 //配置全局路径
 char *g_config_file = NULL;
 
@@ -147,6 +161,45 @@ static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data) {
 
 /*******************************************************************/
 
+/*发送通知邮件*/
+static int send_notice_mail(char *subject, char *content){
+    int ret =0;
+
+    struct st_char_arry to_addrs[0];
+	//收件人列表
+    	to_addrs[0].str_p = g_mail_to;
+    struct st_char_arry att_files[0];
+	//附件列表
+  	att_files[0].str_p="";
+	struct st_mail_msg_ mail;
+	init_mail_msg(&mail);
+	mail.authorization=AUTH_SEND_MAIL;
+	mail.server = g_mail_server;
+	mail.port = g_mail_port;
+	mail.auth_user = g_mail_user;
+	mail.auth_passwd= g_mail_passwd;
+	mail.from = g_mail_user;
+	mail.from_subject = "Task With Some Error@163.com";
+	mail.to_address_ary = to_addrs;
+	mail.to_addr_len = 1;
+	mail.subject = subject;
+	mail.content = content;
+	mail.mail_style_html = HTML_STYLE_MAIL;
+	mail.priority = 3;
+	mail.att_file_len = 2;
+	mail.att_file_ary = att_files;
+	ret = send_mail(&mail);
+
+	if(ret != 0){
+		fprintf(stderr, "Send mail with error : %d.\n", ret);
+	}else{
+		fprintf(stderr, "Send mail success.\n");
+	}
+	return ret;
+}
+
+/*******************************************************************/
+
 /* 邮件队列是否唯一 */
 static bool mail_queue_exist(int task_id){
 	bool isexist = false;
@@ -195,7 +248,7 @@ static void task_log(int task_id, int ret, char* msg){
 	}
 
 	// mysql连接
-	if (mysql_real_connect(&mysql_conn, g_host, g_username, g_passwd, g_dbname, g_port, NULL, 128) == NULL) {
+	if (mysql_real_connect(&mysql_conn, g_mysql_host, g_mysql_username, g_mysql_passwd, g_mysql_dbname, g_mysql_port, NULL, 128) == NULL) {
 		fprintf(stderr, "%s\n", "Mysql Connection fails.");
 		mysql_close(&mysql_conn);
 	}
@@ -388,12 +441,12 @@ static void mail_worker(){
 			content = malloc(strlen(tmp_item->m_msg) + 50);
 
 			sprintf(subject, "ctask has error with : %d\n", tmp_item->m_id);
-			sprintf(content, "url : %s\n msg : %s\n", tmp_item->m_url, tmp_item->m_msg);
-
-			fprintf(stderr, "\n\n%s\n%s\n", tmp_item->m_url, tmp_item->m_msg);
+			sprintf(content, "url : %s\n message : %s\n", tmp_item->m_url, tmp_item->m_msg);
 
 			//发送通知
-			send_notice_mail(subject, content);
+			if(strcmp(g_notice, "on") == 0){
+				send_notice_mail(subject, content);
+			}
 			// 踢出除队列
 			TAILQ_REMOVE(&mail_queue, tmp_item, entries);
 			tmp_item=TAILQ_NEXT(tmp_item, entries);
@@ -477,6 +530,7 @@ static void kill_signal_worker(const int signal) {
 		task_free(task_list);
 		task_list = NULL;
 	}
+	pthread_exit(0);
 	exit(EXIT_SUCCESS);
 }
 
@@ -582,7 +636,7 @@ static void task_mysql_load(TaskList * n_task_list) {
 	}
 
 	// mysql连接
-	if (mysql_real_connect(&mysql_conn, g_host, g_username, g_passwd, g_dbname, g_port, NULL, 128) == NULL) {
+	if (mysql_real_connect(&mysql_conn, g_mysql_host, g_mysql_username, g_mysql_passwd, g_mysql_dbname, g_mysql_port, NULL, 128) == NULL) {
 		fprintf(stderr, "%s\n", "Mysql Connection fails.");
 		mysql_close(&mysql_conn);
 	}
@@ -728,9 +782,6 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 	}
 
-	send_notice_mail("aaaaaaa", "aaaaaaaaa");
-	exit(0);
-
 	// 参数判断
 	if (optind != argc) {
 		fprintf(stderr,	"Too many arguments\nTry `%s --help' for more information.\n", argv[0]);
@@ -743,6 +794,12 @@ int main(int argc, char *argv[], char *envp[]) {
 		fprintf(stderr, "error run type : %s, it's is mysql or file\n", g_run_type);
 		exit(EXIT_FAILURE);
 	}
+	//是否开启通知
+	sprintf(g_notice, "%s", c_get_string("main", "notice", g_config_file));
+	if(strcmp(g_notice, "on") != 0 && strcmp(g_notice, "off") !=0 ){
+		fprintf(stderr, "error notice value : %s, it's is on or off\n", g_notice);
+		exit(EXIT_FAILURE);
+	}
 
 	// 读取任务配置文件
 	if(strcmp(g_run_type, "file") == 0){
@@ -751,11 +808,19 @@ int main(int argc, char *argv[], char *envp[]) {
 			exit(EXIT_FAILURE);
 		}
 	}else if(strcmp(g_run_type, "mysql") == 0){
-		sprintf(g_host, "%s", c_get_string("mysql", "host", g_config_file));
-		sprintf(g_username, "%s", c_get_string("mysql", "username", g_config_file));
-		sprintf(g_passwd, "%s", c_get_string("mysql", "passwd", g_config_file));
-		sprintf(g_dbname, "%s", c_get_string("mysql", "dbname", g_config_file));
-		g_port = c_get_init("mysql", "g_port", g_config_file);
+		sprintf(g_mysql_host, "%s", c_get_string("mysql", "host", g_config_file));
+		sprintf(g_mysql_username, "%s", c_get_string("mysql", "username", g_config_file));
+		sprintf(g_mysql_passwd, "%s", c_get_string("mysql", "passwd", g_config_file));
+		sprintf(g_mysql_dbname, "%s", c_get_string("mysql", "dbname", g_config_file));
+		g_mysql_port = c_get_int("mysql", "g_mysql_port", g_config_file);
+	}
+
+	if(strcmp(g_notice, "on") == 0){
+		sprintf(g_mail_server, "%s", c_get_string("mail", "server", g_config_file));
+		sprintf(g_mail_user, "%s", c_get_string("mail", "user", g_config_file));
+		sprintf(g_mail_passwd, "%s", c_get_string("mail", "passwd", g_config_file));
+		sprintf(g_mail_to, "%s", c_get_string("mail", "to", g_config_file));
+		g_mail_port = c_get_int("mail", "port", g_config_file);
 	}
 
 	// 如果加了-d参数，以守护进程运行

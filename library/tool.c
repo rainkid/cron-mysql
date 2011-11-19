@@ -27,12 +27,11 @@
 
 #include <errno.h>
 
-#include "base64.h"
-#include "mail.h"
-
 #include <curl/curl.h>
 #include <curl/easy.h>
-/*******************************************************************/
+
+#include "tool.h"
+
 /* 字符串截取函数 */
 char* substr(const char*str, unsigned start, unsigned end) {
 	unsigned n = end - start;
@@ -41,54 +40,13 @@ char* substr(const char*str, unsigned start, unsigned end) {
 	stbuf[n] = 0;
 	return stbuf;
 }
-/*******************************************************************/
 
 
-/*******************************************************************/
 /* 获取当前时间戳 */
 time_t GetNowTime() {
 	time_t nowTime;
 	time(&nowTime);
 	return nowTime;
 }
-/*******************************************************************/
 
 
-/*******************************************************************/
-/*发送通知邮件*/
-int send_notice_mail(char *subject, char *content){
-    int ret =0;
-
-    struct st_char_arry to_addrs[0];
-	//收件人列表
-    	to_addrs[0].str_p="15257128383@139.com";
-    struct st_char_arry att_files[0];
-	//附件列表
-  	att_files[0].str_p="";
-	struct st_mail_msg_ mail;
-	init_mail_msg(&mail);
-	mail.authorization=AUTH_SEND_MAIL;
-	//smtp.163.com
-	//ip or server
-	mail.server="123.58.178.203";
-	mail.port=25;
-	mail.auth_user="rainkid@163.com";
-	mail.auth_passwd="raink.kid";
-	mail.from="rainkid@163.com";
-	mail.from_subject="no-reply@rainkid@163.com";
-	mail.to_address_ary=to_addrs;
-	mail.to_addr_len=1;
-	mail.subject = "aaaaa";
-	mail.content = "aaaaaaaaaaaaa";
-	mail.mail_style_html=HTML_STYLE_MAIL;
-	mail.priority=3;
-	mail.att_file_len=2;
-	mail.att_file_ary=att_files;
-	ret = send_mail(&mail);
-	if(ret != 0){
-		fprintf(stderr, "Send mail with error : %d.\n", ret);
-	}else{
-		fprintf(stderr, "Send mail success.\n");
-	}
-	return ret;
-}

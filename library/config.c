@@ -92,7 +92,7 @@ char *c_get_string(char *title, char *key, char *filename) {
 /*******************************************************************/
 
 //从配置文件读取整类型数据
-int c_get_init(char *title, char *key, char *filename) {
+int c_get_int(char *title, char *key, char *filename) {
 	return atoi(c_get_string(title, key, filename));
 }
 
