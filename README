@@ -1,1 +1,5 @@
-cron-mysql
+计划任务服务
+
+安装：
+./configure --with-mysql=/usr/local/mysql --with-curl=/usr/local/curl
+make && make install
