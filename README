@@ -11,8 +11,8 @@
 ./configure --with-mysql=/usr/local/mysql --with-curl=/usr/local/curl
 make && make install
 
-3.启动：
-./ctask -c ctask.conf
+3.启动(-c 必选参数：配置文件路径)：
+ctask -c ctask.conf
 
 4.结构
 doc/ 文档，数据库表结构
@@ -21,3 +21,8 @@ library/ 库文件
 ctask.conf 应用配置文件
 tasks.conf 文件计划任务文件
 
+5.参数说明(ctask --help)
+-h, --help     display this message then exit.
+-v, --version  display version information then exit.
+-c, --config   <path>  task config file path.
+-d, --daemon   run as a daemon.
