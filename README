@@ -1,8 +1,8 @@
 计划任务服务
 
 1.特性
-计划类型: 数据库(mysql)、文件(file)
-自定义错误邮件消息通知
+计划任务支持的类型: 数据库(mysql)、文件(file)
+用户自定义错误邮件消息通知
 
 2.安装：
 ./configure --with-mysql=/usr/local/mysql --with-curl=/usr/local/curl
