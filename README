@@ -1,5 +1,19 @@
 计划任务服务
 
-安装：
+1.特性
+计划类型: 数据库(mysql)、文件(file)
+自定义错误邮件消息通知
+
+2.安装：
 ./configure --with-mysql=/usr/local/mysql --with-curl=/usr/local/curl
 make && make install
+
+3.启动：
+./ctask -c ctask.conf
+
+4.结构
+main.c 主程序文件
+library/ 库文件
+ctask.conf 应用配置文件
+tasks.conf 文件计划任务文件
+
