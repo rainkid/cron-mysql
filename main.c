@@ -40,6 +40,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <math.h>
+#include <sys/prctl.h>
 
 #include <netinet/in.h> 
 #include <sys/socket.h>
@@ -384,6 +385,7 @@ static void curl_request(int task_id, char *command, int timeout) {
 
 /* 任务处理线程 */
 static void task_worker() {
+	pthread_setname_np(pthread_self(), "ctask task worker");
 	int delay = 1;
 	TaskItem *temp;
 	while(1){
@@ -454,6 +456,7 @@ static void task_worker() {
 
 /* 邮件队列线程 */
 static void mail_worker(){
+	pthread_setname_np(pthread_self(), "ctask mail worker");
 	// 邮件结构
 	struct MAIL_QUEUE_ITEM *tmp_item;
 	tmp_item = malloc(sizeof(tmp_item));
@@ -495,6 +498,7 @@ static void mail_worker(){
 
 /* 同步配置线程 */
 static void config_worker() {
+	pthread_setname_np(pthread_self(), "ctask config worker");
 	while(1) {
 		pthread_mutex_lock(&task_lock);
 		write_log("config worker inhert.");
@@ -538,7 +542,6 @@ static void kill_signal_master(const int signal) {
 	}
 	/* 给进程组发送SIGTERM信号，结束子进程 */
 	kill(0, SIGTERM);
-
 	exit(EXIT_SUCCESS);
 }
 
@@ -564,7 +567,7 @@ static void task_file_load(const char *g_task_file) {
 	FILE *fp;
 	fp = fopen(g_task_file, "r");
 	if(NULL == fp){
-		fprintf(stderr, "%s\n", "Open config file faild.");
+		write_log("Open config file faild.");
 	}
 	char line[BUFSIZE] = { 0x00 };
 	while(NULL != fgets(line, BUFSIZE, fp)){
@@ -647,11 +650,11 @@ static void task_mysql_load() {
 	char command[BUFSIZE] = {0x00};
 
 	if (mysql_library_init(0, NULL, NULL)) {
-	    fprintf(stderr, "could not initialize MySQL library\n");
+	    write_log("could not initialize MySQL library");
 	 }
 	// mysql 初始化连接
 	if (mysql_init(&mysql_conn) == NULL) {
-		fprintf(stderr, "%s\n", "Mysql Initialization fails.");
+		write_log("Mysql Initialization fails.");
 		mysql_close(&mysql_conn);
 	}
 
@@ -835,6 +838,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		g_mail_port = c_get_int("mail", "port", g_config_file);
 	}
 
+
 	// 如果加了-d参数，以守护进程运行
 	if (daemon == true) {
 		pid_t pid = fork();
@@ -931,7 +935,6 @@ int main(int argc, char *argv[], char *envp[]) {
 	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
 	// 创建邮件队列线程
 	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
-
 	pthread_join ( config_tid, NULL );
 	pthread_join ( task_tid, NULL );
 	pthread_join ( mail_tid, NULL );
