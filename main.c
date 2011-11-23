@@ -56,8 +56,13 @@
 #include "library/mail.h"
 
 
-#define PIDFILE  "./ctask.pid"
+#define _DEBUG_  ;
+#define PIDFILE  "/tmp/ctask.pid"
 #define VERSION  "1.0"
+#define BUFSIZE  8096
+#define LOG_FILE  "/tmp/ctask.log"
+#define BACK_LOG_FILE  "/tmp/ctask.log.bak"
+#define MAX_LOG_SIZE  1024 * 1024
 
 /*******************************************************************/
 // 函数声明
@@ -65,8 +70,8 @@ static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data);
 static void curl_request(int task_id, char *command, int timeout);
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
-static void task_file_load(const char *g_task_file, TaskList * n_task_list);
-static void task_mysql_load(TaskList * n_task_list);
+static void task_file_load(const char *g_task_file);
+static void task_mysql_load();
 static void task_worker();
 static void config_worker();
 static void mail_worker();
@@ -76,24 +81,24 @@ static int send_notice_mail(char *subject, char *content);
 /*******************************************************************/
 
 //全局变量
-char g_run_type[BUFSIZ] = {0x00};
+char g_run_type[BUFSIZE] = {0x00};
 //mysql参数
-char g_mysql_host[BUFSIZ] = {0x00};
-char g_mysql_username[BUFSIZ] = {0x00};
-char g_mysql_passwd[BUFSIZ] = {0x00};
-char g_mysql_dbname[BUFSIZ] = {0x00};
+char g_mysql_host[BUFSIZE] = {0x00};
+char g_mysql_username[BUFSIZE] = {0x00};
+char g_mysql_passwd[BUFSIZE] = {0x00};
+char g_mysql_dbname[BUFSIZE] = {0x00};
 int g_mysql_port = 0;
 
-char g_notice[BUFSIZ] = {0x00};
+char g_notice[BUFSIZE] = {0x00};
 
 //邮件参数
-char g_mail_server[BUFSIZ] = {0x00};
-char g_mail_user[BUFSIZ] = {0x00};
-char g_mail_passwd[BUFSIZ] = {0x00};
-char g_mail_to[BUFSIZ] = {0x00};
+char g_mail_server[BUFSIZE] = {0x00};
+char g_mail_user[BUFSIZE] = {0x00};
+char g_mail_passwd[BUFSIZE] = {0x00};
+char g_mail_to[BUFSIZE] = {0x00};
 int g_mail_port = 0;
 
-char g_task_file[BUFSIZ] = {0X00};
+char g_task_file[BUFSIZE] = {0X00};
 
 /*******************************************************************/
 // 任务节点
@@ -147,17 +152,33 @@ static void usage(){
 
 /*******************************************************************/
 
-static void write_log(char * msg){
+static void write_log(const char *fmt,  ...){
+#ifdef _DEBUG_
+	char msg[BUFSIZE];
 	FILE * fp = NULL;
+	struct stat buf;
+	stat(LOG_FILE, &buf);
+	if(buf.st_size > MAX_LOG_SIZE){
+		rename(LOG_FILE, BACK_LOG_FILE);
+	}
+
+	//时间
 	struct tm *p;
 	time_t timep;
 	time(&timep);
 	p=localtime(&timep);
-	fp = fopen( "./log.log", "ab+" );
+	//参数处理
+	va_list  va;
+	va_start(va, fmt);
+	vsprintf(msg, fmt, va);
+	va_end(va);
+	//日志写入
+	fp = fopen(LOG_FILE , "ab+" );
 	if(fp){
-		fprintf(fp,"%d-%d-%d %d:%d:%d %s\n",(1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, msg);
+		fprintf(fp,"%04d-%02d-%02d %02d:%02d:%02d %s\n",(1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, msg);
 	}
 	fclose(fp);
+#endif
 }
 
 /*******************************************************************/
@@ -241,8 +262,8 @@ static bool mail_queue_exist(int task_id){
 static void task_log(int task_id, int ret, char* msg){
 	
 	MYSQL mysql_conn;
-	char sql[BUFSIZ] = {0x00};
-	char upsql[BUFSIZ] = {0x00};
+	char sql[BUFSIZE] = {0x00};
+	char upsql[BUFSIZE] = {0x00};
 	char *mmsg;
 
 	struct tm *p;
@@ -268,13 +289,13 @@ static void task_log(int task_id, int ret, char* msg){
 		mysql_close(&mysql_conn);
 	}
 	//更新执行时间
-	sprintf(upsql, "UPDATE mk_timeproc SET last_run_time='%d-%d-%d %d:%d:%d' WHERE id=%d", (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, task_id);
+	sprintf(upsql, "UPDATE mk_timeproc SET last_run_time='%04d-%02d-%02d %02d:%02d:%02d' WHERE id=%d", (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, task_id);
 	if (mysql_query(&mysql_conn, upsql) != 0) {
 		write_log("Update last_run_time Fails.");
 		mysql_close(&mysql_conn);
 	}
 	//添加日志
-	sprintf(sql, "INSERT INTO mk_timeproc_log VALUES('', %d,%d,\"%s\" ,'%d-%d-%d %d:%d:%d')", task_id, ret, msg, (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+	sprintf(sql, "INSERT INTO mk_timeproc_log VALUES('', %d,%d,\"%s\" ,'%04d-%02d-%02d %02d:%02d:%02d')", task_id, ret, msg, (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
 	if (mysql_query(&mysql_conn, sql) != 0) {
 		write_log("Insert Logs fails.");
 		mysql_close(&mysql_conn);
@@ -306,8 +327,6 @@ static void curl_request(int task_id, char *command, int timeout) {
 	    struct MAIL_QUEUE_ITEM *item;
 		item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
 
-		write_log(url);
-
 		curl_handle = curl_easy_init();
 		if (curl_handle != NULL) {
 			curl_easy_setopt(curl_handle, CURLOPT_URL, url);
@@ -322,7 +341,7 @@ static void curl_request(int task_id, char *command, int timeout) {
 		// 请求响应处理
 		if ((response == CURLE_OK) && chunk.responsetext &&
 			(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
-			write_log("...success");
+			write_log("%s...success", url);
 			ret = 1;
 		}else{
 			// 队列去重
@@ -345,13 +364,13 @@ static void curl_request(int task_id, char *command, int timeout) {
 				pthread_mutex_unlock(&mail_lock);
 				pthread_cond_signal(&has_mail);
 			}
-			write_log("...fails");
+			write_log("%s...fails", url);
 		}
-
 		//记录日志
 		if(strcmp(g_run_type, "mysql") == 0){
 			task_log(task_id, ret, chunk.responsetext);
 		}
+
 		if (chunk.responsetext) {
 			free(chunk.responsetext);
 		}
@@ -448,7 +467,7 @@ static void mail_worker(){
 		}
 		if(NULL != tmp_item){
 
-			char subject[BUFSIZ] = {0x00};
+			char subject[BUFSIZE] = {0x00};
 			char *content;
 
 			content = malloc(strlen(tmp_item->m_msg) + 50);
@@ -477,29 +496,24 @@ static void mail_worker(){
 /* 同步配置线程 */
 static void config_worker() {
 	while(1) {
-		// 新建任务列表
-		TaskList *n_task_list;
-		n_task_list = (TaskList *) malloc(sizeof(TaskList));
-		if(NULL == n_task_list){
-			write_log("tasklist malloc failed.");
-		};
+		pthread_mutex_lock(&task_lock);
+		write_log("config worker inhert.");
 
-		n_task_list->count = 0;
-		n_task_list->head = NULL;
-		n_task_list->tail = NULL;
+		if (NULL != task_list) {
+			task_free(task_list);
+			task_list = NULL;
+		}
+		task_list = (TaskList *) malloc(sizeof(TaskList));
+
+		task_list->count = 0;
+		task_list->head = NULL;
+		task_list->tail = NULL;
 
 		//加载任务到新建列表中
 		if(strcmp(g_run_type, "file") == 0){
-			task_file_load(g_task_file, n_task_list);
+			task_file_load(g_task_file);
 		}else if(strcmp(g_run_type, "mysql") == 0){
-			task_mysql_load(n_task_list);
-		}
-		 pthread_mutex_lock(&task_lock);
-		//如果新建任务列表成功，否则等待下次新建
-		if(n_task_list != NULL){
-			task_free(task_list);
-			task_list = NULL;
-			task_list = n_task_list;
+			task_mysql_load();
 		}
 		pthread_mutex_unlock(&task_lock);
 		pthread_cond_signal(&has_task);
@@ -546,14 +560,14 @@ static void kill_signal_worker(const int signal) {
 /*******************************************************************/
 
 /* 文件配置计划任务加载 */
-static void task_file_load(const char *g_task_file, TaskList * n_task_list) {
+static void task_file_load(const char *g_task_file) {
 	FILE *fp;
 	fp = fopen(g_task_file, "r");
 	if(NULL == fp){
 		fprintf(stderr, "%s\n", "Open config file faild.");
 	}
-	char line[BUFSIZ] = { 0x00 };
-	while(NULL != fgets(line, BUFSIZ, fp)){
+	char line[BUFSIZE] = { 0x00 };
+	while(NULL != fgets(line, BUFSIZE, fp)){
 		// 忽略空行和＃号开头的行
 		if ('\n' == line[0] || '#' == line[0]) {
 			continue;
@@ -611,10 +625,7 @@ static void task_file_load(const char *g_task_file, TaskList * n_task_list) {
 	 taskItem->endTime, taskItem->nextTime, taskItem->times,
 		 taskItem->frequency, taskItem->command);*/
 		// 更新到任务链表
-	    pthread_mutex_lock(&task_lock);
-		task_update(taskItem, n_task_list);
-		pthread_mutex_unlock(&task_lock);
-		pthread_cond_signal(&has_task);
+		task_update(taskItem, task_list);
 	}
 	fclose(fp);
 }
@@ -622,18 +633,18 @@ static void task_file_load(const char *g_task_file, TaskList * n_task_list) {
 /*******************************************************************/
 
 /* mysql任务加载 */
-static void task_mysql_load(TaskList * n_task_list) {
+static void task_mysql_load() {
 
 	MYSQL mysql_conn;
 	// mysql连接
 	MYSQL_RES *mysql_result;
 	MYSQL_ROW mysql_row;
-	char sql[BUFSIZ] = {0x00};
+	char sql[BUFSIZE] = {0x00};
 	int row, row_num;
 
-	char start_time[BUFSIZ] = {0x00};
-	char end_time[BUFSIZ] = {0x00};
-	char command[BUFSIZ] = {0x00};
+	char start_time[BUFSIZE] = {0x00};
+	char end_time[BUFSIZE] = {0x00};
+	char command[BUFSIZE] = {0x00};
 
 	if (mysql_library_init(0, NULL, NULL)) {
 	    fprintf(stderr, "could not initialize MySQL library\n");
@@ -729,10 +740,7 @@ static void task_mysql_load(TaskList * n_task_list) {
 			taskItem->endTime, taskItem->nextTime, taskItem->times,
 			taskItem->frequency, taskItem->command, nowTime);*/
 		// 更新到任务链表
-		pthread_mutex_lock(&task_lock);
-		task_update(taskItem, n_task_list);
-		pthread_mutex_unlock(&task_lock);
-		pthread_cond_signal(&has_task);
+		task_update(taskItem, task_list);
 	}
 	// 释放结果集
 	mysql_free_result(mysql_result);
