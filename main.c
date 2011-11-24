@@ -114,11 +114,9 @@ char *g_config_file = NULL;
 /*******************************************************************/
 
 //任务信号标识 锁
-pthread_cond_t has_task = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
 
 //邮件信号标识
-pthread_cond_t has_mail = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mail_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*******************************************************************/
@@ -153,6 +151,7 @@ static void usage(){
 
 /*******************************************************************/
 
+//日志函数
 static void write_log(const char *fmt,  ...){
 #ifdef _DEBUG_
 	char msg[BUFSIZE];
@@ -190,7 +189,7 @@ static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	struct ResponseStruct *mem = (struct ResponseStruct *) data;
 	mem->responsetext = realloc(mem->responsetext, mem->size + realsize + 1);
 	if (mem->responsetext == NULL) {
-		fprintf(stderr, "%s\n", "Responsetext malloc error.");
+		write_log("Responsetext malloc error.");
 	}
 	memcpy(&(mem->responsetext[mem->size]), ptr, realsize);
 	mem->size += realsize;
@@ -363,7 +362,6 @@ static void curl_request(int task_id, char *command, int timeout) {
 				//入邮件队列
 				TAILQ_INSERT_TAIL(&mail_queue, item, entries);
 				pthread_mutex_unlock(&mail_lock);
-				pthread_cond_signal(&has_mail);
 			}
 			write_log("%s...fails", url);
 		}
@@ -385,15 +383,10 @@ static void curl_request(int task_id, char *command, int timeout) {
 
 /* 任务处理线程 */
 static void task_worker() {
-	pthread_setname_np(pthread_self(), "ctask task worker");
 	int delay = 1;
 	TaskItem *temp;
 	while(1){
 		pthread_mutex_lock(&task_lock);
-		// 等待任务处理信号
-		if(NULL == task_list->head) {
-			pthread_cond_wait(&has_task, &task_lock);
-		}
 		time_t nowTime = GetNowTime();
 		while (NULL != (temp = task_list->head)) {
 			// 大于当前时间跳出
@@ -456,7 +449,6 @@ static void task_worker() {
 
 /* 邮件队列线程 */
 static void mail_worker(){
-	pthread_setname_np(pthread_self(), "ctask mail worker");
 	// 邮件结构
 	struct MAIL_QUEUE_ITEM *tmp_item;
 	tmp_item = malloc(sizeof(tmp_item));
@@ -464,10 +456,6 @@ static void mail_worker(){
 	while(1){
 		pthread_mutex_lock(&mail_lock);
 		tmp_item = TAILQ_FIRST(&mail_queue);
-		//等待has_mail处理信号
-		if(NULL == tmp_item) {
-			pthread_cond_wait(&has_mail, &mail_lock);
-		}
 		if(NULL != tmp_item){
 
 			char subject[BUFSIZE] = {0x00};
@@ -498,7 +486,6 @@ static void mail_worker(){
 
 /* 同步配置线程 */
 static void config_worker() {
-	pthread_setname_np(pthread_self(), "ctask config worker");
 	while(1) {
 		pthread_mutex_lock(&task_lock);
 		write_log("config worker inhert.");
@@ -520,7 +507,6 @@ static void config_worker() {
 			task_mysql_load();
 		}
 		pthread_mutex_unlock(&task_lock);
-		pthread_cond_signal(&has_task);
 		sleep(sync_config_time);
 	}
 }
