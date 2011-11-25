@@ -35,22 +35,22 @@ typedef struct _taskList {
 } TaskList;
 
 //任务初始化
-bool task_init(TaskList *);
+void task_init(TaskList *);
 
 //添加节点到尾部
-bool task_add(TaskList *, TaskItem *);
+void task_add(TaskList *, TaskItem *);
 
 //更新节点
-bool task_update(TaskItem *, TaskList *);
+void task_update(TaskItem *, TaskList *);
 
 //任务列表是否空
 bool task_isempty(const TaskList *);
 
 //任务列表销毁
-bool task_free(TaskList *);
+void task_free(TaskList *);
 
 //任务节点销毁
-bool item_free(TaskItem *);
+void item_free(TaskItem *);
 
 #ifdef	__cplusplus
 }

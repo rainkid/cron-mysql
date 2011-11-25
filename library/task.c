@@ -26,16 +26,15 @@
 #include "task.h"
 /*******************************************************************/
 /* 任务初始化 */
-bool task_init(TaskList * task_list) {
+void task_init(TaskList * task_list) {
     task_list = NULL;
-    return true;
 }
 /*******************************************************************/
 
 
 /*******************************************************************/
 /* 添加节点到尾部 */
-bool task_add(TaskList * task_list, TaskItem * task_item) {
+void task_add(TaskList * task_list, TaskItem * task_item) {
     task_item->next = NULL;
     task_item->prev = NULL;
     
@@ -49,15 +48,10 @@ bool task_add(TaskList * task_list, TaskItem * task_item) {
 
     task_list->tail = task_item;
     (task_list->count)++;
-    
-    return true;
 }
 /*******************************************************************/
-
-
-/*******************************************************************/
 /* 更新节点 */
-bool task_update(TaskItem * task_item, TaskList *task_list) {
+void task_update(TaskItem * task_item, TaskList *task_list) {
     if (false == task_isempty(task_list)) {
         task_item->next = NULL;
         task_item->prev = NULL;
@@ -92,12 +86,7 @@ bool task_update(TaskItem * task_item, TaskList *task_list) {
     else {
         task_add(task_list,task_item);
     }
-
-    return true;
 }
-/*******************************************************************/
-
-
 /*******************************************************************/
 /* 任务列表是否空 */
 bool task_isempty(const TaskList *task_list) {
@@ -105,10 +94,8 @@ bool task_isempty(const TaskList *task_list) {
 }
 /*******************************************************************/
 
-
-/*******************************************************************/
 /* 任务列表销毁 */
-bool task_free(TaskList *task_list) {
+void task_free(TaskList *task_list) {
     if (false == task_isempty(task_list)) {
         TaskItem *temp;
         while(NULL != task_list->head) {
@@ -121,15 +108,9 @@ bool task_free(TaskList *task_list) {
     task_list->head = NULL;
     task_list->tail = NULL;
     free(task_list);
-    
-    return true;
 }
 /*******************************************************************/
-
-
-/*******************************************************************/
 /* 任务节点销毁 */
-bool item_free(TaskItem *task_item) {
+void item_free(TaskItem *task_item) {
     free(task_item);
-    return true;
 }
