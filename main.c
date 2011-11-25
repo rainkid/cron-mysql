@@ -335,7 +335,7 @@ static void curl_request(int task_id, char *command, int timeout) {
 		// 请求响应处理
 		if ((response == CURLE_OK) && chunk.responsetext &&
 			(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
-			write_log("%s...success", url);
+//			write_log("%s...success", url);
 			ret = 1;
 		} else{
 			// 队列去重
@@ -382,6 +382,7 @@ static void task_worker() {
 		if (task_list != NULL) {
 			time_t nowTime = GetNowTime();
 			while (NULL != (temp = task_list->head)) {
+				write_log("%s", temp->command);
 				// 大于当前时间跳出
 				if (nowTime < temp->nextTime) {
 					break;
@@ -428,6 +429,8 @@ static void task_worker() {
 					}
 				}
 			}
+		}else{
+			write_log("task is null.");
 		}
 		pthread_mutex_unlock(&task_lock);
 		sleep(1);
