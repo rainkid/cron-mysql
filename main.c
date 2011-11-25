@@ -389,6 +389,7 @@ static void task_worker() {
 		pthread_mutex_lock(&task_lock);
 		time_t nowTime = GetNowTime();
 		while (NULL != (temp = task_list->head)) {
+			write_log("task worker inhert and find %d tasks.", task_list->count);
 			// 大于当前时间跳出
 			if (nowTime < temp->nextTime) {
 				delay = temp->nextTime - nowTime;
@@ -408,6 +409,7 @@ static void task_worker() {
 					temp->next = NULL;
 					temp->nextTime += temp->frequency;
 					// 重新添加
+					task_list->count--;
 					task_update(temp, task_list);
 					/*fprintf(stderr,
 					"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s, now=%ld\n",
@@ -415,12 +417,14 @@ static void task_worker() {
 					temp->endTime, temp->nextTime, temp->times,
 					temp->frequency, temp->command, nowTime);*/
 				} else {
+					task_list->count--;
 					item_free(temp);
 					temp = NULL;
 				}
 			} else {
 				// 已经达到执行次数,抛出队列
 				if (temp->times > 0 && temp->runTimes > temp->times) {
+					task_list->count--;
 					item_free(temp);
 					temp = NULL;
 					task_list->head = NULL;
@@ -488,7 +492,6 @@ static void mail_worker(){
 static void config_worker() {
 	while(1) {
 		pthread_mutex_lock(&task_lock);
-		write_log("config worker inhert.");
 
 		if (NULL != task_list) {
 			task_free(task_list);
@@ -731,6 +734,7 @@ static void task_mysql_load() {
 		// 更新到任务链表
 		task_update(taskItem, task_list);
 	}
+	write_log("reload %d tasks in task_list", task_list->count);
 	// 释放结果集
 	mysql_free_result(mysql_result);
 	// 关闭mysql连接
