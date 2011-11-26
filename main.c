@@ -480,23 +480,18 @@ static void load_worker() {
 	while(1) {
 		pthread_mutex_lock(&task_lock);
 		write_log("load worker inhert.");
-
-		/*if (NULL != task_list) {
+		// 释放列表
+		if (NULL != task_list) {
 			task_free(task_list);
 			task_list = NULL;
 		}
-
 		// 初始化任务列表
 		task_list = (TaskList *) malloc(sizeof(TaskList));
 		if (NULL == task_list) {
 			write_log("tasklist malloc failed.");
-		};*/
+		};
 
-		task_list->count = 0;
-		task_list->head = NULL;
-		task_list->tail = NULL;
-
-		//加载任务到新建列表中
+		// 加载任务到新建列表中
 		if (strcmp(g_run_type, "file") == 0) {
 			task_file_load(g_task_file);
 		} else if (strcmp(g_run_type, "mysql") == 0) {
@@ -896,11 +891,6 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	// 初始化邮件队列
 	TAILQ_INIT(&mail_queue);
-
-	task_list = (TaskList *) malloc(sizeof(TaskList));
-	if (NULL == task_list) {
-		write_log("tasklist malloc failed.");
-	};
 
 	pthread_t config_tid, task_tid, mail_tid;
 	// 定时加载配置张线程
