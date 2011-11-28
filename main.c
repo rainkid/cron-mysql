@@ -880,7 +880,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	TAILQ_INIT(&mail_queue);
 
 	pthread_t config_tid, task_tid, mail_tid;
-	// 定时加载配置张线程
+	// 定时加载配置线程
 	pthread_create(&config_tid, NULL, (void *) load_worker, NULL);
 	// 创建计划任务线程
 	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
