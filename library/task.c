@@ -47,15 +47,36 @@ void task_add(TaskList * task_list, TaskItem * task_item) {
     (task_list->count)++;
 }
 /*******************************************************************/
+void task_copy(TaskItem *src, TaskItem *dsc){
+	dsc->startTime = src->startTime;
+	dsc->endTime = src->endTime;
+	dsc->nextTime = src->nextTime;
+	dsc->frequency = src->frequency;
+	dsc->timeout = src->timeout;
+	dsc->times = src->times;
+	dsc->runTimes = src->runTimes;
+	sprintf(dsc->command, "%s", src->command);
+}
+/*******************************************************************/
 /* 更新节点 */
 void task_update(TaskItem * task_item, TaskList *task_list) {
     if (false == task_isempty(task_list)) {
         task_item->next = NULL;
         task_item->prev = NULL;
+        TaskItem *temp = task_list->head;
+        /*while(NULL != temp) {
+            if (task_item->task_id == temp->task_id) {
+				printf("\n\naaaaaaaaaaaaaaaaaaaaaa\n\n");
+				task_copy(temp, task_item);
+				temp->prev->next = temp->next;
+				temp->next->prev = temp->prev;				
+                break;
+            }
+            temp = temp->next;
+        }*/
 
         if (task_item->nextTime >= task_list->head->nextTime) {
             if (task_item->nextTime < task_list->tail->nextTime) {
-                TaskItem *temp = task_list->head;
                 while(NULL != temp) {
                     if (task_item->nextTime < temp->nextTime) {
                         task_item->prev = temp->prev;

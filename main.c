@@ -105,7 +105,7 @@ char g_task_file[BUFSIZE] = {0X00};
 // 任务节点
 TaskList *task_list = NULL;
 // 同步配置时间
-int sync_config_time = 5 * 60;
+int sync_config_time = 1 * 20;
 // 邮件队列间隔时间
 int send_mail_time = 5 * 60;
 //配置全局路径
@@ -680,7 +680,7 @@ static void task_mysql_load() {
 		sprintf(taskItem->command, "%s", command);
 
 		taskItem->times = 0;
-		taskItem->frequency = atoi(mysql_row[3]) * 60;
+		taskItem->frequency = atoi(mysql_row[3]) * 2;
 		taskItem->task_id = atoi(mysql_row[0]);
 		taskItem->timeout = atoi(mysql_row[7]);
 
