@@ -105,7 +105,7 @@ char g_task_file[BUFSIZE] = {0X00};
 // 任务节点
 TaskList *task_list = NULL;
 // 同步配置时间
-int sync_config_time = 1 * 20;
+int sync_config_time = 5 * 60;
 // 邮件队列间隔时间
 int send_mail_time = 5 * 60;
 //配置全局路径
@@ -402,11 +402,6 @@ static void task_worker() {
 						// 重新添加
 						task_list->count--;
 						task_update(temp, task_list);
-						/*fprintf(stderr,
-						"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s, now=%ld\n",
-						temp->prev, temp->next, temp, temp->startTime,
-						temp->endTime, temp->nextTime, temp->times,
-						temp->frequency, temp->command, nowTime);*/
 					} else {
 						task_list->count--;
 						item_free(temp);
