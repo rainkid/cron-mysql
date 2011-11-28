@@ -30,9 +30,6 @@ void task_init(TaskList * task_list) {
     task_list = NULL;
 }
 /*******************************************************************/
-
-
-/*******************************************************************/
 /* 添加节点到尾部 */
 void task_add(TaskList * task_list, TaskItem * task_item) {
     task_item->next = NULL;
@@ -93,7 +90,6 @@ bool task_isempty(const TaskList *task_list) {
     return (task_list->count == 0) ? true : false;
 }
 /*******************************************************************/
-
 /* 任务列表销毁 */
 void task_free(TaskList *task_list) {
     if (false == task_isempty(task_list)) {

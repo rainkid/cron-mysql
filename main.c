@@ -174,7 +174,6 @@ static void write_log(const char *fmt,  ...) {
 	va_end(va);
 	//日志写入
 	fp = fopen(LOG_FILE , "ab+" );
-	fprintf(stderr, "%s\n", msg);
 	if (fp) {
 		fprintf(fp,"%04d-%02d-%02d %02d:%02d:%02d %s\n",(1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, msg);
 	}
@@ -184,11 +183,11 @@ static void write_log(const char *fmt,  ...) {
 
 /*******************************************************************/
 
-/* Curl回调处理函数 */
+/* curl回调处理函数 */
 static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	size_t realsize = size * nmemb;
 	struct RESPONSE *mem = (struct RESPONSE *) data;
-	mem->responsetext = malloc(mem->size + realsize);
+	mem->responsetext = malloc(mem->size + realsize + 1);
 	if (mem->responsetext == NULL) {
 		write_log("responsetext malloc error.");
 	}
@@ -291,12 +290,12 @@ static void task_log(int task_id, int ret, char* msg) {
 	//更新执行时间
 	sprintf(upsql, "UPDATE mk_timeproc SET last_run_time='%04d-%02d-%02d %02d:%02d:%02d' WHERE id=%d", (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, task_id);
 	if (mysql_query(&mysql_conn, upsql) != 0) {
-		write_log("update last_run_time fails.");
+		write_log("update last_run_time fails : %s", upsql);
 	}
 	//添加日志
 	sprintf(sql, "INSERT INTO mk_timeproc_log VALUES('', %d,%d,\"%s\" ,'%04d-%02d-%02d %02d:%02d:%02d')", task_id, ret, msg, (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
 	if (mysql_query(&mysql_conn, sql) != 0) {
-		write_log("insert logs fails.");
+		write_log("insert logs fails : %s", sql);
 	}
 
 	free(mmsg);
@@ -382,11 +381,11 @@ static void task_worker() {
 		if (task_list != NULL) {
 			time_t nowTime = GetNowTime();
 			while (NULL != (temp = task_list->head)) {
-				write_log("%s", temp->command);
 				// 大于当前时间跳出
 				if (nowTime < temp->nextTime) {
 					break;
 				}
+				write_log("[%d] %s", temp->task_id, temp->command);
 				// 执行任务
 				curl_request(temp->task_id, temp->command, temp->timeout);
 				(temp->runTimes)++;
@@ -430,7 +429,7 @@ static void task_worker() {
 				}
 			}
 		}else{
-			write_log("task is null.");
+			write_log("task list is null.");
 		}
 		pthread_mutex_unlock(&task_lock);
 		sleep(1);
@@ -490,6 +489,10 @@ static void load_worker() {
 		if (NULL == task_list) {
 			write_log("tasklist malloc failed.");
 		};
+
+	    task_list->count = 0;
+	    task_list->head = NULL;
+	    task_list->tail = NULL;
 
 		// 加载任务到新建列表中
 		if (strcmp(g_run_type, "file") == 0) {
@@ -600,10 +603,6 @@ static void task_file_load(const char *g_task_file) {
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
-		/*fprintf(stderr, "prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,frequency=%d,command=%s\n",
-		 taskItem->prev, taskItem->next, taskItem, taskItem->startTime,
-	 taskItem->endTime, taskItem->nextTime, taskItem->times,
-		 taskItem->frequency, taskItem->command);*/
 		// 更新到任务链表
 		write_log("load tasks form file.");
 		task_update(taskItem, task_list);
@@ -709,13 +708,6 @@ static void task_mysql_load() {
 		if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
 			continue;
 		}
-
-		/*fprintf(
-		stderr,
-		"prev=%p, next=%p,self=%p, starTime=%ld,endTime=%ld,nextTime=%ld,times=%d,fre=%d,command=%s, now=%ld\n",
-		taskItem->prev, taskItem->next, taskItem, taskItem->startTime,
-		taskItem->endTime, taskItem->nextTime, taskItem->times,
-		taskItem->frequency, taskItem->command, nowTime);*/
 		// 更新到任务链表
 		task_update(taskItem, task_list);
 	}
