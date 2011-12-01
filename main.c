@@ -125,13 +125,13 @@ pthread_mutex_t curl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*******************************************************************/
 
-/* 请求返回数据结构 */
+/* 请求返回数据 */
 struct RESPONSE {
 	char *responsetext;
 	size_t size;
 };
 
-/* 邮件队列结构 */
+/* 邮件队列 */
 struct MAIL_QUEUE_ITEM{
 	int m_id;
     char *m_url;
@@ -140,7 +140,7 @@ struct MAIL_QUEUE_ITEM{
 };
 TAILQ_HEAD(, MAIL_QUEUE_ITEM) mail_queue;
 
-/**/
+/*即时任务队列*/
 struct CURL_TASK_ITEM{
 	int task_id;
     char *command;
@@ -390,11 +390,11 @@ static void curl_worker() {
 		}
 }
 
-
 /*******************************************************************/
 /* 任务处理线程 */
 static void task_worker() {
 	TaskItem *temp;
+	pthread_t tid[1024];
 	while(1) {
 		pthread_mutex_lock(&task_lock);
 		if (NULL != task_list) {
@@ -403,6 +403,7 @@ static void task_worker() {
 				// 大于当前时间跳出
 				time_t nowTime = GetNowTime();
 				if (nowTime < temp->nextTime) {
+					write_log("%s...break.",temp->command);
 					break;
 				}
 				// 执行任务
@@ -413,6 +414,7 @@ static void task_worker() {
 
 				item->task_id = temp->task_id;
 				item->command = malloc(strlen(temp->command));
+				write_log("%s",temp->command);
 				sprintf(item->command, "%s", temp->command);
 				item->timeout = temp->timeout;
 
@@ -432,7 +434,7 @@ static void task_worker() {
 						temp->next = NULL;
 						temp->nextTime += temp->frequency;
 						// 重新添加
-						//task_update(temp, task_list);
+						task_update(temp, task_list);
 					} else {
 						write_log("[%d] %s...free.", temp->task_id, temp->command);
 						item_free(temp, task_list);
