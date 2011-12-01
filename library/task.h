@@ -50,7 +50,7 @@ bool task_isempty(const TaskList *);
 void task_free(TaskList *);
 
 //任务节点销毁
-void item_free(TaskItem *);
+void item_free(TaskItem *task_item, TaskList *task_list);
 
 #ifdef	__cplusplus
 }

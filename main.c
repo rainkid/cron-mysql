@@ -65,14 +65,19 @@
 #define BACK_LOG_FILE  "/tmp/ctask.log.bak"
 #define MAX_LOG_SIZE  1024 * 1024
 
+#define SYNC_CONFIG_TIME 5 * 60
+#define SEND_MAIL_TIME 5 * 60
+#define TASK_RUN_UNIT 60
+#define TASK_RUN_STEP 1
+
 /*******************************************************************/
 // 函数声明
 static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data);
-static void curl_request(int task_id, char *command, int timeout);
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
 static void task_file_load(const char *g_task_file);
 static void task_mysql_load();
+static void curl_worker();
 static void task_worker();
 static void load_worker();
 static void mail_worker();
@@ -104,20 +109,19 @@ char g_task_file[BUFSIZE] = {0X00};
 /*******************************************************************/
 // 任务节点
 TaskList *task_list = NULL;
-// 同步配置时间
-int sync_config_time = 5 * 60;
-// 邮件队列间隔时间
-int send_mail_time = 5 * 60;
 //配置全局路径
 char *g_config_file = NULL;
 
+CURL *curl_handle = NULL;
+
 /*******************************************************************/
 
-//任务信号标识 锁
+//任务锁
 pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
-
-//邮件信号标识
+//邮件信号锁
 pthread_mutex_t mail_lock = PTHREAD_MUTEX_INITIALIZER;
+//即时任务锁
+pthread_mutex_t curl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /*******************************************************************/
 
@@ -126,7 +130,6 @@ struct RESPONSE {
 	char *responsetext;
 	size_t size;
 };
-
 
 /* 邮件队列结构 */
 struct MAIL_QUEUE_ITEM{
@@ -137,6 +140,14 @@ struct MAIL_QUEUE_ITEM{
 };
 TAILQ_HEAD(, MAIL_QUEUE_ITEM) mail_queue;
 
+/**/
+struct CURL_TASK_ITEM{
+	int task_id;
+    char *command;
+	int timeout;
+    TAILQ_ENTRY(CURL_TASK_ITEM) entries;
+};
+TAILQ_HEAD(, CURL_TASK_ITEM) curl_task;
 
 /*******************************************************************/
 
@@ -188,7 +199,7 @@ static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	size_t realsize = size * nmemb;
 	struct RESPONSE *mem = (struct RESPONSE *) data;
 	mem->responsetext = malloc(mem->size + realsize + 1);
-	if (mem->responsetext == NULL) {
+	if (NULL == mem->responsetext) {
 		write_log("responsetext malloc error.");
 	}
 	memcpy(&(mem->responsetext[mem->size]), ptr, realsize);
@@ -271,7 +282,7 @@ static void task_log(int task_id, int ret, char* msg) {
 	time_t timep;
 	time(&timep);
 	p=localtime(&timep);
-	mmsg = malloc(strlen(msg));
+	mmsg = malloc(strlen(msg)+1);
 	sprintf(mmsg, "%s", msg);
 
 	if (mysql_library_init(0, NULL, NULL)) {
@@ -279,12 +290,12 @@ static void task_log(int task_id, int ret, char* msg) {
 	 }
 
 	// mysql 初始化连接
-	if (mysql_init(&mysql_conn) == NULL) {
+	if (NULL == mysql_init(&mysql_conn)) {
 		write_log("mysql Initialization fails.");
 	}
 
 	// mysql连接
-	if (mysql_real_connect(&mysql_conn, g_mysql_host, g_mysql_username, g_mysql_passwd, g_mysql_dbname, g_mysql_port, NULL, 128) == NULL) {
+	if (NULL == mysql_real_connect(&mysql_conn, g_mysql_host, g_mysql_username, g_mysql_passwd, g_mysql_dbname, g_mysql_port, NULL, 128)) {
 		write_log("mysql connection fails.");
 	}
 	//更新执行时间
@@ -303,91 +314,112 @@ static void task_log(int task_id, int ret, char* msg) {
 	mysql_library_end();
 }
 
-
 /*******************************************************************/
 
 /* 发送请求 */
-static void curl_request(int task_id, char *command, int timeout) {
-		int ret = 0;
-		CURL *curl_handle = NULL;
-		CURLcode response;
-		char *url;
-		int ukey;
+static void curl_worker() {
+		struct CURL_TASK_ITEM *temp_item;
+		while(1){
+			pthread_mutex_lock(&curl_lock);
+			temp_item = malloc(sizeof(struct CURL_TASK_ITEM));
+			temp_item = TAILQ_FIRST(&curl_task);
+			while (NULL != temp_item){
+				int ret = 0;
+				char *url;
+				struct RESPONSE chunk;
+				chunk.responsetext = NULL;
+				chunk.size = 0;
+				CURLcode response;
+				curl_handle = curl_easy_init();
+				url = malloc(strlen(temp_item->command) + 1);
+				sprintf(url, "%s", temp_item->command);
+				if (curl_handle != NULL) {
 
-		url = malloc(strlen(command) + 1);
-		sprintf(url, "%s", command);
+					curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+					curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, temp_item->timeout);
+					curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, temp_item->timeout);
+					// 回调设置
+					curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_callback);
+					curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
 
-		struct RESPONSE chunk;
-		chunk.responsetext = NULL;
-		chunk.size = 0;
+					response = curl_easy_perform(curl_handle);
+				}else{
+					write_log("curl handler is null.");
+				}
+				// 请求响应处理
+				if ((response == CURLE_OK) && chunk.responsetext &&
+					(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
+					write_log("%s...success", url);
+					ret = 1;
+				} else{
+					// 队列去重
+					if (false == mail_queue_exist(temp_item->task_id)) {
+						//邮件队列处理
+						struct MAIL_QUEUE_ITEM *item;
+						item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
 
-		curl_handle = curl_easy_init();
-		if (curl_handle != NULL) {
-			curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-			curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, timeout);
-			curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, timeout);
-			// 回调设置
-			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_callback);
-			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
-			response = curl_easy_perform(curl_handle);
-		}
-		// 请求响应处理
-		if ((response == CURLE_OK) && chunk.responsetext &&
-			(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
-//			write_log("%s...success", url);
-			ret = 1;
-		} else{
-			// 队列去重
-			if (false == mail_queue_exist(task_id)) {
-				//邮件队列处理
-				struct MAIL_QUEUE_ITEM *item;
-				item = malloc(sizeof(struct MAIL_QUEUE_ITEM));
+						item->m_url = malloc(strlen(url));
+						item->m_msg = malloc(strlen(chunk.responsetext));
 
-				item->m_url = malloc(strlen(url));
-				item->m_msg = malloc(strlen(chunk.responsetext));
+						item->m_id = temp_item->task_id;
+						sprintf(item->m_url, "%s", url);
+						sprintf(item->m_msg, "%s", chunk.responsetext);
 
-				item->m_id = task_id;
-				sprintf(item->m_url, "%s", url);
-				sprintf(item->m_msg, "%s", chunk.responsetext);
+						pthread_mutex_lock(&mail_lock);
+						//入邮件队列
+						TAILQ_INSERT_TAIL(&mail_queue, item, entries);
+						pthread_mutex_unlock(&mail_lock);
+					}
+					write_log("%s...fails", url);
+				}
+				//记录日志
+				if (strcmp(g_run_type, "mysql") == 0) {
+					task_log(temp_item->task_id, ret, chunk.responsetext);
+				}
 
-				pthread_mutex_lock(&mail_lock);
-				//入邮件队列
-				TAILQ_INSERT_TAIL(&mail_queue, item, entries);
-				pthread_mutex_unlock(&mail_lock);
+				if (NULL != chunk.responsetext) {
+					free(chunk.responsetext);
+				}
+				free(url);
+				curl_easy_cleanup(curl_handle);
+				TAILQ_REMOVE(&curl_task, temp_item, entries);
+				temp_item=TAILQ_NEXT(temp_item, entries);
 			}
-			write_log("%s...fails", url);
+			pthread_mutex_unlock(&curl_lock);
+			sleep(1);
 		}
-		//记录日志
-		if (strcmp(g_run_type, "mysql") == 0) {
-			task_log(task_id, ret, chunk.responsetext);
-		}
-
-		if (chunk.responsetext != NULL) {
-			free(chunk.responsetext);
-		}
-		free(url);
-		curl_easy_cleanup(curl_handle);
-		curl_global_cleanup();
 }
 
 
 /*******************************************************************/
-
 /* 任务处理线程 */
 static void task_worker() {
 	TaskItem *temp;
 	while(1) {
 		pthread_mutex_lock(&task_lock);
-		if (task_list != NULL) {
-			time_t nowTime = GetNowTime();
+		if (NULL != task_list) {
+			int i = 0;
 			while (NULL != (temp = task_list->head)) {
 				// 大于当前时间跳出
+				time_t nowTime = GetNowTime();
 				if (nowTime < temp->nextTime) {
 					break;
 				}
-				write_log("[%d] %s", temp->task_id, temp->command);
 				// 执行任务
-				curl_request(temp->task_id, temp->command, temp->timeout);
+				//curl_request(temp);
+
+				struct CURL_TASK_ITEM *item;
+				item = malloc(sizeof(struct CURL_TASK_ITEM));
+
+				item->task_id = temp->task_id;
+				item->command = malloc(strlen(temp->command));
+				sprintf(item->command, "%s", temp->command);
+				item->timeout = temp->timeout;
+
+				pthread_mutex_lock(&curl_lock);
+				TAILQ_INSERT_TAIL(&curl_task, item, entries);
+				pthread_mutex_unlock(&curl_lock);
+
 				(temp->runTimes)++;
 				if (temp->next) {
 					task_list->head = temp->next;
@@ -400,18 +432,17 @@ static void task_worker() {
 						temp->next = NULL;
 						temp->nextTime += temp->frequency;
 						// 重新添加
-						task_list->count--;
-						task_update(temp, task_list);
+						//task_update(temp, task_list);
 					} else {
-						task_list->count--;
-						item_free(temp);
+						write_log("[%d] %s...free.", temp->task_id, temp->command);
+						item_free(temp, task_list);
 						temp = NULL;
 					}
 				} else {
 					// 已经达到执行次数,抛出队列
 					if (temp->times > 0 && temp->runTimes > temp->times) {
-						task_list->count--;
-						item_free(temp);
+						write_log("%s......times < 0 and free.", temp->command);
+						item_free(temp, task_list);
 						temp = NULL;
 
 						task_list->head = NULL;
@@ -419,6 +450,7 @@ static void task_worker() {
 						task_free(task_list);
 						task_list = NULL;
 					} else {
+						write_log("%s......nextTime : %d.",temp->command, temp->frequency);
 						temp->nextTime += temp->frequency;
 					}
 				}
@@ -427,7 +459,7 @@ static void task_worker() {
 			write_log("task list is null.");
 		}
 		pthread_mutex_unlock(&task_lock);
-		sleep(1);
+		sleep(TASK_RUN_STEP);
 	}
 }
 
@@ -462,7 +494,7 @@ static void mail_worker() {
 		}
 		free(tmp_item);
 		pthread_mutex_unlock(&mail_lock);
-		sleep(send_mail_time);
+		sleep(SEND_MAIL_TIME);
 	}
 }
 
@@ -496,7 +528,7 @@ static void load_worker() {
 			task_mysql_load();
 		}
 		pthread_mutex_unlock(&task_lock);
-		sleep(sync_config_time);
+		sleep(SYNC_CONFIG_TIME);
 	}
 }
 
@@ -531,6 +563,7 @@ static void kill_signal_worker(const int signal) {
 		task_free(task_list);
 		task_list = NULL;
 	}
+	curl_global_cleanup();
 	pthread_exit(0);
 	exit(EXIT_SUCCESS);
 }
@@ -578,7 +611,7 @@ static void task_file_load(const char *g_task_file) {
 		_stime.tm_mon -= 1;
 		_etime.tm_mon -= 1;
 
-		taskItem->frequency = taskItem->frequency * 60;
+		taskItem->frequency = taskItem->frequency * TASK_RUN_UNIT;
 
 		taskItem->startTime = mktime(&_stime);
 		taskItem->endTime = mktime(&_etime);
@@ -588,7 +621,7 @@ static void task_file_load(const char *g_task_file) {
 
 		// 如果已经结束直接下一个
 		if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
-			item_free(taskItem);
+			item_free(taskItem, task_list);
 			continue;
 		}
 
@@ -624,12 +657,12 @@ static void task_mysql_load() {
 	    write_log("could not initialize MySQL library.");
 	 }
 	// mysql 初始化连接
-	if (mysql_init(&mysql_conn) == NULL) {
+	if (NULL == mysql_init(&mysql_conn)) {
 		write_log("mysql initialization fails.");
 	}
 
 	// mysql连接
-	if (mysql_real_connect(&mysql_conn, g_mysql_host, g_mysql_username, g_mysql_passwd, g_mysql_dbname, g_mysql_port, NULL, 128) == NULL) {
+	if (NULL == mysql_real_connect(&mysql_conn, g_mysql_host, g_mysql_username, g_mysql_passwd, g_mysql_dbname, g_mysql_port, NULL, 128)) {
 		write_log("mysql connection fails.");
 	}
 	// 查询sql
@@ -675,7 +708,7 @@ static void task_mysql_load() {
 		sprintf(taskItem->command, "%s", command);
 
 		taskItem->times = 0;
-		taskItem->frequency = atoi(mysql_row[3]) * 2;
+		taskItem->frequency = atoi(mysql_row[3]) * TASK_RUN_UNIT;
 		taskItem->task_id = atoi(mysql_row[0]);
 		taskItem->timeout = atoi(mysql_row[7]);
 
@@ -734,14 +767,14 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	// 读取参数
 	int c;
-	while ((c = getopt_long(argc, argv, "dv:t:c:h", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "v:t:c:dh", long_options, NULL)) != -1) {
 		switch (c) {
 		case 'd':
 			daemon = true;
 			break;
 		case 'c':
 			g_config_file = malloc(strlen(optarg)+1);
-			assert( g_config_file != NULL );
+			assert( NULL != g_config_file);
 			sprintf( g_config_file, "%s", optarg );
 			break;
 		case 'v':
@@ -879,15 +912,21 @@ int main(int argc, char *argv[], char *envp[]) {
 	// 初始化邮件队列
 	TAILQ_INIT(&mail_queue);
 
-	pthread_t config_tid, task_tid, mail_tid;
+	//初始化即时任务
+	TAILQ_INIT(&curl_task);
+
+	pthread_t config_tid, task_tid, mail_tid, curl_tid;
 	// 定时加载配置线程
 	pthread_create(&config_tid, NULL, (void *) load_worker, NULL);
 	// 创建计划任务线程
 	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
+	//即时任务
+	pthread_create(&curl_tid, NULL, (void *) curl_worker, NULL);
 	// 创建邮件队列线程
 	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
 	pthread_join ( config_tid, NULL );
 	pthread_join ( task_tid, NULL );
+	pthread_join ( curl_tid, NULL );
 	pthread_join ( mail_tid, NULL );
 
 	return 0;

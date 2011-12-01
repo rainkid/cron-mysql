@@ -107,7 +107,7 @@ void task_free(TaskList *task_list) {
         TaskItem *temp;
         while(NULL != task_list->head) {
             temp = task_list->head->next;
-            item_free(task_list->head);
+            item_free(task_list->head, task_list);
             task_list->head = temp;
         }
     }
@@ -118,6 +118,7 @@ void task_free(TaskList *task_list) {
 }
 /*******************************************************************/
 /* 任务节点销毁 */
-void item_free(TaskItem *task_item) {
+void item_free(TaskItem *task_item, TaskList *task_list) {
+	(task_list->count)--;
     free(task_item);
 }
