@@ -33,7 +33,8 @@
 #include "tool.h"
 
 /* 字符串截取函数 */
-char* substr(const char*str, unsigned start, unsigned end) {
+char* substr(const char*str, unsigned start, unsigned end)
+{
 	unsigned n = end - start;
 	static char stbuf[256];
 	strncpy(stbuf, str + start, n);
@@ -48,5 +49,4 @@ time_t GetNowTime() {
 	time(&nowTime);
 	return nowTime;
 }
-
 
