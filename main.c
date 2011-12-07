@@ -204,7 +204,7 @@ static int send_notice_mail(char *subject, char *content) {
     strncpy(m_subject, subject, strlen(subject));
     strncpy(m_content, content, strlen(content));
 
-    struct st_char_arry to_addrs[0];
+    struct st_char_arry to_addrs[1];
 	//收件人列表
     	to_addrs[0].str_p = g_mail_to;
     struct st_char_arry att_files[0];
@@ -212,7 +212,7 @@ static int send_notice_mail(char *subject, char *content) {
   	att_files[0].str_p="";
 	struct st_mail_msg_ mail;
 	init_mail_msg(&mail);
-	mail.authorization=AUTH_SEND_MAIL;
+	mail.authorization = AUTH_SEND_MAIL;
 	mail.server = g_mail_server;
 	mail.port = g_mail_port;
 	mail.auth_user = g_mail_user;
@@ -229,7 +229,7 @@ static int send_notice_mail(char *subject, char *content) {
 	mail.content = m_content;
 	ret = send_mail(&mail);
 	if (ret != 0) {
-		write_log("send mail with error.");
+		write_log("send mail with error : %d.", ret);
 	}
 	free(m_subject);
 	free(m_content);
@@ -341,8 +341,8 @@ static void curl_request(TaskItem *task_item)
 		char subject[BUFSIZE] = {0x00};
 		char content[BUFSIZE] = {0x00};
 		write_log("send an e-mail right now.");
-		sprintf(subject, "Oh, ctask may be wrong.\n");
-		sprintf(content, "the task error with task_id [%d], please check it now.\n", task_item->task_id);
+		sprintf(subject, "CTask with some error!");
+		sprintf(content, "CTask run with error, The task_id is [%d], Please check it right now.\n", task_item->task_id);
 		send_notice_mail(subject, content);
 		write_log("%s...fails", url);
 	}
@@ -776,7 +776,6 @@ int main(int argc, char *argv[], char *envp[]) {
 		sprintf(g_mail_to, "%s", c_get_string("mail", "to", g_config_file));
 		g_mail_port = c_get_int("mail", "port", g_config_file);
 	}
-
 
 	// 如果加了-d参数，以守护进程运行
 	if (daemon == true) {
