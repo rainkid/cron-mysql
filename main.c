@@ -679,7 +679,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			sprintf( g_config_file, "%s", optarg );
 			break;
 		case 'v':
-			printf("%s\n\n", VERSION);
+			printf("%s\n", VERSION);
 			exit(EXIT_SUCCESS);
 			break;
 		case 'h':

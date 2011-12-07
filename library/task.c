@@ -1,5 +1,5 @@
 /*
- * send_mail.c
+ * task.c
  * This file is part of <task> 
  *
  * Copyright (C) 2011 - raink.kid@gmail.com

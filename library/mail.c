@@ -1,6 +1,6 @@
 /*
- * send_mail.c
- * This file is part of <task> 
+ * mail.c
+ * This file is part of <ctask>
  *
  * Copyright (C) 2011 - raink.kid@gmail.com
  *
@@ -102,7 +102,7 @@ int send_mail(struct st_mail_msg_ *msg_) {
 			fprintf(tmp_fp, "\r\n");
 		}
 	}
-	/* 抄送 */
+	/* 密送 */
 	if (msg_->cc_address_ary) {
 		for (i_addr_p = 0, char_arry_p = msg_->cc_address_ary; char_arry_p	< (msg_->cc_address_ary + msg_->cc_addr_len); char_arry_p++, i_addr_p++){
 			if (i_addr_p == 0) {

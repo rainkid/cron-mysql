@@ -37,33 +37,28 @@ struct st_mail_msg_{
  int mail_style_html;
   //mail server IP or Host.
  char *server;
-
   //标题
  char *subject;
  //文本正文
  char *content;
-
  //需要认证的帐号
  char *auth_user;
  //需要认证的密码
  char *auth_passwd;
  //字符编码
  char *charset;
-
  //发送地址
  char *from;
  //收信人看到的地址，如果不设置则为from
  char *from_subject;
-
-
-    //附件数组
+ //附件数组
  //file path
  struct st_char_arry *att_file_ary;
-  //秘送
+ //秘送
  struct st_char_arry *cc_address_ary;
-  //抄送人地址数组
+ //抄送人地址数组
  struct st_char_arry *bc_address_ary;
- 	//接收人地址
+ //接收人地址
  struct st_char_arry *to_address_ary;
 };
 //初始化结构
