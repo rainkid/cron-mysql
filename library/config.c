@@ -67,7 +67,7 @@ char *c_get_string(char *title, char *key, char *filename) {
 					if ('#' == szLine[0]) {
 
 					} else {
-						//找打key对应变量
+						//找到key对应变量
 						strcpy(tmpstr, tmp + 1);
 						fclose(fp);
 						return tmpstr;

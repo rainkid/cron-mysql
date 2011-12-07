@@ -32,17 +32,6 @@
 
 #include "tool.h"
 
-/* 字符串截取函数 */
-char* substr(const char*str, unsigned start, unsigned end)
-{
-	unsigned n = end - start;
-	static char stbuf[256];
-	strncpy(stbuf, str + start, n);
-	stbuf[n] = 0;
-	return stbuf;
-}
-
-
 /* 获取当前时间戳 */
 time_t GetNowTime() {
 	time_t nowTime;

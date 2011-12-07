@@ -41,13 +41,10 @@
 #include <sys/wait.h>
 #include <math.h>
 #include <sys/prctl.h>
-
 #include <netinet/in.h> 
 #include <sys/socket.h>
-
 #include <curl/curl.h>
 #include <curl/easy.h>
-
 #include <mysql/mysql.h>
 
 #include "library/task.h"
@@ -56,36 +53,34 @@
 #include "library/base64.h"
 #include "library/mail.h"
 
-
 #define _DEBUG_  ;
 #define PIDFILE  "/tmp/ctask.pid"
 #define VERSION  "1.0"
 #define BUFSIZE  8096
 #define LOG_FILE  "/tmp/ctask.log"
 #define BACK_LOG_FILE  "/tmp/ctask.log.bak"
-#define MAX_LOG_SIZE  (1024 * 1024)
+#define MAX_LOG_SIZE  (1024 * 1000)
 
 #define SYNC_CONFIG_TIME (5 * 60)
 #define SEND_MAIL_TIME (5 * 60)
 #define TASK_RUN_UNIT 60
 #define TASK_RUN_STEP 1
 #define MAX_THREADS 1024
-
 /*******************************************************************/
 // 函数声明
+static void write_log(const char *fmt,  ...);
+static int send_notice_mail(char *subject, char *content);
 static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data);
+static void task_log(int task_id, int ret, char* msg);
+static void curl_request(TaskItem *task_item);
+static void curl_worker();
+static void task_worker();
+static void load_worker();
 static void kill_signal_master(const int signal);
 static void kill_signal_worker(const int signal);
 static void task_file_load(const char *g_task_file);
 static void task_mysql_load();
-static void curl_worker();
-static void task_worker();
-static void load_worker();
-static void task_log(int id, int ret, char* msg);
-static int send_notice_mail(char *subject, char *content);
-
 /*******************************************************************/
-
 //全局变量
 char g_run_type[BUFSIZE] = {0x00};
 //mysql参数
@@ -107,7 +102,6 @@ int g_mail_port = 0;
 char g_task_file[BUFSIZE] = {0X00};
 //即时任务
 int g_right_task = 0;
-
 /*******************************************************************/
 // 任务节点
 TaskList *task_list = NULL;
@@ -115,24 +109,13 @@ TaskList *task_list = NULL;
 char *g_config_file = NULL;
 //任务锁
 pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
-
 /*******************************************************************/
-
 /* 请求返回数据 */
 struct RESPONSE {
 	char *responsetext;
 	size_t size;
 };
-
-/* 邮件队列 */
-struct MAIL_QUEUE_ITEM{
-	int task_id;
-    TAILQ_ENTRY(MAIL_QUEUE_ITEM) entries;
-};
-TAILQ_HEAD(, MAIL_QUEUE_ITEM) mail_queue;
-
 /*******************************************************************/
-
 /* 帮助信息 */
 static void usage() {
 	printf("author raink.kid@gmail.com\n" \
@@ -141,9 +124,7 @@ static void usage() {
 		 "-c, --config   <path>  task config file path.\n" \
 		 "-d, --daemon   run as a daemon.\n\n");
 }
-
 /*******************************************************************/
-
 //日志函数
 static void write_log(const char *fmt,  ...) {
 #ifdef _DEBUG_
@@ -194,7 +175,7 @@ static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data) {
 
 /*发送通知邮件*/
 static int send_notice_mail(char *subject, char *content) {
-    int ret =0;
+    int ret = 0;
 
     char *m_subject;
     char *m_content;
@@ -235,29 +216,7 @@ static int send_notice_mail(char *subject, char *content) {
 	free(m_content);
 	return ret;
 }
-
 /*******************************************************************/
-
-/* 邮件队列是否唯一 */
-static bool mail_queue_exist(int task_id) {
-	bool is_exist = false;
-
-	struct MAIL_QUEUE_ITEM *tmp_item;
-	tmp_item = malloc(sizeof(tmp_item));
-
-	tmp_item = TAILQ_FIRST(&mail_queue);
-	while(NULL != tmp_item) {
-		if (tmp_item->task_id == task_id) {
-			is_exist = true;
-			break;
-		}
-		tmp_item=TAILQ_NEXT(tmp_item, entries);
-	}
-	return is_exist;
-}
-
-/*******************************************************************/
-
 //记录日志
 static void task_log(int task_id, int ret, char* msg) {
 
@@ -305,8 +264,7 @@ static void task_log(int task_id, int ret, char* msg) {
 
 /*******************************************************************/
 
-static void curl_request(TaskItem *task_item)
-{
+static void curl_request(TaskItem *task_item) {
 	int ret = 0;
 	char *url;
 	CURL *curl_handle = NULL;
@@ -337,12 +295,12 @@ static void curl_request(TaskItem *task_item)
 		(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
 		write_log("%s...success", url);
 		ret = 1;
-	} else{
+	} else {
 		char subject[BUFSIZE] = {0x00};
 		char content[BUFSIZE] = {0x00};
 		write_log("send an e-mail right now.");
 		sprintf(subject, "CTask with some error!");
-		sprintf(content, "CTask run with error, The task_id is [%d], Please check it right now.\n", task_item->task_id);
+		sprintf(content, "The task_id is [%d]\r\nThe task url : [%s]\r\nPlease check it right now", task_item->task_id, url);
 		send_notice_mail(subject, content);
 		write_log("%s...fails", url);
 	}
@@ -359,10 +317,12 @@ static void curl_request(TaskItem *task_item)
 	free(url);
 	curl_easy_cleanup(curl_handle);
 }
+
 /*******************************************************************/
+//请求处理
 static void curl_worker(){
 	TaskItem *task_item;
-	while(1){
+	while (1) {
 		pthread_mutex_lock(&task_lock);
 		if (NULL != task_list && task_list->count>0 && g_right_task>0) {
 			task_item = task_list->head;
@@ -377,7 +337,7 @@ static void curl_worker(){
 			}
 		}
 		pthread_mutex_unlock(&task_lock);
-		sleep(1);
+		sleep(TASK_RUN_STEP);
 	}
 }
 
@@ -386,7 +346,7 @@ static void curl_worker(){
 static void task_worker() {
 	pthread_detach(pthread_self());
 	TaskItem *temp;
-	while(1) {
+	while (1) {
 		pthread_mutex_lock(&task_lock);
 		if (NULL != task_list && task_list->count > 0) {
 			while (NULL != (temp = task_list->head)) {
@@ -395,14 +355,12 @@ static void task_worker() {
 				if (nowTime < temp->nextTime) {
 					break;
 				}
-				// 执行任务
-//				curl_request(temp);
 				g_right_task++;
 				(temp->runTimes)++;
 				if (temp->next) {
 					task_list->head = temp->next;
 					temp->next->prev = NULL;
-					task_list->count--;
+					(task_list->count)--;
 					if (temp == task_list->tail) {
 						task_list->tail = temp->prev;
 					}
@@ -410,7 +368,6 @@ static void task_worker() {
 						temp->prev = NULL;
 						temp->next = NULL;
 						temp->nextTime += temp->frequency;
-						// 重新添加
 						task_update(temp, task_list);
 					} else {
 						item_free(temp, task_list);
@@ -422,7 +379,7 @@ static void task_worker() {
 						item_free(temp, task_list);
 						temp = NULL;
 
-						task_list->count--;
+						(task_list->count)--;
 						task_list->head = NULL;
 						task_list->tail = NULL;
 						task_free(task_list);
@@ -447,7 +404,7 @@ static void task_worker() {
 /* 同步配置线程 */
 static void load_worker() {
 	pthread_detach(pthread_self());
-	while(1) {
+	while (1) {
 		// 加载任务到新建列表中
 		if (strcmp(g_run_type, "file") == 0) {
 			task_file_load(g_task_file);
@@ -473,7 +430,7 @@ static void kill_signal_master(const int signal) {
 		free(g_config_file);
 		g_config_file = NULL;
 	}
-	/* 给进程组发送SIGTERM信号，结束子进程 */
+	// 给进程组发送SIGTERM信号，结束子进程
 	kill(0, SIGTERM);
 	exit(EXIT_SUCCESS);
 	return;
@@ -513,7 +470,7 @@ static void task_file_load(const char *g_task_file) {
 	task_list->head = NULL;
 	task_list->tail = NULL;
 
-	while(NULL != fgets(line, BUFSIZE, fp)) {
+	while (NULL != fgets(line, BUFSIZE, fp)) {
 		// 忽略空行和＃号开头的行
 		if ('\n' == line[0] || '#' == line[0]) {
 			continue;
@@ -531,8 +488,7 @@ static void task_file_load(const char *g_task_file) {
 		taskItem->runTimes = 0;
 
 		// 按格式读取
-		sscanf(
-				line,
+		sscanf(line,
 				"%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%d,%d,%[^\n]",
 				&_stime.tm_year, &_stime.tm_mon, &_stime.tm_mday,
 				&_stime.tm_hour, &_stime.tm_min, &_stime.tm_sec,
@@ -561,8 +517,8 @@ static void task_file_load(const char *g_task_file) {
 		}
 
 		// 计算下次运行点
-		int st = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
-		taskItem->nextTime = taskItem->startTime + ((st + 1) * taskItem->frequency);
+		int step = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
+		taskItem->nextTime = taskItem->startTime + ((step + 1) * taskItem->frequency);
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
@@ -668,8 +624,8 @@ static void task_mysql_load() {
 		time_t nowTime = GetNowTime();
 
 		// 计算下次运行点
-		int st = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
-		taskItem->nextTime = taskItem->startTime + ((st + 1) * taskItem->frequency);
+		int step = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
+		taskItem->nextTime = taskItem->startTime + ((step + 1) * taskItem->frequency);
 
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
@@ -697,7 +653,6 @@ static void task_mysql_load() {
 /* 主模块 */
 int main(int argc, char *argv[], char *envp[]) {
 	bool daemon = false;
-
 	// 输入参数格式定义
 	struct option long_options[] = {
 			{ "daemon", 0, 0, 'd' },
@@ -860,7 +815,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		write_log("tasklist malloc failed.");
 	};
 
-	pthread_t config_tid, task_tid, mail_tid, curl_tid;
+	pthread_t config_tid, task_tid, curl_tid;
 	// 定时加载配置线程
 	pthread_create(&config_tid, NULL, (void *) load_worker, NULL);
 	// 创建计划任务线程
