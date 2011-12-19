@@ -61,11 +61,12 @@
 #define BACK_LOG_FILE  "/tmp/ctask.log.bak"
 #define MAX_LOG_SIZE  (1024 * 1000)
 
-#define SYNC_CONFIG_TIME (5 * 60)
-#define SEND_MAIL_TIME (5 * 60)
-#define TASK_RUN_UNIT 60
-#define TASK_RUN_STEP 1
-#define MAX_THREADS 1024
+#define SYNC_CONFIG_TIME (5000000 * 60)
+#define SEND_MAIL_TIME (30 * 1000000 * 60)
+#define TIME_UNIT 60
+#define TASK_STEP   1000000
+#define THREAD_MAX 1024
+
 /*******************************************************************/
 // 函数声明
 static void write_log(const char *fmt,  ...);
@@ -73,7 +74,7 @@ static int send_notice_mail(char *subject, char *content);
 static size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data);
 static void task_log(int task_id, int ret, char* msg);
 static void curl_request(TaskItem *task_item);
-static void curl_worker();
+static void *pull_one_item(void *item);
 static void task_worker();
 static void load_worker();
 static void kill_signal_master(const int signal);
@@ -101,7 +102,6 @@ int g_mail_port = 0;
 
 char g_task_file[BUFSIZE] = {0X00};
 //即时任务
-int g_right_task = 0;
 /*******************************************************************/
 // 任务节点
 TaskList *task_list = NULL;
@@ -216,7 +216,9 @@ static int send_notice_mail(char *subject, char *content) {
 	free(m_content);
 	return ret;
 }
+
 /*******************************************************************/
+
 //记录日志
 static void task_log(int task_id, int ret, char* msg) {
 
@@ -264,6 +266,35 @@ static void task_log(int task_id, int ret, char* msg) {
 
 /*******************************************************************/
 
+//邮件队列
+static void mail_worker(){
+	pthread_detach(pthread_self());
+	TaskItem *task_item;
+	while (1) {
+		pthread_mutex_lock(&task_lock);
+		if (NULL != task_list && task_list->count > 0) {
+			task_item = task_list->head;
+			while (NULL !=task_item) {
+				if (true == task_item->mail) {
+					char subject[BUFSIZE] = {0x00};
+					char content[BUFSIZE] = {0x00};
+					write_log("send an e-mail right now.");
+					sprintf(subject, "CTask with some error!");
+					sprintf(content, "The task_id is [%d]\r\nThe task url : [%s]\r\nPlease check it right now", task_item->task_id, task_item->command);
+					send_notice_mail(subject, content);
+					task_item->mail = false;
+				}
+				task_item = task_item->next;
+			}
+		}
+		pthread_mutex_unlock(&task_lock);
+		usleep(SEND_MAIL_TIME);
+	}
+}
+
+/*******************************************************************/
+
+//请求处理
 static void curl_request(TaskItem *task_item) {
 	int ret = 0;
 	char *url;
@@ -281,7 +312,7 @@ static void curl_request(TaskItem *task_item) {
 	if (curl_handle != NULL) {
 
 		curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, task_item->timeout);
+		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, task_item->timeout * TIME_UNIT);
 		// 回调设置
 		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_callback);
 		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
@@ -296,12 +327,7 @@ static void curl_request(TaskItem *task_item) {
 		write_log("%s...success", url);
 		ret = 1;
 	} else {
-		char subject[BUFSIZE] = {0x00};
-		char content[BUFSIZE] = {0x00};
-		write_log("send an e-mail right now.");
-		sprintf(subject, "CTask with some error!");
-		sprintf(content, "The task_id is [%d]\r\nThe task url : [%s]\r\nPlease check it right now", task_item->task_id, url);
-		send_notice_mail(subject, content);
+		task_item->mail = true;
 		write_log("%s...fails", url);
 	}
 	//记录日志
@@ -319,26 +345,57 @@ static void curl_request(TaskItem *task_item) {
 }
 
 /*******************************************************************/
-//请求处理
-static void curl_worker(){
+//
+static void *pull_one_item(void *item) {
+	int ret = 0;
+	char *url;
+	CURL *curl_handle = NULL;
+
+	struct RESPONSE chunk;
+	chunk.responsetext = NULL;
+	chunk.size = 0;
+
+	CURLcode response;
+	curl_handle = curl_easy_init();
+
 	TaskItem *task_item;
-	while (1) {
-		pthread_mutex_lock(&task_lock);
-		if (NULL != task_list && task_list->count>0 && g_right_task>0) {
-			task_item = task_list->head;
-			while (NULL != task_item) {
-				//没有即时任务
-				if(g_right_task == 0){
-					break;
-				}
-				curl_request(task_item);
-				g_right_task--;
-				task_item = task_item->next;
-			}
-		}
-		pthread_mutex_unlock(&task_lock);
-		sleep(TASK_RUN_STEP);
+	task_item = (TaskItem *)item;
+
+	url = malloc(strlen(task_item->command) + 1);
+	sprintf(url, "%s", task_item->command);
+	if (curl_handle != NULL) {
+
+		curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, task_item->timeout * TIME_UNIT);
+		// 回调设置
+		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_callback);
+		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
+
+		response = curl_easy_perform(curl_handle);
+	}else{
+		write_log("curl handler is null.");
 	}
+	// 请求响应处理
+	if ((response == CURLE_OK) && chunk.responsetext &&
+		(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
+		write_log("%s...success", url);
+		ret = 1;
+	} else {
+		task_item->mail = true;
+		write_log("%s...fails", url);
+	}
+	//记录日志
+	if (strcmp(g_run_type, "mysql") == 0) {
+		if(NULL != chunk.responsetext){
+			task_log(task_item->task_id, ret, chunk.responsetext);
+		}
+	}
+
+	if (NULL != chunk.responsetext) {
+		free(chunk.responsetext);
+	}
+	free(url);
+	curl_easy_cleanup(curl_handle);
 }
 
 /*******************************************************************/
@@ -346,16 +403,22 @@ static void curl_worker(){
 static void task_worker() {
 	pthread_detach(pthread_self());
 	TaskItem *temp;
+	pthread_t tid[THREAD_MAX];
 	while (1) {
 		pthread_mutex_lock(&task_lock);
 		if (NULL != task_list && task_list->count > 0) {
+			int i = 0;
 			while (NULL != (temp = task_list->head)) {
 				// 大于当前时间跳出
 				time_t nowTime = GetNowTime();
 				if (nowTime < temp->nextTime) {
 					break;
 				}
-				g_right_task++;
+//				curl_request(temp);
+				pthread_create(&tid[i], NULL, pull_one_item, (void *)temp);
+				pthread_join(tid[i], NULL);
+				i++;
+
 				(temp->runTimes)++;
 				if (temp->next) {
 					task_list->head = temp->next;
@@ -394,13 +457,11 @@ static void task_worker() {
 			write_log("task list is null.");
 		}
 		pthread_mutex_unlock(&task_lock);
-		sleep(TASK_RUN_STEP);
+		usleep(TASK_STEP);
 	}
 }
 
 /*******************************************************************/
-
-
 /* 同步配置线程 */
 static void load_worker() {
 	pthread_detach(pthread_self());
@@ -411,15 +472,12 @@ static void load_worker() {
 		} else if (strcmp(g_run_type, "mysql") == 0) {
 			task_mysql_load();
 		}
-		sleep(SYNC_CONFIG_TIME);
+		usleep(SYNC_CONFIG_TIME);
 	}
 }
 
-
 /*******************************************************************/
-
-
-/* 父进程信号处理 */
+// 父进程信号处理
 static void kill_signal_master(const int signal) {
 	//删除PID
 	if (0 == access(PIDFILE, F_OK)) {
@@ -436,11 +494,8 @@ static void kill_signal_master(const int signal) {
 	return;
 }
 
-
 /*******************************************************************/
-
-
-/*子进程信号处理*/
+//子进程信号处理
 static void kill_signal_worker(const int signal) {
 	//销毁任务
 	if (NULL != task_list) {
@@ -454,8 +509,7 @@ static void kill_signal_worker(const int signal) {
 }
 
 /*******************************************************************/
-
-/* 文件配置计划任务加载 */
+// 文件配置计划任务加载
 static void task_file_load(const char *g_task_file) {
 	FILE *fp;
 	fp = fopen(g_task_file, "r");
@@ -502,7 +556,7 @@ static void task_file_load(const char *g_task_file) {
 		_stime.tm_mon -= 1;
 		_etime.tm_mon -= 1;
 
-		taskItem->frequency = taskItem->frequency * TASK_RUN_UNIT;
+		taskItem->frequency = taskItem->frequency * TIME_UNIT;
 
 		taskItem->startTime = mktime(&_stime);
 		taskItem->endTime = mktime(&_etime);
@@ -532,8 +586,7 @@ static void task_file_load(const char *g_task_file) {
 }
 
 /*******************************************************************/
-
-/* mysql任务加载 */
+//mysql任务加载
 static void task_mysql_load() {
 
 	MYSQL mysql_conn;
@@ -586,6 +639,7 @@ static void task_mysql_load() {
 		taskItem = (TaskItem *) malloc(sizeof(TaskItem));
 		assert(NULL != taskItem);
 
+		taskItem->mail = false;
 		taskItem->next = NULL;
 		taskItem->prev = NULL;
 		taskItem->runTimes = 0;
@@ -607,7 +661,7 @@ static void task_mysql_load() {
 		sprintf(taskItem->command, "%s", command);
 
 		taskItem->times = 0;
-		taskItem->frequency = atoi(mysql_row[3]) * TASK_RUN_UNIT;
+		taskItem->frequency = atoi(mysql_row[3]) * TIME_UNIT;
 		taskItem->task_id = atoi(mysql_row[0]);
 		taskItem->timeout = atoi(mysql_row[7]);
 
@@ -649,8 +703,7 @@ static void task_mysql_load() {
 }
 
 /*******************************************************************/
-
-/* 主模块 */
+// 主模块
 int main(int argc, char *argv[], char *envp[]) {
 	bool daemon = false;
 	// 输入参数格式定义
@@ -815,16 +868,18 @@ int main(int argc, char *argv[], char *envp[]) {
 		write_log("tasklist malloc failed.");
 	};
 
-	pthread_t config_tid, task_tid, curl_tid;
+	pthread_t config_tid, task_tid, mail_tid;
 	// 定时加载配置线程
 	pthread_create(&config_tid, NULL, (void *) load_worker, NULL);
 	// 创建计划任务线程
-	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
-	// 即时任务处理
-	pthread_create(&curl_tid, NULL, (void *) curl_worker, NULL);
+//	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
+	// 邮件队列线程
+	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
+	//任务开始
+	task_worker();
 
-	pthread_join ( config_tid, NULL );
-	pthread_join ( task_tid, NULL );
-	pthread_join ( curl_tid, NULL );
+//	pthread_join ( config_tid, NULL );
+//	pthread_join ( task_tid, NULL );
+//	pthread_join ( mail_tid, NULL );
 	return 0;
 }

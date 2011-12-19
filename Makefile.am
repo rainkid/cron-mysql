@@ -4,4 +4,3 @@ ctask_SOURCES=main.c library/task.c library/task.h library/mail.c library/mail.h
 ctask_LDFLAGS=-Lusr/local/lib
 INCLUDES=-I/usr/local/include/
 LIBS=-lcurl -lmysqlclient -lrt -D -REENTRANT -lpthread -Wl -lm -lc -lz -O2 
- 

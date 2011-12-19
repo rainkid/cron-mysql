@@ -19,6 +19,7 @@ typedef struct _taskItem {
     int timeout;
     int times;
     int runTimes;
+    bool mail;
     char command[BUFSIZ];
     struct _taskItem *next;
     struct _taskItem *prev;
