@@ -47,18 +47,18 @@
 #include <curl/easy.h>
 #include <mysql/mysql.h>
 
-#include "src/list.h"
-#include "src/tool.h"
-#include "src/config.h"
-#include "src/base64.h"
-#include "src/mail.h"
-#include "src/define.h"
+#include "list.h"
+#include "tool.h"
+#include "config.h"
+#include "base64.h"
+#include "mail.h"
+#include "define.h"
 
-#define PIDFILE  "/tmp/ctask.pid"
+#define PIDFILE  "task.pid"
 #define VERSION  "1.0"
 #define BUFSIZE  8096
-#define LOG_FILE  "/tmp/ctask.log"
-#define BACK_LOG_FILE  "/tmp/ctask.log.bak"
+#define LOG_FILE  "logs/task.log"
+#define BACK_LOG_FILE  "logs/task.log.bak"
 #define MAX_LOG_SIZE  (1024 * 1000)
 
 #define SYNC_CONFIG_TIME (5000000 * 60)
@@ -435,7 +435,6 @@ void task_worker() {
 		usleep(TASK_STEP);
 	}
 }
-
 /*******************************************************************/
 /* 同步配置线程 */
 void load_worker() {
@@ -450,7 +449,6 @@ void load_worker() {
 		usleep(SYNC_CONFIG_TIME);
 	}
 }
-
 /*******************************************************************/
 // 父进程信号处理
 void kill_signal_master(const int signal) {
@@ -462,6 +460,14 @@ void kill_signal_master(const int signal) {
 	if (NULL != g_config_file) {
 		free(g_config_file);
 		g_config_file = NULL;
+	}
+	if (NULL != g_mysql_params) {
+		free(g_mysql_params);
+		g_mysql_params = NULL;
+	}
+	if (NULL != g_mail_params) {
+		free(g_mail_params);
+		g_mail_params = NULL;
 	}
 	// 给进程组发送SIGTERM信号，结束子进程
 	kill(0, SIGTERM);
@@ -663,7 +669,6 @@ void task_mysql_load() {
 	mysql_end(&mysql_conn);
 	return;
 }
-
 /*******************************************************************/
 void create_child(void){
 	// 派生子进程（工作进程）
