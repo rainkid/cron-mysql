@@ -16,10 +16,10 @@
 
 
 
-pkgdatadir = $(datadir)/ctask
-pkgincludedir = $(includedir)/ctask
-pkglibdir = $(libdir)/ctask
-pkglibexecdir = $(libexecdir)/ctask
+pkgdatadir = $(datadir)/taskserver
+pkgincludedir = $(includedir)/taskserver
+pkglibdir = $(libdir)/taskserver
+pkglibexecdir = $(libexecdir)/taskserver
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 install_sh_DATA = $(install_sh) -c -m 644
 install_sh_PROGRAM = $(install_sh) -c
@@ -32,7 +32,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = ctask$(EXEEXT)
+bin_PROGRAMS = taskserver$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/configure depcomp \
@@ -48,11 +48,11 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_ctask_OBJECTS = main.$(OBJEXT) task.$(OBJEXT) mail.$(OBJEXT) \
+am_taskserver_OBJECTS = task.$(OBJEXT) list.$(OBJEXT) mail.$(OBJEXT) \
 	base64.$(OBJEXT) tool.$(OBJEXT) config.$(OBJEXT)
-ctask_OBJECTS = $(am_ctask_OBJECTS)
-ctask_LDADD = $(LDADD)
-ctask_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(ctask_LDFLAGS) \
+taskserver_OBJECTS = $(am_taskserver_OBJECTS)
+taskserver_LDADD = $(LDADD)
+taskserver_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(taskserver_LDFLAGS) \
 	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -62,8 +62,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(ctask_SOURCES)
-DIST_SOURCES = $(ctask_SOURCES)
+SOURCES = $(taskserver_SOURCES)
+DIST_SOURCES = $(taskserver_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -89,7 +89,7 @@ CFLAGS = -g -O2
 CPP = gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"ctask\" -DPACKAGE_TARNAME=\"ctask\" -DPACKAGE_VERSION=\"1.0\" -DPACKAGE_STRING=\"ctask\ 1.0\" -DPACKAGE_BUGREPORT=\"raink.kid@gmail.com\" -DPACKAGE_URL=\"\" -DPACKAGE=\"ctask\" -DVERSION=\"1.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ARPA_INET_H=1 -DHAVE_FCNTL_H=1 -DHAVE_MALLOC_H=1 -DHAVE_NETDB_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_PARAM_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_UNISTD_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_MYSQL_MYSQL_H=1 -DHAVE__BOOL=1 -DHAVE_STDBOOL_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_SYS_TIME_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ALARM=1 -DHAVE_STDLIB_H=1 -DHAVE_REALLOC=1 -DHAVE_BZERO=1 -DHAVE_GETHOSTBYADDR=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_MEMSET=1 -DHAVE_SOCKET=1 -DHAVE_STRCHR=1 -DHAVE_STRDUP=1 -DHAVE_STRSTR=1 -DHAVE_STRNCPY=1 -DHAVE_MEMCPY=1
+DEFS = -DPACKAGE_NAME=\"taskserver\" -DPACKAGE_TARNAME=\"taskserver\" -DPACKAGE_VERSION=\"1.0\" -DPACKAGE_STRING=\"taskserver\ 1.0\" -DPACKAGE_BUGREPORT=\"raink.kid@gmail.com\" -DPACKAGE_URL=\"\" -DPACKAGE=\"taskserver\" -DVERSION=\"1.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ARPA_INET_H=1 -DHAVE_FCNTL_H=1 -DHAVE_MALLOC_H=1 -DHAVE_NETDB_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_PARAM_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_UNISTD_H=1 -DHAVE_CURL_CURL_H=1 -DHAVE_MYSQL_MYSQL_H=1 -DHAVE__BOOL=1 -DHAVE_STDBOOL_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_SYS_TIME_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ALARM=1 -DHAVE_STDLIB_H=1 -DHAVE_REALLOC=1 -DHAVE_BZERO=1 -DHAVE_GETHOSTBYADDR=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_MEMSET=1 -DHAVE_SOCKET=1 -DHAVE_STRCHR=1 -DHAVE_STRDUP=1 -DHAVE_STRSTR=1 -DHAVE_STRNCPY=1 -DHAVE_MEMCPY=1
 DEPDIR = .deps
 ECHO_C = 
 ECHO_N = -n
@@ -104,16 +104,16 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS = 
 LIBOBJS = 
-LIBS = -lcurl -lmysqlclient -lrt -D -REENTRANT -lpthread -Wl -lm -lc -lz -O2 
+LIBS = -lcurl -lmysqlclient -lrt -lpthread -Wl -lm -lc -lz -O2
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/rainkid/workspace/task/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
-PACKAGE = ctask
+PACKAGE = taskserver
 PACKAGE_BUGREPORT = raink.kid@gmail.com
-PACKAGE_NAME = ctask
-PACKAGE_STRING = ctask 1.0
-PACKAGE_TARNAME = ctask
+PACKAGE_NAME = taskserver
+PACKAGE_STRING = taskserver 1.0
+PACKAGE_TARNAME = taskserver
 PACKAGE_URL = 
 PACKAGE_VERSION = 1.0
 PATH_SEPARATOR = :
@@ -164,8 +164,8 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 AUTOMAKE_OPTIONS = foreign
-ctask_SOURCES = main.c library/task.c library/task.h library/mail.c library/mail.h library/base64.c library/base64.h library/tool.c library/tool.h library/config.c library/config.h
-ctask_LDFLAGS = -Lusr/local/lib
+taskserver_SOURCES = src/task.c src/list.c src/list.h src/mail.c src/mail.h src/base64.c src/base64.h src/tool.c src/tool.h src/config.c src/config.h
+taskserver_LDFLAGS = -Lusr/local/lib
 INCLUDES = -I/usr/local/include/
 all: all-am
 
@@ -242,9 +242,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-ctask$(EXEEXT): $(ctask_OBJECTS) $(ctask_DEPENDENCIES) 
-	@rm -f ctask$(EXEEXT)
-	$(ctask_LINK) $(ctask_OBJECTS) $(ctask_LDADD) $(LIBS)
+taskserver$(EXEEXT): $(taskserver_OBJECTS) $(taskserver_DEPENDENCIES) 
+	@rm -f taskserver$(EXEEXT)
+	$(taskserver_LINK) $(taskserver_OBJECTS) $(taskserver_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -254,8 +254,8 @@ distclean-compile:
 
 include ./$(DEPDIR)/base64.Po
 include ./$(DEPDIR)/config.Po
+include ./$(DEPDIR)/list.Po
 include ./$(DEPDIR)/mail.Po
-include ./$(DEPDIR)/main.Po
 include ./$(DEPDIR)/task.Po
 include ./$(DEPDIR)/tool.Po
 
@@ -273,75 +273,89 @@ include ./$(DEPDIR)/tool.Po
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
-task.o: library/task.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT task.o -MD -MP -MF $(DEPDIR)/task.Tpo -c -o task.o `test -f 'library/task.c' || echo '$(srcdir)/'`library/task.c
+task.o: src/task.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT task.o -MD -MP -MF $(DEPDIR)/task.Tpo -c -o task.o `test -f 'src/task.c' || echo '$(srcdir)/'`src/task.c
 	$(am__mv) $(DEPDIR)/task.Tpo $(DEPDIR)/task.Po
-#	source='library/task.c' object='task.o' libtool=no \
+#	source='src/task.c' object='task.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o task.o `test -f 'library/task.c' || echo '$(srcdir)/'`library/task.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o task.o `test -f 'src/task.c' || echo '$(srcdir)/'`src/task.c
 
-task.obj: library/task.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT task.obj -MD -MP -MF $(DEPDIR)/task.Tpo -c -o task.obj `if test -f 'library/task.c'; then $(CYGPATH_W) 'library/task.c'; else $(CYGPATH_W) '$(srcdir)/library/task.c'; fi`
+task.obj: src/task.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT task.obj -MD -MP -MF $(DEPDIR)/task.Tpo -c -o task.obj `if test -f 'src/task.c'; then $(CYGPATH_W) 'src/task.c'; else $(CYGPATH_W) '$(srcdir)/src/task.c'; fi`
 	$(am__mv) $(DEPDIR)/task.Tpo $(DEPDIR)/task.Po
-#	source='library/task.c' object='task.obj' libtool=no \
+#	source='src/task.c' object='task.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o task.obj `if test -f 'library/task.c'; then $(CYGPATH_W) 'library/task.c'; else $(CYGPATH_W) '$(srcdir)/library/task.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o task.obj `if test -f 'src/task.c'; then $(CYGPATH_W) 'src/task.c'; else $(CYGPATH_W) '$(srcdir)/src/task.c'; fi`
 
-mail.o: library/mail.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mail.o -MD -MP -MF $(DEPDIR)/mail.Tpo -c -o mail.o `test -f 'library/mail.c' || echo '$(srcdir)/'`library/mail.c
+list.o: src/list.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT list.o -MD -MP -MF $(DEPDIR)/list.Tpo -c -o list.o `test -f 'src/list.c' || echo '$(srcdir)/'`src/list.c
+	$(am__mv) $(DEPDIR)/list.Tpo $(DEPDIR)/list.Po
+#	source='src/list.c' object='list.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o list.o `test -f 'src/list.c' || echo '$(srcdir)/'`src/list.c
+
+list.obj: src/list.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT list.obj -MD -MP -MF $(DEPDIR)/list.Tpo -c -o list.obj `if test -f 'src/list.c'; then $(CYGPATH_W) 'src/list.c'; else $(CYGPATH_W) '$(srcdir)/src/list.c'; fi`
+	$(am__mv) $(DEPDIR)/list.Tpo $(DEPDIR)/list.Po
+#	source='src/list.c' object='list.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o list.obj `if test -f 'src/list.c'; then $(CYGPATH_W) 'src/list.c'; else $(CYGPATH_W) '$(srcdir)/src/list.c'; fi`
+
+mail.o: src/mail.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mail.o -MD -MP -MF $(DEPDIR)/mail.Tpo -c -o mail.o `test -f 'src/mail.c' || echo '$(srcdir)/'`src/mail.c
 	$(am__mv) $(DEPDIR)/mail.Tpo $(DEPDIR)/mail.Po
-#	source='library/mail.c' object='mail.o' libtool=no \
+#	source='src/mail.c' object='mail.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mail.o `test -f 'library/mail.c' || echo '$(srcdir)/'`library/mail.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mail.o `test -f 'src/mail.c' || echo '$(srcdir)/'`src/mail.c
 
-mail.obj: library/mail.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mail.obj -MD -MP -MF $(DEPDIR)/mail.Tpo -c -o mail.obj `if test -f 'library/mail.c'; then $(CYGPATH_W) 'library/mail.c'; else $(CYGPATH_W) '$(srcdir)/library/mail.c'; fi`
+mail.obj: src/mail.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mail.obj -MD -MP -MF $(DEPDIR)/mail.Tpo -c -o mail.obj `if test -f 'src/mail.c'; then $(CYGPATH_W) 'src/mail.c'; else $(CYGPATH_W) '$(srcdir)/src/mail.c'; fi`
 	$(am__mv) $(DEPDIR)/mail.Tpo $(DEPDIR)/mail.Po
-#	source='library/mail.c' object='mail.obj' libtool=no \
+#	source='src/mail.c' object='mail.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mail.obj `if test -f 'library/mail.c'; then $(CYGPATH_W) 'library/mail.c'; else $(CYGPATH_W) '$(srcdir)/library/mail.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mail.obj `if test -f 'src/mail.c'; then $(CYGPATH_W) 'src/mail.c'; else $(CYGPATH_W) '$(srcdir)/src/mail.c'; fi`
 
-base64.o: library/base64.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT base64.o -MD -MP -MF $(DEPDIR)/base64.Tpo -c -o base64.o `test -f 'library/base64.c' || echo '$(srcdir)/'`library/base64.c
+base64.o: src/base64.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT base64.o -MD -MP -MF $(DEPDIR)/base64.Tpo -c -o base64.o `test -f 'src/base64.c' || echo '$(srcdir)/'`src/base64.c
 	$(am__mv) $(DEPDIR)/base64.Tpo $(DEPDIR)/base64.Po
-#	source='library/base64.c' object='base64.o' libtool=no \
+#	source='src/base64.c' object='base64.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o base64.o `test -f 'library/base64.c' || echo '$(srcdir)/'`library/base64.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o base64.o `test -f 'src/base64.c' || echo '$(srcdir)/'`src/base64.c
 
-base64.obj: library/base64.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT base64.obj -MD -MP -MF $(DEPDIR)/base64.Tpo -c -o base64.obj `if test -f 'library/base64.c'; then $(CYGPATH_W) 'library/base64.c'; else $(CYGPATH_W) '$(srcdir)/library/base64.c'; fi`
+base64.obj: src/base64.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT base64.obj -MD -MP -MF $(DEPDIR)/base64.Tpo -c -o base64.obj `if test -f 'src/base64.c'; then $(CYGPATH_W) 'src/base64.c'; else $(CYGPATH_W) '$(srcdir)/src/base64.c'; fi`
 	$(am__mv) $(DEPDIR)/base64.Tpo $(DEPDIR)/base64.Po
-#	source='library/base64.c' object='base64.obj' libtool=no \
+#	source='src/base64.c' object='base64.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o base64.obj `if test -f 'library/base64.c'; then $(CYGPATH_W) 'library/base64.c'; else $(CYGPATH_W) '$(srcdir)/library/base64.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o base64.obj `if test -f 'src/base64.c'; then $(CYGPATH_W) 'src/base64.c'; else $(CYGPATH_W) '$(srcdir)/src/base64.c'; fi`
 
-tool.o: library/tool.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tool.o -MD -MP -MF $(DEPDIR)/tool.Tpo -c -o tool.o `test -f 'library/tool.c' || echo '$(srcdir)/'`library/tool.c
+tool.o: src/tool.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tool.o -MD -MP -MF $(DEPDIR)/tool.Tpo -c -o tool.o `test -f 'src/tool.c' || echo '$(srcdir)/'`src/tool.c
 	$(am__mv) $(DEPDIR)/tool.Tpo $(DEPDIR)/tool.Po
-#	source='library/tool.c' object='tool.o' libtool=no \
+#	source='src/tool.c' object='tool.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tool.o `test -f 'library/tool.c' || echo '$(srcdir)/'`library/tool.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tool.o `test -f 'src/tool.c' || echo '$(srcdir)/'`src/tool.c
 
-tool.obj: library/tool.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tool.obj -MD -MP -MF $(DEPDIR)/tool.Tpo -c -o tool.obj `if test -f 'library/tool.c'; then $(CYGPATH_W) 'library/tool.c'; else $(CYGPATH_W) '$(srcdir)/library/tool.c'; fi`
+tool.obj: src/tool.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tool.obj -MD -MP -MF $(DEPDIR)/tool.Tpo -c -o tool.obj `if test -f 'src/tool.c'; then $(CYGPATH_W) 'src/tool.c'; else $(CYGPATH_W) '$(srcdir)/src/tool.c'; fi`
 	$(am__mv) $(DEPDIR)/tool.Tpo $(DEPDIR)/tool.Po
-#	source='library/tool.c' object='tool.obj' libtool=no \
+#	source='src/tool.c' object='tool.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tool.obj `if test -f 'library/tool.c'; then $(CYGPATH_W) 'library/tool.c'; else $(CYGPATH_W) '$(srcdir)/library/tool.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tool.obj `if test -f 'src/tool.c'; then $(CYGPATH_W) 'src/tool.c'; else $(CYGPATH_W) '$(srcdir)/src/tool.c'; fi`
 
-config.o: library/config.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT config.o -MD -MP -MF $(DEPDIR)/config.Tpo -c -o config.o `test -f 'library/config.c' || echo '$(srcdir)/'`library/config.c
+config.o: src/config.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT config.o -MD -MP -MF $(DEPDIR)/config.Tpo -c -o config.o `test -f 'src/config.c' || echo '$(srcdir)/'`src/config.c
 	$(am__mv) $(DEPDIR)/config.Tpo $(DEPDIR)/config.Po
-#	source='library/config.c' object='config.o' libtool=no \
+#	source='src/config.c' object='config.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o config.o `test -f 'library/config.c' || echo '$(srcdir)/'`library/config.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o config.o `test -f 'src/config.c' || echo '$(srcdir)/'`src/config.c
 
-config.obj: library/config.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT config.obj -MD -MP -MF $(DEPDIR)/config.Tpo -c -o config.obj `if test -f 'library/config.c'; then $(CYGPATH_W) 'library/config.c'; else $(CYGPATH_W) '$(srcdir)/library/config.c'; fi`
+config.obj: src/config.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT config.obj -MD -MP -MF $(DEPDIR)/config.Tpo -c -o config.obj `if test -f 'src/config.c'; then $(CYGPATH_W) 'src/config.c'; else $(CYGPATH_W) '$(srcdir)/src/config.c'; fi`
 	$(am__mv) $(DEPDIR)/config.Tpo $(DEPDIR)/config.Po
-#	source='library/config.c' object='config.obj' libtool=no \
+#	source='src/config.c' object='config.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o config.obj `if test -f 'library/config.c'; then $(CYGPATH_W) 'library/config.c'; else $(CYGPATH_W) '$(srcdir)/library/config.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o config.obj `if test -f 'src/config.c'; then $(CYGPATH_W) 'src/config.c'; else $(CYGPATH_W) '$(srcdir)/src/config.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
