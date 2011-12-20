@@ -93,12 +93,6 @@ MailParams *g_mail_params = NULL;
 //任务锁
 pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
 /*******************************************************************/
-/* 请求返回数据 */
-struct RESPONSE {
-	char *responsetext;
-	size_t size;
-};
-/*******************************************************************/
 /* 帮助信息 */
 void usage() {
 	printf("author raink.kid@gmail.com\n" \
@@ -580,7 +574,6 @@ void task_mysql_load() {
 	char command[BUFSIZE] = {0x00};
 
 	mysql_begin(&mysql_conn);
-
 	// 查询sql
 	sprintf(sql, "%s", "SELECT * FROM mk_timeproc");
 
