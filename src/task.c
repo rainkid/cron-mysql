@@ -76,13 +76,10 @@ void curl_request(TaskItem *task_item);
 void *pull_one_item(void *item);
 void task_worker();
 void load_worker();
-void task_file_load(const char *g_task_file);
+void task_file_load(const char *task_file);
 void task_mysql_load();
 /*******************************************************************/
 //全局变量
-char g_run_type[BUFSIZE] = {0x00};
-char g_notice[BUFSIZE] = {0x00};
-char g_task_file[BUFSIZE] = {0X00};
 char *g_config_file = NULL;
 // 任务节点
 TaskList *task_list = NULL;
@@ -90,6 +87,8 @@ TaskList *task_list = NULL;
 MysqlParams *g_mysql_params = NULL;
 //邮件参数
 MailParams *g_mail_params = NULL;
+//全局变量
+GlobalParams *global = NULL;
 //任务锁
 pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
 /*******************************************************************/
@@ -189,22 +188,20 @@ int send_notice_mail(char *subject, char *content) {
 }
 /*******************************************************************/
 void mysql_begin(MYSQL *mysql_conn){
-	if (mysql_library_init(0, NULL, NULL)) {
-		write_log("could not initialize MySQL library.");
-	 }
+	mysql_thread_init();
 	// mysql 初始化连接
 	if (NULL == mysql_init(mysql_conn)) {
 		write_log("mysql initialization fails.");
 	}
 	// mysql连接
-	if (NULL == mysql_real_connect(mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, 1024)) {
+	if(NULL == mysql_real_connect(mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, 128)){
 		write_log("mysql connection fails.");
 	}
 }
 /*******************************************************************/
 void mysql_end(MYSQL *mysql_conn){
 	mysql_close(mysql_conn);
-	mysql_library_end();
+	mysql_thread_end();
 }
 /*******************************************************************/
 //记录日志
@@ -221,18 +218,7 @@ void task_log(int task_id, int ret, char* msg) {
 	p = localtime(&timep);
 	mmsg = malloc(strlen(msg)+1);
 	sprintf(mmsg, "%s", msg);
-	/*if (mysql_library_init(0, NULL, NULL)) {
-		write_log("could not initialize MySQL library.");
-	}*/
-	mysql_thread_init();
-	// mysql 初始化连接
-	if (NULL == mysql_init(&mysql_conn)) {
-		write_log("mysql initialization fails.");
-	}
-	// mysql连接
-	if(NULL == mysql_real_connect(&mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, 128)){
-		write_log("mysql connection fails.");
-	}
+	mysql_begin(&mysql_conn);
 	//更新执行时间
 	sprintf(upsql, "UPDATE mk_timeproc SET last_run_time='%04d-%02d-%02d %02d:%02d:%02d' WHERE id=%d", (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, task_id);
 	if (mysql_query(&mysql_conn, upsql) != 0) {
@@ -244,9 +230,7 @@ void task_log(int task_id, int ret, char* msg) {
 		write_log("insert logs fails.");
 	}
 	free(mmsg);
-	mysql_close(&mysql_conn);
-//	mysql_library_end();
-	mysql_thread_end();
+	mysql_end(&mysql_conn);
 }
 
 /*******************************************************************/
@@ -316,7 +300,7 @@ void curl_request(TaskItem *task_item) {
 		write_log("%s...fails", url);
 	}
 	//记录日志
-	if (strcmp(g_run_type, "mysql") == 0) {
+	if (strcmp(global->run_type, "mysql") == 0) {
 		if(NULL != chunk.responsetext){
 			task_log(task_item->task_id, ret, chunk.responsetext);
 		}
@@ -370,7 +354,7 @@ void *pull_one_item(void *item) {
 		write_log("%s...fails", url);
 	}
 	//记录日志
-	if (strcmp(g_run_type, "mysql") == 0) {
+	if (strcmp(global->run_type, "mysql") == 0) {
 		if(NULL != chunk.responsetext){
 			task_log(task_item->task_id, ret, chunk.responsetext);
 		}
@@ -450,9 +434,9 @@ void load_worker() {
 	pthread_detach(pthread_self());
 	while (1) {
 		// 加载任务到新建列表中
-		if (strcmp(g_run_type, "file") == 0) {
-			task_file_load(g_task_file);
-		} else if (strcmp(g_run_type, "mysql") == 0) {
+		if (strcmp(global->run_type, "file") == 0) {
+			task_file_load(global->task_file);
+		} else if (strcmp(global->run_type, "mysql") == 0) {
 			task_mysql_load();
 		}
 		usleep(SYNC_CONFIG_TIME);
@@ -498,9 +482,9 @@ void kill_signal_worker(const int signal) {
 
 /*******************************************************************/
 // 文件配置计划任务加载
-void task_file_load(const char *g_task_file) {
+void task_file_load(const char *task_file) {
 	FILE *fp;
-	fp = fopen(g_task_file, "r");
+	fp = fopen(global->task_file, "r");
 	if (NULL == fp) {
 		write_log("open config file faild.");
 	}
@@ -584,17 +568,7 @@ void task_mysql_load() {
 	char end_time[BUFSIZE] = {0x00};
 	char command[BUFSIZE] = {0x00};
 
-	if (mysql_library_init(0, NULL, NULL)) {
-		write_log("could not initialize MySQL library.");
-	 }
-	// mysql 初始化连接
-	if (NULL == mysql_init(&mysql_conn)) {
-		write_log("mysql initialization fails.");
-	}
-	// mysql连接
-	if (NULL == mysql_real_connect(&mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, CLIENT_MULTI_STATEMENTS)) {
-		write_log("mysql connection fails.");
-	}
+	mysql_begin(&mysql_conn);
 	// 查询sql
 	sprintf(sql, "%s", "SELECT * FROM mk_timeproc");
 
@@ -681,8 +655,7 @@ void task_mysql_load() {
 	pthread_mutex_unlock(&task_lock);
 	// 释放结果集
 	mysql_free_result(mysql_result);
-	mysql_close(&mysql_conn);
-	mysql_library_end();
+	mysql_end(&mysql_conn);
 }
 /*******************************************************************/
 void create_child(void){
@@ -763,17 +736,32 @@ void daemonize(void) {
 			close(i);
 		}
 }
+void init_global_params(){
+	global = (GlobalParams *)malloc(sizeof(GlobalParams));
+	// 配置选项检查-运行方式
+	sprintf(global->run_type, "%s", c_get_string("main", "run", g_config_file));
+	if (strcmp(global->run_type, "file") != 0 && strcmp(global->run_type, "mysql") !=0 ) {
+		fprintf(stderr, "error run type : %s, it's is mysql or file\n", global->run_type);
+		exit(EXIT_FAILURE);
+	}
+	//是否开启通知
+	sprintf(global->notice, "%s", c_get_string("main", "notice", g_config_file));
+	if (strcmp(global->notice, "on") != 0 && strcmp(global->notice, "off") !=0 ) {
+		fprintf(stderr, "error notice value : %s, it's is on or off\n", global->notice);
+		exit(EXIT_FAILURE);
+	}
+}
 /*******************************************************************/
-void init_g_mysql_params(){
+void init_mysql_params(){
 	g_mysql_params = (MysqlParams *)malloc(sizeof(MysqlParams));
 	// 读取任务配置文件
-	if (strcmp(g_run_type, "file") == 0) {
-		sprintf(g_task_file, "%s", c_get_string("file", "file", g_config_file));
-		if (NULL == g_task_file || -1 == access(g_task_file, F_OK)) {
+	if (strcmp(global->run_type, "file") == 0) {
+		sprintf(global->task_file, "%s", c_get_string("file", "file", g_config_file));
+		if (NULL == global->task_file || -1 == access(global->task_file, F_OK)) {
 			fprintf(stderr,	"task file is not exist.\n");
 			exit(EXIT_FAILURE);
 		}
-	} else if (strcmp(g_run_type, "mysql") == 0) {
+	} else if (strcmp(global->run_type, "mysql") == 0) {
 		sprintf(g_mysql_params->host, "%s", c_get_string("mysql", "host", g_config_file));
 		sprintf(g_mysql_params->username, "%s", c_get_string("mysql", "username", g_config_file));
 		sprintf(g_mysql_params->passwd, "%s", c_get_string("mysql", "passwd", g_config_file));
@@ -836,20 +824,9 @@ int main(int argc, char *argv[], char *envp[]) {
 		fprintf(stderr,	"too many arguments\nTry `%s --help' for more information.\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	// 配置选项检查-运行方式
-	sprintf(g_run_type, "%s", c_get_string("main", "run", g_config_file));
-	if (strcmp(g_run_type, "file") != 0 && strcmp(g_run_type, "mysql") !=0 ) {
-		fprintf(stderr, "error run type : %s, it's is mysql or file\n", g_run_type);
-		exit(EXIT_FAILURE);
-	}
-	//是否开启通知
-	sprintf(g_notice, "%s", c_get_string("main", "notice", g_config_file));
-	if (strcmp(g_notice, "on") != 0 && strcmp(g_notice, "off") !=0 ) {
-		fprintf(stderr, "error notice value : %s, it's is on or off\n", g_notice);
-		exit(EXIT_FAILURE);
-	}
-	init_g_mysql_params();
-	if (strcmp(g_notice, "on") == 0) {
+	init_global_params();
+	init_mysql_params();
+	if (strcmp(global->notice, "on") == 0) {
 		init_g_mail_params();
 	}
 	if (daemon == true) {
