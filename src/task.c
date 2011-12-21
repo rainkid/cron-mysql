@@ -190,14 +190,14 @@ int send_notice_mail(char *subject, char *content) {
 /*******************************************************************/
 void mysql_begin(MYSQL *mysql_conn){
 	if (mysql_library_init(0, NULL, NULL)) {
-	    write_log("could not initialize MySQL library.");
+		write_log("could not initialize MySQL library.");
 	 }
 	// mysql 初始化连接
 	if (NULL == mysql_init(mysql_conn)) {
 		write_log("mysql initialization fails.");
 	}
 	// mysql连接
-	if (NULL == mysql_real_connect(mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, 128)) {
+	if (NULL == mysql_real_connect(mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, 1024)) {
 		write_log("mysql connection fails.");
 	}
 }
@@ -209,7 +209,6 @@ void mysql_end(MYSQL *mysql_conn){
 /*******************************************************************/
 //记录日志
 void task_log(int task_id, int ret, char* msg) {
-
 	MYSQL mysql_conn;
 	char sql[BUFSIZE] = {0x00};
 	char upsql[BUFSIZE] = {0x00};
@@ -219,24 +218,35 @@ void task_log(int task_id, int ret, char* msg) {
 	struct tm *p;
 	time_t timep;
 	time(&timep);
-	p=localtime(&timep);
+	p = localtime(&timep);
 	mmsg = malloc(strlen(msg)+1);
 	sprintf(mmsg, "%s", msg);
-
-	mysql_begin(&mysql_conn);
+	/*if (mysql_library_init(0, NULL, NULL)) {
+		write_log("could not initialize MySQL library.");
+	}*/
+	mysql_thread_init();
+	// mysql 初始化连接
+	if (NULL == mysql_init(&mysql_conn)) {
+		write_log("mysql initialization fails.");
+	}
+	// mysql连接
+	if(NULL == mysql_real_connect(&mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, 128)){
+		write_log("mysql connection fails.");
+	}
 	//更新执行时间
 	sprintf(upsql, "UPDATE mk_timeproc SET last_run_time='%04d-%02d-%02d %02d:%02d:%02d' WHERE id=%d", (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, task_id);
 	if (mysql_query(&mysql_conn, upsql) != 0) {
-		write_log("update last_run_time fails : %s", upsql);
+		write_log("update last_run_time fails.");
 	}
 	//添加日志
 	sprintf(sql, "INSERT INTO mk_timeproc_log VALUES('', %d,%d,\"%s\" ,'%04d-%02d-%02d %02d:%02d:%02d')", task_id, ret, msg, (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
 	if (mysql_query(&mysql_conn, sql) != 0) {
-		write_log("insert logs fails : %s", sql);
+		write_log("insert logs fails.");
 	}
-
 	free(mmsg);
-	mysql_end(&mysql_conn);
+	mysql_close(&mysql_conn);
+//	mysql_library_end();
+	mysql_thread_end();
 }
 
 /*******************************************************************/
@@ -322,6 +332,7 @@ void curl_request(TaskItem *task_item) {
 /*******************************************************************/
 //
 void *pull_one_item(void *item) {
+	pthread_detach(pthread_self());
 	int ret = 0;
 	char *url;
 	CURL *curl_handle = NULL;
@@ -335,7 +346,6 @@ void *pull_one_item(void *item) {
 
 	TaskItem *task_item;
 	task_item = (TaskItem *)item;
-
 	url = malloc(strlen(task_item->command) + 1);
 	sprintf(url, "%s", task_item->command);
 	if (curl_handle != NULL) {
@@ -376,7 +386,6 @@ void *pull_one_item(void *item) {
 /*******************************************************************/
 /* 任务处理线程 */
 void task_worker() {
-	pthread_detach(pthread_self());
 	TaskItem *temp;
 	pthread_t tid[THREAD_MAX];
 	while (1) {
@@ -389,9 +398,9 @@ void task_worker() {
 				if (nowTime < temp->nextTime) {
 					break;
 				}
-//				curl_request(temp);
+				curl_request(temp);
 				pthread_create(&tid[i], NULL, pull_one_item, (void *)temp);
-				pthread_join(tid[i], NULL);
+				pthread_detach(tid[i]);
 				i++;
 
 				(temp->runTimes)++;
@@ -472,7 +481,6 @@ void kill_signal_master(const int signal) {
 	// 给进程组发送SIGTERM信号，结束子进程
 	kill(0, SIGTERM);
 	exit(EXIT_SUCCESS);
-	return;
 }
 
 /*******************************************************************/
@@ -486,7 +494,6 @@ void kill_signal_worker(const int signal) {
 	curl_global_cleanup();
 	pthread_exit(0);
 	exit(EXIT_SUCCESS);
-	return;
 }
 
 /*******************************************************************/
@@ -563,12 +570,10 @@ void task_file_load(const char *g_task_file) {
 	write_log("load tasks form file.");
 	pthread_mutex_unlock(&task_lock);
 	fclose(fp);
-	return;
 }
 /*******************************************************************/
 //mysql任务加载
 void task_mysql_load() {
-
 	MYSQL mysql_conn;
 	MYSQL_RES *mysql_result;
 	MYSQL_ROW mysql_row;
@@ -579,7 +584,17 @@ void task_mysql_load() {
 	char end_time[BUFSIZE] = {0x00};
 	char command[BUFSIZE] = {0x00};
 
-	mysql_begin(&mysql_conn);
+	if (mysql_library_init(0, NULL, NULL)) {
+		write_log("could not initialize MySQL library.");
+	 }
+	// mysql 初始化连接
+	if (NULL == mysql_init(&mysql_conn)) {
+		write_log("mysql initialization fails.");
+	}
+	// mysql连接
+	if (NULL == mysql_real_connect(&mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, CLIENT_MULTI_STATEMENTS)) {
+		write_log("mysql connection fails.");
+	}
 	// 查询sql
 	sprintf(sql, "%s", "SELECT * FROM mk_timeproc");
 
@@ -666,8 +681,8 @@ void task_mysql_load() {
 	pthread_mutex_unlock(&task_lock);
 	// 释放结果集
 	mysql_free_result(mysql_result);
-	mysql_end(&mysql_conn);
-	return;
+	mysql_close(&mysql_conn);
+	mysql_library_end();
 }
 /*******************************************************************/
 void create_child(void){
