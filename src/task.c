@@ -398,7 +398,7 @@ void task_worker() {
 				if (nowTime < temp->nextTime) {
 					break;
 				}
-				curl_request(temp);
+//				curl_request(temp);
 				pthread_create(&tid[i], NULL, pull_one_item, (void *)temp);
 				pthread_detach(tid[i]);
 				i++;
