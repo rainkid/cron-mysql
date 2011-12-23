@@ -375,7 +375,7 @@ void task_worker() {
 	while (1) {
 		pthread_mutex_lock(&task_lock);
 		if (NULL != task_list && task_list->count > 0) {
-			int i = 0;
+			int i =0, j = 0;
 			while (NULL != (temp = task_list->head)) {
 				// 大于当前时间跳出
 				time_t nowTime = GetNowTime();
@@ -384,7 +384,8 @@ void task_worker() {
 				}
 //				curl_request(temp);
 				pthread_create(&tid[i], NULL, pull_one_item, (void *)temp);
-				pthread_detach(tid[i]);
+//				pthread_detach(tid[i]);
+//				pthread_join(tid[i], NULL);
 				i++;
 
 				(temp->runTimes)++;
@@ -420,6 +421,9 @@ void task_worker() {
 					}
 				}
 			}
+			for(j=0; j<i; j++){
+				pthread_join(tid[j], NULL);
+			}	
 			write_log("%d tasks in task list.", task_list->count);
 		}else{
 			write_log("task list is null.");
