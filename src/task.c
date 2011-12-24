@@ -54,18 +54,6 @@
 #include "mail.h"
 #include "define.h"
 
-#define PIDFILE  "task.pid"
-#define VERSION  "1.0"
-#define BUFSIZE  8096
-#define LOG_FILE  "logs/task.log"
-#define BACK_LOG_FILE  "logs/task.log.bak"
-#define MAX_LOG_SIZE  (1024 * 1000)
-
-#define SYNC_CONFIG_TIME (5000000 * 60)
-#define SEND_MAIL_TIME (30 * 1000000 * 60)
-#define TIME_UNIT 60
-#define TASK_STEP   1000000
-#define THREAD_MAX 1024
 /*******************************************************************/
 // 函数声明
 void write_log(const char *fmt,  ...);
@@ -132,7 +120,7 @@ void write_log(const char *fmt,  ...) {
 /* curl回调处理函数 */
 size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data) {
 	size_t realsize = size * nmemb;
-	struct RESPONSE *mem = (struct RESPONSE *) data;
+	struct Response *mem = (struct Response *) data;
 	mem->responsetext = malloc(mem->size + realsize + 1);
 	if (NULL == mem->responsetext) {
 		write_log("responsetext malloc error.");
@@ -260,59 +248,6 @@ void mail_worker(){
 		usleep(SEND_MAIL_TIME);
 	}
 }
-
-/*******************************************************************/
-
-//请求处理
-void curl_request(TaskItem *task_item) {
-	int ret = 0;
-	char *url;
-	CURL *curl_handle = NULL;
-
-	struct RESPONSE chunk;
-	chunk.responsetext = NULL;
-	chunk.size = 0;
-
-	CURLcode response;
-	curl_handle = curl_easy_init();
-
-	url = malloc(strlen(task_item->command) + 1);
-	sprintf(url, "%s", task_item->command);
-	if (curl_handle != NULL) {
-
-		curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, task_item->timeout * TIME_UNIT);
-		// 回调设置
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_callback);
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
-
-		response = curl_easy_perform(curl_handle);
-	}else{
-		write_log("curl handler is null.");
-	}
-	// 请求响应处理
-	if ((response == CURLE_OK) && chunk.responsetext &&
-		(strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
-		write_log("%s...success", url);
-		ret = 1;
-	} else {
-		task_item->mail = true;
-		write_log("%s...fails", url);
-	}
-	//记录日志
-	if (strcmp(global->run_type, "mysql") == 0) {
-		if(NULL != chunk.responsetext){
-			task_log(task_item->task_id, ret, chunk.responsetext);
-		}
-	}
-
-	if (NULL != chunk.responsetext) {
-		free(chunk.responsetext);
-	}
-	free(url);
-	curl_easy_cleanup(curl_handle);
-}
-
 /*******************************************************************/
 //
 void *pull_one_item(void *item) {
@@ -321,7 +256,7 @@ void *pull_one_item(void *item) {
 	char *url;
 	CURL *curl_handle = NULL;
 
-	struct RESPONSE chunk;
+	struct Response chunk;
 	chunk.responsetext = NULL;
 	chunk.size = 0;
 
@@ -421,9 +356,6 @@ void task_worker() {
 					}
 				}
 			}
-			for(j=0; j<i; j++){
-				pthread_join(tid[j], NULL);
-			}	
 			write_log("%d tasks in task list.", task_list->count);
 		}else{
 			write_log("task list is null.");
@@ -774,7 +706,7 @@ void init_mysql_params(){
 	}
 }
 /*******************************************************************/
-void init_g_mail_params(){
+void init_mail_params(){
 	g_mail_params = (MailParams *)malloc(sizeof(MailParams));
 	sprintf(g_mail_params->server, "%s", c_get_string("mail", "server", g_config_file));
 	sprintf(g_mail_params->user, "%s", c_get_string("mail", "user", g_config_file));
@@ -831,7 +763,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	init_global_params();
 	init_mysql_params();
 	if (strcmp(global->notice, "on") == 0) {
-		init_g_mail_params();
+		init_mail_params();
 	}
 	if (daemon == true) {
 		daemonize();
