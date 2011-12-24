@@ -21,6 +21,7 @@ typedef struct _taskItem {
     int runTimes;
     bool mail;
     char command[BUFSIZ];
+    int status;
     struct _taskItem *next;
     struct _taskItem *prev;
 } TaskItem;

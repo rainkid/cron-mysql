@@ -79,6 +79,8 @@ MailParams *g_mail_params = NULL;
 GlobalParams *global = NULL;
 //任务锁
 pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
+
+TaskItem *task_right_list[THREAD_MAX];
 /*******************************************************************/
 /* 帮助信息 */
 void usage() {
@@ -225,7 +227,7 @@ void task_log(int task_id, int ret, char* msg) {
 
 //邮件队列
 void mail_worker(){
-	pthread_detach(pthread_self());
+//	pthread_detach(pthread_self());
 	TaskItem *task_item;
 	while (1) {
 		pthread_mutex_lock(&task_lock);
@@ -251,7 +253,7 @@ void mail_worker(){
 /*******************************************************************/
 //
 void *pull_one_item(void *item) {
-	pthread_detach(pthread_self());
+//	pthread_detach(pthread_self());
 	int ret = 0;
 	char *url;
 	CURL *curl_handle = NULL;
@@ -298,27 +300,37 @@ void *pull_one_item(void *item) {
 	if (NULL != chunk.responsetext) {
 		free(chunk.responsetext);
 	}
+	task_item->status = 0;
 	free(url);
 	curl_easy_cleanup(curl_handle);
 }
-
 /*******************************************************************/
 /* 任务处理线程 */
 void task_worker() {
+//	pthread_detach(pthread_self());
 	TaskItem *temp;
-	pthread_t tid[THREAD_MAX];
+	//pthread_t tid[THREAD_MAX];
+	int i = 0 ;
 	while (1) {
 		pthread_mutex_lock(&task_lock);
 		if (NULL != task_list && task_list->count > 0) {
-			int i =0, j = 0;
+//			int i =0, j = 0;
 			while (NULL != (temp = task_list->head)) {
 				// 大于当前时间跳出
 				time_t nowTime = GetNowTime();
-				if (nowTime < temp->nextTime) {
+				if (nowTime < temp->nextTime || temp->status == 1) {
 					break;
 				}
-//				curl_request(temp);
-				pthread_create(&tid[i], NULL, pull_one_item, (void *)temp);
+				for(i=0; i<THREAD_MAX; i++) {
+					if (task_right_list[i] == NULL) {
+						task_right_list[i] = temp;
+						break;
+					}
+				}
+//				temp->status = 1;
+//				fprintf(stderr,"%d\n",temp->status);
+//				pull_one_item(temp);
+//				pthread_create(&tid[i], NULL, pull_one_item, (void *)temp);
 //				pthread_detach(tid[i]);
 //				pthread_join(tid[i], NULL);
 				i++;
@@ -367,7 +379,7 @@ void task_worker() {
 /*******************************************************************/
 /* 同步配置线程 */
 void load_worker() {
-	pthread_detach(pthread_self());
+//	pthread_detach(pthread_self());
 	while (1) {
 		// 加载任务到新建列表中
 		if (strcmp(global->run_type, "file") == 0) {
@@ -413,6 +425,7 @@ void kill_signal_worker(const int signal) {
 	}
 	curl_global_cleanup();
 	pthread_exit(0);
+	kill(0, SIGTERM);
 	exit(EXIT_SUCCESS);
 }
 
@@ -428,9 +441,7 @@ void task_file_load(const char *task_file) {
 
 	pthread_mutex_lock(&task_lock);
 	//初始化任务列表
-	task_list->count = 0;
-	task_list->head = NULL;
-	task_list->tail = NULL;
+	task_init(task_list);
 
 	while (NULL != fgets(line, BUFSIZE, fp)) {
 		// 忽略空行和＃号开头的行
@@ -519,9 +530,7 @@ void task_mysql_load() {
 
 	pthread_mutex_lock(&task_lock);
 	//初始化任务列表
-	task_list->count = 0;
-	task_list->head = NULL;
-	task_list->tail = NULL;
+	task_init(task_list);
 
 	// 取数据
 	for (row = 0; row < row_num; row++) {
@@ -537,6 +546,7 @@ void task_mysql_load() {
 		taskItem->next = NULL;
 		taskItem->prev = NULL;
 		taskItem->runTimes = 0;
+		taskItem->status = 0;
 
 		// 格式化开始时间
 		sprintf(start_time, "%s", mysql_row[1]);
@@ -714,7 +724,46 @@ void init_mail_params(){
 	sprintf(g_mail_params->to, "%s", c_get_string("mail", "to", g_config_file));
 	g_mail_params->port = c_get_int("mail", "port", g_config_file);
 }
-
+/*******************************************************************/
+void task_right(void *it){
+	long t = (long)it;
+	for(;;) {
+		TaskItem * task_item = (TaskItem *)task_right_list[t];
+	    if (task_item != NULL) {
+			pull_one_item(task_item);
+			task_right_list[t] = NULL;			
+		}
+		usleep(100000);
+	}
+}
+/*******************************************************************/
+void task_main(){
+	long i = 0;
+	pthread_t task_tid, config_tid, mail_tid;
+	// 定时加载配置线程
+	pthread_create(&config_tid, NULL, (void *) load_worker, NULL);
+	// 邮件队列线程
+	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
+	//任务开始
+	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
+	pthread_t tid[THREAD_MAX];
+	for(i=0; i<THREAD_MAX; i++) {
+		pthread_create(&tid[i], NULL,(void *) task_right, (void *)i);		
+	}
+    pthread_join(task_tid, NULL);
+    pthread_join(config_tid, NULL);
+    pthread_join(mail_tid, NULL);
+	for(i=0; i<THREAD_MAX; i++) {
+		pthread_join(tid[i], NULL);
+	}
+}
+/*******************************************************************/
+void init_right_task_list(){
+	int i = 0;
+	for(i=0; i<THREAD_MAX; i++) {
+		task_right_list[i] != NULL;
+	}
+}
 /*******************************************************************/
 // 主模块
 int main(int argc, char *argv[], char *envp[]) {
@@ -775,12 +824,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	if (NULL == task_list) {
 		write_log("tasklist malloc failed.");
 	};
-	pthread_t config_tid, mail_tid;
-	// 定时加载配置线程
-	pthread_create(&config_tid, NULL, (void *) load_worker, NULL);
-	// 邮件队列线程
-	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
-	//任务开始
-	task_worker();
+	init_right_task_list();
+	task_main();
 	return 0;
 }
