@@ -503,7 +503,16 @@ void task_mysql_load() {
 	char end_time[BUFSIZE] = {0x00};
 	char command[BUFSIZE] = {0x00};
 
-	mysql_begin(&mysql_conn);
+	if (mysql_library_init(0, NULL, NULL)) {
+		write_log("could not initialize mysql library.");
+	}
+	if (NULL == mysql_init(&mysql_conn)) {
+		write_log("mysql initialization fails.");
+	}
+	// mysql连接
+	if(NULL == mysql_real_connect(&mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, 128)){
+		write_log("mysql connection fails.");
+	}
 	// 查询sql
 	sprintf(sql, "%s", "SELECT * FROM mk_timeproc");
 
@@ -589,7 +598,8 @@ void task_mysql_load() {
 	pthread_mutex_unlock(&task_lock);
 	// 释放结果集
 	mysql_free_result(mysql_result);
-	mysql_end(&mysql_conn);
+	mysql_close(&mysql_conn);
+	mysql_library_end();
 }
 /*******************************************************************/
 void create_child(void){
