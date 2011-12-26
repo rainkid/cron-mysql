@@ -18,7 +18,7 @@
 #define SYNC_CONFIG_TIME (5000000 * 60)
 #define SEND_MAIL_TIME (30 * 1000000 * 60)
 #define TIME_UNIT 60
-#define TASK_STEP   1000000
+#define TASK_STEP   100000
 #define THREAD_MAX 100
 /* mysql连接相接相关数据 */
 typedef struct mysql_params{
@@ -42,6 +42,7 @@ typedef struct global_params{
 	char run_type[1024];
 	char notice[1024];
 	char task_file[1024];
+	int max_threads;
 } GlobalParams;
 
 /* 请求返回数据 */

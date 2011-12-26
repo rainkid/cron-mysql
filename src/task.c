@@ -80,7 +80,7 @@ GlobalParams *global = NULL;
 //任务锁
 pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
 
-TaskItem *task_right_list[THREAD_MAX];
+TaskItem *task_right_list[1024]={0};
 /*******************************************************************/
 /* 帮助信息 */
 void usage() {
@@ -356,7 +356,7 @@ void task_worker() {
 					}
 				}
 			}
-			write_log("%d tasks in task list.", task_list->count);
+			//write_log("%d tasks in task list.", task_list->count);
 		}else{
 			write_log("task list is null.");
 		}
@@ -669,6 +669,7 @@ void daemonize(void) {
 			close(i);
 		}
 }
+/*******************************************************************/
 void init_global_params(){
 	global = (GlobalParams *)malloc(sizeof(GlobalParams));
 	// 配置选项检查-运行方式
@@ -683,6 +684,7 @@ void init_global_params(){
 		fprintf(stderr, "error notice value : %s, it's is on or off\n", global->notice);
 		exit(EXIT_FAILURE);
 	}
+	global->max_threads = c_get_int("main", "max_threads", g_config_file);
 }
 /*******************************************************************/
 void init_mysql_params(){
@@ -720,7 +722,7 @@ void task_right(void *thread_id){
 			pull_one_item(task_item);
 			task_right_list[tid] = NULL;			
 		}
-		usleep(100000);
+		usleep(TASK_STEP);
 	}
 }
 /*******************************************************************/
@@ -735,20 +737,20 @@ void task_main(){
 	//任务分配线程
 	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
 	//创建即时任务线程
-	for(i=0; i<THREAD_MAX; i++) {
+	for(i=0; i<global->max_threads; i++) {
 		pthread_create(&tid[i], NULL,(void *) task_right, (void *)i);		
 	}
     pthread_join(task_tid, NULL);
     pthread_join(config_tid, NULL);
     pthread_join(mail_tid, NULL);
-	for(i=0; i<THREAD_MAX; i++) {
+	for(i=0; i<global->max_threads; i++) {
 		pthread_join(tid[i], NULL);
 	}
 }
 /*******************************************************************/
 void init_right_task_list(){
 	int i = 0;
-	for(i=0; i<THREAD_MAX; i++) {
+	for(i=0; i<global->max_threads; i++) {
 		task_right_list[i] != NULL;
 	}
 }
