@@ -1,6 +1,0 @@
-Inconsistency detected by ld.so: dl-open.c: 222: dl_open_worker: Assertion `_dl_debug_initialize (0, args->nsid)->r_state == RT_CONSISTENT' failed!
-Inconsistency detected by ld.so: dl-open.c: 222: dl_open_worker: Assertion `_dl_debug_initialize (0, args->nsid)->r_state == RT_CONSISTENT' failed!
-Inconsistency detected by ld.so: dl-open.c: 222: dl_open_worker: Assertion `_dl_debug_initialize (0, args->nsid)->r_state == RT_CONSISTENT' failed!
-Inconsistency detected by ld.so: dl-open.c: 222: dl_open_worker: Assertion `_dl_debug_initialize (0, args->nsid)->r_state == RT_CONSISTENT' failed!
-Inconsistency detected by ld.so: dl-open.c: 222: dl_open_worker: Assertion `_dl_debug_initialize (0, args->nsid)->r_state == RT_CONSISTENT' failed!
-Inconsistency detected by ld.so: dl-open.c: 222: dl_open_worker: Assertion `_dl_debug_initialize (0, args->nsid)->r_state == RT_CONSISTENT' failed!
