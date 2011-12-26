@@ -359,7 +359,7 @@ void task_worker() {
 			}
 			//write_log("%d tasks in task list.", task_list->count);
 		}else{
-			write_log("task list is null.");
+			write_log("task list is null , %p, %d", task_list, task->count);
 		}
 		pthread_mutex_unlock(&task_lock);
 		usleep(TASK_STEP);
