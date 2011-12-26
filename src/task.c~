@@ -232,7 +232,7 @@ void task_log(int task_id, int ret, char* msg) {
 		write_log("insert logs fails.");
 	}
 	free(mmsg);
-	mysql_close(&mysql_conn);
+	mysql_close(mysql_conn);
 	mysql_library_end();
 	//mysql_end(&mysql_conn);
 }
