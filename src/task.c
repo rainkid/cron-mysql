@@ -242,6 +242,7 @@ void mail_worker(){
 			}
 		}
 		pthread_mutex_unlock(&task_lock);
+		usleep(SEND_MAIL_TIME);
 	}
 }
 /*******************************************************************/
