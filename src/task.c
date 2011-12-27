@@ -223,6 +223,7 @@ void task_log(int task_id, int ret, char* msg) {
 
 //邮件队列
 void mail_worker(){
+	pthread_detach(pthread_self());
 	TaskItem *task_item;
 	for (;;) {
 		pthread_mutex_lock(&task_lock);
@@ -362,6 +363,7 @@ void task_worker() {
 /*******************************************************************/
 /* 同步配置线程 */
 void load_worker() {
+	pthread_detach(pthread_self());
 	for (;;) {
 		// 加载任务到新建列表中
 		if (strcmp(global->run_type, "file") == 0) {
@@ -722,6 +724,7 @@ void init_mail_params(){
 }
 /*******************************************************************/
 void task_right(void *thread_id){
+	pthread_detach(pthread_self());
 	long tid = (long)thread_id;
 	for(;;) {
 		TaskItem * task_item = (TaskItem *)task_right_list[tid];
@@ -742,17 +745,17 @@ void task_main(){
 	// 邮件队列线程
 	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
 	//任务分配线程
-	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
+//	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
 	//创建即时任务线程
 	for(i=0; i<global->max_threads; i++) {
 		pthread_create(&tid[i], NULL,(void *) task_right, (void *)i);		
 	}
-    pthread_join(task_tid, NULL);
+/*    pthread_join(task_tid, NULL);
     pthread_join(config_tid, NULL);
     pthread_join(mail_tid, NULL);
 	for(i=0; i<global->max_threads; i++) {
 		pthread_join(tid[i], NULL);
-	}
+	}*/
 }
 /*******************************************************************/
 void init_right_task_list(){
@@ -823,5 +826,6 @@ int main(int argc, char *argv[], char *envp[]) {
 	};
 	init_right_task_list();
 	task_main();
+	task_worker();
 	return 0;
 }
