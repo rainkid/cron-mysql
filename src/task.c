@@ -79,7 +79,7 @@ MailParams *g_mail_params = NULL;
 GlobalParams *global = NULL;
 //任务锁
 pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
-
+pthread_cond_t cond;
 TaskItem *task_right_list[1024]={0};
 /*******************************************************************/
 /* 帮助信息 */
@@ -242,7 +242,6 @@ void mail_worker(){
 			}
 		}
 		pthread_mutex_unlock(&task_lock);
-		usleep(SEND_MAIL_TIME);
 	}
 }
 /*******************************************************************/
@@ -497,106 +496,103 @@ void task_mysql_load() {
 	char end_time[BUFSIZE] = {0x00};
 	char command[BUFSIZE] = {0x00};
 
-	if (mysql_library_init(0, NULL, NULL)) {
+	if (!mysql_library_init(0, NULL, NULL)) {
+
+		if (NULL != mysql_init(&mysql_conn)) {
+			// mysql连接
+			if(NULL != mysql_real_connect(&mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, 128)){
+					// 查询sql
+					sprintf(sql, "%s", "SELECT * FROM mk_timeproc");
+					// 查询结果
+					if (0 == mysql_query(&mysql_conn, sql)) {
+						// 获取结果集和条数
+						mysql_result = mysql_store_result(&mysql_conn);
+						row_num = mysql_num_rows(mysql_result);
+
+						pthread_mutex_lock(&task_lock);
+						//初始化任务列表
+						task_init(task_list);
+
+						// 取数据
+						for (row = 0; row < row_num; row++) {
+							mysql_row = mysql_fetch_row(mysql_result);
+
+							// 开始,结束时间
+							struct tm _stime, _etime;
+							TaskItem *taskItem;
+							taskItem = (TaskItem *) malloc(sizeof(TaskItem));
+							assert(NULL != taskItem);
+
+							taskItem->mail = false;
+							taskItem->next = NULL;
+							taskItem->prev = NULL;
+							taskItem->runTimes = 0;
+
+							// 格式化开始时间
+							sprintf(start_time, "%s", mysql_row[1]);
+							sscanf(start_time, "%04d-%02d-%02d %02d:%02d:%02d", &_stime.tm_year,
+									&_stime.tm_mon, &_stime.tm_mday, &_stime.tm_hour,
+									&_stime.tm_min, &_stime.tm_sec);
+
+							// 格式化结束时间
+							sprintf(end_time, "%s", mysql_row[2]);
+							sscanf(end_time, "%04d-%02d-%02d %02d:%02d:%02d", &_etime.tm_year,
+									&_etime.tm_mon, &_etime.tm_mday, &_etime.tm_hour,
+									&_etime.tm_min, &_etime.tm_sec);
+
+							// 格式化命令
+							sprintf(command, "%s", mysql_row[5]);
+							sprintf(taskItem->command, "%s", command);
+
+							taskItem->times = 0;
+							taskItem->frequency = atoi(mysql_row[3]) * TIME_UNIT;
+							taskItem->task_id = atoi(mysql_row[0]);
+							taskItem->timeout = atoi(mysql_row[7]);
+
+							// 转化为时间戳
+							_stime.tm_year -= 1900;
+							_etime.tm_year -= 1900;
+							_stime.tm_mon -= 1;
+							_etime.tm_mon -= 1;
+
+							taskItem->startTime = mktime(&_stime);
+							taskItem->endTime = mktime(&_etime);
+
+							// 当前时间
+							time_t nowTime = GetNowTime();
+
+							// 计算下次运行点
+							int step = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
+							taskItem->nextTime = taskItem->startTime + ((step + 1) * taskItem->frequency);
+
+							while (taskItem->nextTime <= nowTime) {
+								taskItem->nextTime += taskItem->frequency;
+							}
+
+							// 如果已经结束直接下一个
+							if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
+								continue;
+							}
+							// 更新到任务链表
+							task_update(taskItem, task_list);
+						}
+						write_log("load %d tasks from mysql.", task_list->count);
+
+						pthread_mutex_unlock(&task_lock);
+						// 释放结果集
+						mysql_free_result(mysql_result);
+					}else{
+						write_log("mysql query fails.");
+					}
+			} else {
+				write_log("mysql connection fails.");
+			}
+		} else {
+			write_log("mysql initialization fails.");
+		}
+	} else {
 		write_log("could not initialize mysql library.");
-		goto mysql_end;
-	} 
-	if (NULL == mysql_init(&mysql_conn)) {
-		write_log("mysql initialization fails.");
-		goto mysql_end;
 	}
-	// mysql连接
-	if(NULL == mysql_real_connect(&mysql_conn, g_mysql_params->host, g_mysql_params->username, g_mysql_params->passwd, g_mysql_params->dbname, g_mysql_params->port, NULL, 128)){
-		write_log("mysql connection fails.");
-		goto mysql_end;
-	}
-	// 查询sql
-	sprintf(sql, "%s", "SELECT * FROM mk_timeproc");
-
-	// 查询结果
-	if (mysql_query(&mysql_conn, sql) != 0) {
-		write_log("mysql query fails.");
-		goto mysql_end;
-	}
-
-	// 获取结果集和条数
-	mysql_result = mysql_store_result(&mysql_conn);
-	row_num = mysql_num_rows(mysql_result);
-
-	pthread_mutex_lock(&task_lock);
-	//初始化任务列表
-	task_init(task_list);
-
-	// 取数据
-	for (row = 0; row < row_num; row++) {
-		mysql_row = mysql_fetch_row(mysql_result);
-
-		// 开始,结束时间
-		struct tm _stime, _etime;
-		TaskItem *taskItem;
-		taskItem = (TaskItem *) malloc(sizeof(TaskItem));
-		assert(NULL != taskItem);
-
-		taskItem->mail = false;
-		taskItem->next = NULL;
-		taskItem->prev = NULL;
-		taskItem->runTimes = 0;
-
-		// 格式化开始时间
-		sprintf(start_time, "%s", mysql_row[1]);
-		sscanf(start_time, "%04d-%02d-%02d %02d:%02d:%02d", &_stime.tm_year,
-				&_stime.tm_mon, &_stime.tm_mday, &_stime.tm_hour,
-				&_stime.tm_min, &_stime.tm_sec);
-
-		// 格式化结束时间
-		sprintf(end_time, "%s", mysql_row[2]);
-		sscanf(end_time, "%04d-%02d-%02d %02d:%02d:%02d", &_etime.tm_year,
-				&_etime.tm_mon, &_etime.tm_mday, &_etime.tm_hour,
-				&_etime.tm_min, &_etime.tm_sec);
-
-		// 格式化命令
-		sprintf(command, "%s", mysql_row[5]);
-		sprintf(taskItem->command, "%s", command);
-
-		taskItem->times = 0;
-		taskItem->frequency = atoi(mysql_row[3]) * TIME_UNIT;
-		taskItem->task_id = atoi(mysql_row[0]);
-		taskItem->timeout = atoi(mysql_row[7]);
-
-		// 转化为时间戳
-		_stime.tm_year -= 1900;
-		_etime.tm_year -= 1900;
-		_stime.tm_mon -= 1;
-		_etime.tm_mon -= 1;
-
-		taskItem->startTime = mktime(&_stime);
-		taskItem->endTime = mktime(&_etime);
-
-		// 当前时间
-		time_t nowTime = GetNowTime();
-
-		// 计算下次运行点
-		int step = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
-		taskItem->nextTime = taskItem->startTime + ((step + 1) * taskItem->frequency);
-
-		while (taskItem->nextTime <= nowTime) {
-			taskItem->nextTime += taskItem->frequency;
-		}
-
-		// 如果已经结束直接下一个
-		if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
-			continue;
-		}
-		// 更新到任务链表
-		task_update(taskItem, task_list);
-	}
-	write_log("load %d tasks from mysql.", task_list->count);
-
-	pthread_mutex_unlock(&task_lock);
-	// 释放结果集
-	mysql_free_result(mysql_result);
-
-mysql_end : 
 	mysql_close(&mysql_conn);
 	mysql_library_end();
 }
