@@ -722,7 +722,7 @@ void init_mail_params(){
 }
 /*******************************************************************/
 void task_right(void *thread_id){
-	int tid = *(int*)thread_id;
+	unsigned long tid = (unsigned long)thread_id;
 	for(;;) {
 		TaskItem * task_item = (TaskItem *)task_right_list[tid];
 	    if (task_item != NULL) {
@@ -734,7 +734,7 @@ void task_right(void *thread_id){
 }
 /*******************************************************************/
 void task_main(){
-	int i = 0;
+	unsigned long i = 0;
 	pthread_t tid[global->max_threads];
 	pthread_t task_tid, config_tid, mail_tid;
 	// 定时加载配置线程
@@ -745,7 +745,7 @@ void task_main(){
 	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
 	//创建即时任务线程
 	for(i=0; i<global->max_threads; i++) {
-		pthread_create(&tid[i], NULL,(void *) task_right, (void *)&i);
+		pthread_create(&tid[i], NULL,(void *) task_right, (void *)i);
 	}
     pthread_join(task_tid, NULL);
     pthread_join(config_tid, NULL);
