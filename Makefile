@@ -49,7 +49,8 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_taskserver_OBJECTS = task.$(OBJEXT) list.$(OBJEXT) mail.$(OBJEXT) \
-	base64.$(OBJEXT) tool.$(OBJEXT) config.$(OBJEXT)
+	base64.$(OBJEXT) tool.$(OBJEXT) config.$(OBJEXT) \
+	http.$(OBJEXT)
 taskserver_OBJECTS = $(am_taskserver_OBJECTS)
 taskserver_LDADD = $(LDADD)
 taskserver_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(taskserver_LDFLAGS) \
@@ -164,7 +165,7 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 AUTOMAKE_OPTIONS = foreign
-taskserver_SOURCES = src/task.c src/list.c src/list.h src/mail.c src/mail.h src/base64.c src/base64.h src/tool.c src/tool.h src/config.c src/config.h
+taskserver_SOURCES = src/task.c src/list.c src/list.h src/mail.c src/mail.h src/base64.c src/base64.h src/tool.c src/tool.h src/config.c src/config.h src/http.c src/http.h
 taskserver_LDFLAGS = -Lusr/local/lib
 INCLUDES = -I/usr/local/include/
 all: all-am
@@ -254,6 +255,7 @@ distclean-compile:
 
 include ./$(DEPDIR)/base64.Po
 include ./$(DEPDIR)/config.Po
+include ./$(DEPDIR)/http.Po
 include ./$(DEPDIR)/list.Po
 include ./$(DEPDIR)/mail.Po
 include ./$(DEPDIR)/task.Po
@@ -356,6 +358,20 @@ config.obj: src/config.c
 #	source='src/config.c' object='config.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o config.obj `if test -f 'src/config.c'; then $(CYGPATH_W) 'src/config.c'; else $(CYGPATH_W) '$(srcdir)/src/config.c'; fi`
+
+http.o: src/http.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT http.o -MD -MP -MF $(DEPDIR)/http.Tpo -c -o http.o `test -f 'src/http.c' || echo '$(srcdir)/'`src/http.c
+	$(am__mv) $(DEPDIR)/http.Tpo $(DEPDIR)/http.Po
+#	source='src/http.c' object='http.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o http.o `test -f 'src/http.c' || echo '$(srcdir)/'`src/http.c
+
+http.obj: src/http.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT http.obj -MD -MP -MF $(DEPDIR)/http.Tpo -c -o http.obj `if test -f 'src/http.c'; then $(CYGPATH_W) 'src/http.c'; else $(CYGPATH_W) '$(srcdir)/src/http.c'; fi`
+	$(am__mv) $(DEPDIR)/http.Tpo $(DEPDIR)/http.Po
+#	source='src/http.c' object='http.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o http.obj `if test -f 'src/http.c'; then $(CYGPATH_W) 'src/http.c'; else $(CYGPATH_W) '$(srcdir)/src/http.c'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
