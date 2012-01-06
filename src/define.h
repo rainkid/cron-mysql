@@ -38,12 +38,13 @@ typedef struct mail_params{
 	int port;
 } MailParams;
 //全局参数
-typedef struct global_params{
+typedef struct server_params{
 	char run_type[1024];
 	char notice[1024];
 	char task_file[1024];
 	int max_threads;
-} GlobalParams;
+	int shutdown;
+} ServerParams;
 
 /* 请求返回数据 */
 struct Response {

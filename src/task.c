@@ -76,7 +76,7 @@ MysqlParams g_mysql_params;
 //邮件参数
 MailParams g_mail_params;
 //全局变量
-GlobalParams global;
+ServerParams server;
 //任务锁
 pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond;
@@ -226,6 +226,7 @@ void mail_worker(){
 	pthread_detach(pthread_self());
 	TaskItem *task_item;
 	for (;;) {
+		if (server.shutdown) break;
 		pthread_mutex_lock(&task_lock);
 		if (NULL != task_list && task_list->count > 0) {
 			task_item = task_list->head;
@@ -285,7 +286,7 @@ void curl_request(TaskItem *item) {
 		write_log("%s...fails", task_item->command);
 	}
 	//记录日志
-	if (strcmp(global.run_type, "mysql") == 0) {
+	if (strcmp(server.run_type, "mysql") == 0) {
 		if(NULL != chunk.responsetext){
 			task_log(task_item->task_id, ret, chunk.responsetext);
 		}
@@ -329,6 +330,7 @@ void task_worker() {
 	pthread_detach(pthread_self());
 	TaskItem *temp;
 	for (;;) {
+		if (server.shutdown) break;
 		pthread_mutex_lock(&task_lock);
 		if (NULL != task_list && task_list->count > 0) {
 			while (NULL != (temp = task_list->head)) {
@@ -338,7 +340,7 @@ void task_worker() {
 					break;
 				}
 				int i = 0 ;
-				for(i=0; i<global.max_threads; i++) {
+				for(i=0; i<server.max_threads; i++) {
 					if (task_right_list[i] == NULL) {
 //						write_log("----->>%s : %d", temp->command, i);
 						task_right_list[i] = temp;
@@ -392,10 +394,11 @@ void task_worker() {
 void load_worker() {
 	pthread_detach(pthread_self());
 	for (;;) {
+		if (server.shutdown) break;
 		// 加载任务到新建列表中
-		if (strcmp(global.run_type, "file") == 0) {
-			task_file_load(global.task_file);
-		} else if (strcmp(global.run_type, "mysql") == 0) {
+		if (strcmp(server.run_type, "file") == 0) {
+			task_file_load(server.task_file);
+		} else if (strcmp(server.run_type, "mysql") == 0) {
 			task_mysql_load();
 		}
 		usleep(SYNC_CONFIG_TIME);
@@ -405,7 +408,7 @@ void load_worker() {
 // 文件配置计划任务加载
 void task_file_load(const char *task_file) {
 	FILE *fp;
-	fp = fopen(global.task_file, "r");
+	fp = fopen(server.task_file, "r");
 	if (NULL == fp) {
 		write_log("open config file faild.");
 	}
@@ -603,20 +606,18 @@ void free_resource(){
 }
 /*******************************************************************/
 // 父进程信号处理
-void kill_signal_master(const int signal) {
+void signal_master(const int signal) {
 	write_log("kill master with signal %d.", signal);
-	free_resource();
 	// 给进程组发送SIGTERM信号，结束子进程
+	server.shutdown = 1;
 	kill(0, SIGTERM);
-	exit(EXIT_SUCCESS);
+	exit(0);
 }
 /*******************************************************************/
 //子进程信号处理
-void kill_signal_worker(const int signal) {
+void signal_worker(const int signal) {
 	write_log("kill worker with signal %d.", signal);
-	free_resource();
-	kill(0, SIGTERM);
-	exit(EXIT_SUCCESS);
+	exit(0);
 }
 /*******************************************************************/
 void create_child(void){
@@ -627,36 +628,36 @@ void create_child(void){
 	// 如果派生进程失败，则退出程序
 	if (worker_pid < 0) {
 		fprintf(stderr, "error: %s:%d\n", __FILE__, __LINE__);
-		exit(EXIT_FAILURE);
+		exit(0);
 	}
 
 	// 父进程内容
 	if (worker_pid > 0) {
-		// 忽略Broken Pipe信号
+
 		signal(SIGPIPE, SIG_IGN);
 		signal(SIGCHLD, SIG_IGN);
-
+		signal(SIGTTOU, SIG_IGN);
+		signal(SIGHUP, SIG_IGN);
 		// 处理kill信号
-		signal(SIGINT, kill_signal_master);
-		signal(SIGKILL, kill_signal_master);
-		signal(SIGQUIT, kill_signal_master);
-		signal(SIGTERM, kill_signal_master);
-		signal(SIGHUP, kill_signal_master);
+
+		signal(SIGINT, signal_master);
+		signal(SIGKILL, signal_master);
+		signal(SIGQUIT, signal_master);
+		signal(SIGTERM, signal_master);
 
 		// 处理段错误信号/
-		signal(SIGSEGV, kill_signal_master);
+		signal(SIGSEGV, signal_master);
 
 		// 如果子进程终止，则重新派生新的子进程
 		while (1) {
 			worker_pid_wait = wait(NULL);
 			if (worker_pid_wait < 0) {
-				continue;
+				worker_pid = fork();
+				if (worker_pid == 0) {
+					break;
+				}
 			}
 			usleep(100000);
-			worker_pid = fork();
-			if (worker_pid == 0) {
-				break;
-			}
 		}
 	}
 
@@ -665,15 +666,16 @@ void create_child(void){
 	// 忽略Broken Pipe信号
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGCHLD, SIG_IGN);
+	signal(SIGTTOU, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 
 	// 处理kill信号
-	signal(SIGINT, kill_signal_worker);
-	signal(SIGKILL, kill_signal_worker);
-	signal(SIGQUIT, kill_signal_worker);
-	signal(SIGTERM, kill_signal_worker);
-	signal(SIGHUP, kill_signal_worker);
+	signal(SIGINT, signal_worker);
+	signal(SIGKILL, signal_worker);
+	signal(SIGQUIT, signal_worker);
+	signal(SIGTERM, signal_worker);
 	// 处理段错误信号
-	signal(SIGSEGV, kill_signal_worker);
+	signal(SIGSEGV, signal_worker);
 }
 /*******************************************************************/
 void create_pid_file(void) {
@@ -684,47 +686,48 @@ void create_pid_file(void) {
 }
 /*******************************************************************/
 void daemonize(void) {
-		pid_t pid = fork();
-		if (pid < 0) {
-			fprintf(stderr, "fork failured\n");
-			exit(EXIT_FAILURE);
-		}
-		if (pid > 0) {
-			exit(EXIT_SUCCESS);
-		}
-		setsid();
-		umask(0);
-		int i;
-		for (i = 0; i < NOFILE; i++) {
-			close(i);
-		}
+	pid_t pid = fork();
+	if (pid < 0) {
+		fprintf(stderr, "fork failed : %d\n", pid);
+		exit(0);
+	}
+	if (pid > 0) {
+		exit(0);
+	}
+	setsid();
+	umask(0);
+	int i;
+	for (i = 0; i < NOFILE; i++) {
+		close(i);
+	}
 }
 /*******************************************************************/
 void init_global_params(){
 	// 配置选项检查-运行方式
-	sprintf(global.run_type, "%s", c_get_string("main", "run", g_config_file));
-	if (strcmp(global.run_type, "file") != 0 && strcmp(global.run_type, "mysql") !=0 ) {
-		fprintf(stderr, "error run type : %s, it's is mysql or file\n", global.run_type);
-		exit(EXIT_FAILURE);
+	sprintf(server.run_type, "%s", c_get_string("main", "run", g_config_file));
+	if (strcmp(server.run_type, "file") != 0 && strcmp(server.run_type, "mysql") !=0 ) {
+		fprintf(stderr, "error run type : %s, it's is mysql or file\n", server.run_type);
+		exit(0);
 	}
 	//是否开启通知
-	sprintf(global.notice, "%s", c_get_string("main", "notice", g_config_file));
-	if (strcmp(global.notice, "on") != 0 && strcmp(global.notice, "off") !=0 ) {
-		fprintf(stderr, "error notice value : %s, it's is on or off\n", global.notice);
-		exit(EXIT_FAILURE);
+	sprintf(server.notice, "%s", c_get_string("main", "notice", g_config_file));
+	if (strcmp(server.notice, "on") != 0 && strcmp(server.notice, "off") !=0 ) {
+		fprintf(stderr, "error notice value : %s, it's is on or off\n", server.notice);
+		exit(0);
 	}
-	global.max_threads = c_get_int("main", "max_threads", g_config_file);
+	server.max_threads = c_get_int("main", "max_threads", g_config_file);
+	server.shutdown = 0;
 }
 /*******************************************************************/
 void init_mysql_params(){
 	// 读取任务配置文件
-	if (strcmp(global.run_type, "file") == 0) {
-		sprintf(global.task_file, "%s", c_get_string("file", "file", g_config_file));
-		if (NULL == global.task_file || -1 == access(global.task_file, F_OK)) {
+	if (strcmp(server.run_type, "file") == 0) {
+		sprintf(server.task_file, "%s", c_get_string("file", "file", g_config_file));
+		if (NULL == server.task_file || -1 == access(server.task_file, F_OK)) {
 			fprintf(stderr,	"task file is not exist.\n");
-			exit(EXIT_FAILURE);
+			exit(0);
 		}
-	} else if (strcmp(global.run_type, "mysql") == 0) {
+	} else if (strcmp(server.run_type, "mysql") == 0) {
 		sprintf(g_mysql_params.host, "%s", c_get_string("mysql", "host", g_config_file));
 		sprintf(g_mysql_params.username, "%s", c_get_string("mysql", "username", g_config_file));
 		sprintf(g_mysql_params.passwd, "%s", c_get_string("mysql", "passwd", g_config_file));
@@ -745,11 +748,10 @@ void task_right(void *thread_id){
 	pthread_detach(pthread_self());
 	unsigned long tid = (unsigned long)thread_id;
 	for(;;) {
+		if (server.shutdown) break;
 		TaskItem * task_item = (TaskItem *)task_right_list[tid];
 	    if (task_item != NULL) {
 			curl_request(task_item);
-//	    	http_request(task_item);
-//			write_log("<<-----%s : %d", task_item->command, tid);
 			task_right_list[tid] = NULL;			
 		}
 		usleep(TASK_STEP);
@@ -758,7 +760,7 @@ void task_right(void *thread_id){
 /*******************************************************************/
 void task_main(){
 	unsigned long i = 0;
-	pthread_t tid[global.max_threads];
+	pthread_t tid[server.max_threads];
 	pthread_t task_tid, config_tid, mail_tid;
 	// 定时加载配置线程
 	pthread_create(&config_tid, NULL, (void *) load_worker, NULL);
@@ -767,20 +769,20 @@ void task_main(){
 	//任务分配线程
 	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
 	//创建即时任务线程
-	for(i=0; i<global.max_threads; i++) {
-		pthread_create(&tid[i], NULL,(void *) task_right, (void *)i);
+	for(i=0; i<server.max_threads; i++) {
+		pthread_create(&tid[i], NULL, (void *) task_right, (void *)i);
 	}
    	pthread_join(task_tid, NULL);
    	pthread_join(config_tid, NULL);
    	pthread_join(mail_tid, NULL);
-	for(i=0; i<global.max_threads; i++) {
+	for(i=0; i<server.max_threads; i++) {
 		pthread_join(tid[i], NULL);
 	}
 }
 /*******************************************************************/
 void init_right_task_list(){
 	int i = 0;
-	for(i=0; i<global.max_threads; i++) {
+	for(i=0; i<server.max_threads; i++) {
 		task_right_list[i] != NULL;
 	}
 }
@@ -815,23 +817,23 @@ int main(int argc, char *argv[], char *envp[]) {
 			break;
 		case 'v':
 			printf("%s\n", VERSION);
-			exit(EXIT_SUCCESS);
+			exit(0);
 			break;
 		case 'h':
 		default:
 			usage();
-			exit(EXIT_SUCCESS);
+			exit(0);
 			break;
 		}
 	}
 	// 参数判断
 	if (optind != argc) {
 		fprintf(stderr,	"too many arguments\nTry `%s --help' for more information.\n", argv[0]);
-		exit(EXIT_FAILURE);
+		exit(0);
 	}
 	init_global_params();
 	init_mysql_params();
-	if (strcmp(global.notice, "on") == 0) {
+	if (strcmp(server.notice, "on") == 0) {
 		init_mail_params();
 	}
 	if (daemon == true) {
@@ -847,5 +849,6 @@ int main(int argc, char *argv[], char *envp[]) {
 	curl_global_init(CURL_GLOBAL_ALL);
 	init_right_task_list();
 	task_main();
+	free_resource();
 	return 0;
 }
