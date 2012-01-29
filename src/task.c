@@ -32,12 +32,10 @@
 #include <signal.h>
 #include <unistd.h>
 #include <time.h>
-#include <sys/stat.h>
 #include <string.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <pthread.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
 #include <math.h>
 #include <sys/prctl.h>
@@ -57,7 +55,6 @@
 
 /*******************************************************************/
 // 函数声明
-void write_log(const char *fmt,  ...);
 int send_notice_mail(char *subject, char *content);
 size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data);
 void task_log(int task_id, int ret, char* msg);
@@ -89,34 +86,6 @@ void usage() {
 		 "-v, --version  display version information then exit.\n" \
 		 "-c, --config   <path>  task config file path.\n" \
 		 "-d, --daemon   run as a daemon.\n\n");
-}
-/*******************************************************************/
-//日志函数
-void write_log(const char *fmt,  ...) {
-	char msg[BUFSIZE];
-	FILE * fp = NULL;
-	struct stat buf;
-	stat(LOG_FILE, &buf);
-	if (buf.st_size > MAX_LOG_SIZE) {
-		rename(LOG_FILE, BACK_LOG_FILE);
-	}
-
-	//时间
-	struct tm *p;
-	time_t timep;
-	time(&timep);
-	p=localtime(&timep);
-	//参数处理
-	va_list  va;
-	va_start(va, fmt);
-	vsprintf(msg, fmt, va);
-	va_end(va);
-	//日志写入
-	fp = fopen(LOG_FILE , "ab+" );
-	if (fp) {
-		fprintf(fp,"%04d-%02d-%02d %02d:%02d:%02d %s\n",(1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, msg);
-	}
-	fclose(fp);
 }
 /*******************************************************************/
 /* curl回调处理函数 */
@@ -652,6 +621,7 @@ void create_child(void){
 		while (1) {
 			worker_pid_wait = wait(NULL);
 			if (worker_pid_wait < 0) {
+				write_log("restart worker.");
 				worker_pid = fork();
 				if (worker_pid == 0) {
 					break;

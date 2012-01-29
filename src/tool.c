@@ -24,18 +24,45 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-
-#include <errno.h>
-
-#include <curl/curl.h>
-#include <curl/easy.h>
+#include <sys/stat.h>
+#include <stdarg.h>
 
 #include "tool.h"
-
+#include "define.h"
+/*******************************************************************/
 /* 获取当前时间戳 */
 time_t GetNowTime() {
 	time_t nowTime;
 	time(&nowTime);
 	return nowTime;
+}
+
+/*******************************************************************/
+//日志函数
+void write_log(const char *fmt,  ...) {
+	char msg[BUFSIZE];
+	FILE * fp = NULL;
+	struct stat buf;
+	stat(LOG_FILE, &buf);
+	if (buf.st_size > MAX_LOG_SIZE) {
+		rename(LOG_FILE, BACK_LOG_FILE);
+	}
+
+	//时间
+	struct tm *p;
+	time_t timep;
+	time(&timep);
+	p=localtime(&timep);
+	//参数处理
+	va_list  va;
+	va_start(va, fmt);
+	vsprintf(msg, fmt, va);
+	va_end(va);
+	//日志写入
+	fp = fopen(LOG_FILE , "ab+" );
+	if (fp) {
+		fprintf(fp,"%04d-%02d-%02d %02d:%02d:%02d %s\n",(1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, msg);
+	}
+	fclose(fp);
 }
 

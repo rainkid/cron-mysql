@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 time_t GetNowTime();
+void write_log(const char *fmt,  ...);
 #ifdef	__cplusplus
 }
 #endif
