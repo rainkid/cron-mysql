@@ -22,7 +22,7 @@ src/程序目录
 task.conf 应用配置文件
 tasks.conf 文件计划任务文件
 
-5.参数说明(ctask --help)
+5.参数说明(task --help)
 -h, --help     display this message then exit.
 -v, --version  display version information then exit.
 -c, --config   <path>  task config file path.
