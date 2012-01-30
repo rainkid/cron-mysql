@@ -1,5 +1,3 @@
-注：如疑问请联系raink.kid@gmail.com
-
 0.计划任务服务
 解决生产环境中遇到的大量计划任务维护难问题，所有计划任务可实现后台管理，即时记录计划任务执行结束，执行失败的计划定时发送报警邮件通知，后台维护的计划任务会在五分钟内生效，可定义计划任务的开始时间，结束时间，执行间隔，执行次数，基于http协议的计划任务，大大提高计划任务的灵活性。
 
@@ -30,3 +28,5 @@ tasks.conf 文件计划任务文件
 -v, --version  display version information then exit.
 -c, --config   <path>  task config file path.
 -d, --daemon   run as a daemon.
+
+7.mail:raink.kid@gmail.com
