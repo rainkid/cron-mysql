@@ -12,13 +12,13 @@
 make && make install
 
 3.启动(-c 必选参数：配置文件路径)：
-ctask -c ctask.conf
+taskserver -c task.conf
 
 4.结构
 doc/ 文档，数据库表结构
-main.c 主程序文件
+src/程序目录
 library/ 库文件
-ctask.conf 应用配置文件
+task.conf 应用配置文件
 tasks.conf 文件计划任务文件
 
 5.参数说明(ctask --help)
