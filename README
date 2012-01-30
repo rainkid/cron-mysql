@@ -13,16 +13,18 @@
 ./configure --with-mysql=/usr/local/mysql --with-curl=/usr/local/curl
 make && make install
 
-3.启动(-c 必选参数：配置文件路径)：
+3.建立数据库（sql文件在doc目录下）或者计划任务配置文件（tasks.conf）
+
+4.启动服务(-c 必选参数：配置文件路径)：
 taskserver -c task.conf
 
-4.结构
+5.目录结构
 doc/ 文档，数据库表结构
 src/程序目录
 task.conf 应用配置文件
 tasks.conf 文件计划任务文件
 
-5.参数说明(task --help)
+6.参数说明(task --help)
 -h, --help     display this message then exit.
 -v, --version  display version information then exit.
 -c, --config   <path>  task config file path.
