@@ -75,9 +75,18 @@ MailParams g_mail_params;
 //全局变量
 ServerParams server;
 //任务锁
-pthread_mutex_t task_lock = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond;
-TaskItem *task_right_list[1024]={0};
+pthread_mutex_t LOCK_task = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t LOCK_right_task = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t COND_right_task = PTHREAD_COND_INITIALIZER;
+//即时任务列表
+TaskItem *task_right_list[MAX_THREADS]={0};
+
+struct RightTask {
+	struct RightTask *next;
+	TaskItem * item;
+};
+
+struct RightTask *right_tasks = NULL;
 /*******************************************************************/
 /* 帮助信息 */
 void usage() {
@@ -196,7 +205,7 @@ void mail_worker(){
 	TaskItem *task_item;
 	for (;;) {
 		if (server.shutdown) break;
-		pthread_mutex_lock(&task_lock);
+		pthread_mutex_lock(&LOCK_task);
 		if (NULL != task_list && task_list->count > 0) {
 			task_item = task_list->head;
 			while (NULL !=task_item) {
@@ -212,13 +221,12 @@ void mail_worker(){
 				task_item = task_item->next;
 			}
 		}
-		pthread_mutex_unlock(&task_lock);
+		pthread_mutex_unlock(&LOCK_task);
 		usleep(SEND_MAIL_TIME);
 	}
 }
 /*******************************************************************/
 void curl_request(TaskItem *item) {
-	pthread_detach(pthread_self());
 	int ret = 0;
 	CURL *curl_handle;
 
@@ -231,10 +239,10 @@ void curl_request(TaskItem *item) {
 
 	TaskItem *task_item;
 	task_item = malloc(sizeof(TaskItem));
-	pthread_mutex_lock(&task_lock);
+	pthread_mutex_lock(&LOCK_task);
 	sprintf(task_item->command, "%s", item->command);
 	task_item->task_id = item->task_id;
-	pthread_mutex_unlock(&task_lock);
+	pthread_mutex_unlock(&LOCK_task);
 
 	if (curl_handle != NULL) {
 		curl_easy_setopt(curl_handle, CURLOPT_URL, task_item->command);
@@ -298,9 +306,10 @@ void http_request(TaskItem *item){
 void task_worker() {
 	pthread_detach(pthread_self());
 	TaskItem *temp;
+	struct RightTask *right_item;
 	for (;;) {
 		if (server.shutdown) break;
-		pthread_mutex_lock(&task_lock);
+		pthread_mutex_lock(&LOCK_task);
 		if (NULL != task_list && task_list->count > 0) {
 			while (NULL != (temp = task_list->head)) {
 				// 大于当前时间跳出
@@ -308,14 +317,21 @@ void task_worker() {
 				if (nowTime < temp->nextTime) {
 					break;
 				}
-				int i = 0 ;
-				for(i=0; i<server.max_threads; i++) {
-					if (task_right_list[i] == NULL) {
-//						write_log("----->>%s : %d", temp->command, i);
-						task_right_list[i] = temp;
-						break;
-					}
-				}
+//				int i = 0 ;
+//				for(i=0; i<server.max_threads; i++) {
+//					if (task_right_list[i] == NULL) {
+//						task_right_list[i] = temp;
+//						break;
+//					}
+//				}
+
+				right_item = malloc(sizeof(struct RightTask));
+				right_item->item = temp;
+				pthread_mutex_lock(&LOCK_right_task);
+				right_item->next = right_tasks;
+				right_tasks = right_item;
+				pthread_mutex_unlock(&LOCK_right_task);
+				pthread_cond_broadcast(&COND_right_task);
 
 				(temp->runTimes)++;
 				if (temp->next) {
@@ -350,11 +366,11 @@ void task_worker() {
 					}
 				}
 			}
-			//write_log("%d tasks in task list.", task_list->count);
+//			write_log("%d tasks in task list.", task_list->count);
 		}else{
 			write_log("task list is null , %p, %d", task_list, task_list->count);
 		}
-		pthread_mutex_unlock(&task_lock);
+		pthread_mutex_unlock(&LOCK_task);
 		usleep(TASK_STEP);
 	}
 }
@@ -383,7 +399,7 @@ void task_file_load(const char *task_file) {
 	}
 	char line[BUFSIZE] = { 0x00 };
 
-	pthread_mutex_lock(&task_lock);
+	pthread_mutex_lock(&LOCK_task);
 	//初始化任务列表
 	task_init(task_list);
 
@@ -443,7 +459,7 @@ void task_file_load(const char *task_file) {
 		task_update(taskItem, task_list);
 	}
 	write_log("load tasks form file.");
-	pthread_mutex_unlock(&task_lock);
+	pthread_mutex_unlock(&LOCK_task);
 	fclose(fp);
 }
 /*******************************************************************/
@@ -481,7 +497,7 @@ void task_mysql_load() {
 	mysql_result = mysql_store_result(&mysql_conn);
 	row_num = mysql_num_rows(mysql_result);
 
-	pthread_mutex_lock(&task_lock);
+	pthread_mutex_lock(&LOCK_task);
 	//初始化任务列表
 	task_init(task_list);
 
@@ -550,7 +566,7 @@ void task_mysql_load() {
 	}
 	write_log("load %d tasks from mysql.", task_list->count);
 
-	pthread_mutex_unlock(&task_lock);
+	pthread_mutex_unlock(&LOCK_task);
 	// 释放结果集
 	mysql_free_result(mysql_result);
 	mysql_close(&mysql_conn);
@@ -686,6 +702,11 @@ void init_global_params(){
 		exit(0);
 	}
 	server.max_threads = c_get_int("main", "max_threads", g_config_file);
+	if (server.max_threads > MAX_THREADS) {
+		server.max_threads = MAX_THREADS;
+	} else if (server.max_threads < 0) {
+		server.max_threads = 1;
+	}
 	server.shutdown = 0;
 }
 /*******************************************************************/
@@ -714,16 +735,21 @@ void init_mail_params(){
 	g_mail_params.port = c_get_int("mail", "port", g_config_file);
 }
 /*******************************************************************/
-void task_right(void *thread_id){
+void task_right(){
 	pthread_detach(pthread_self());
-	unsigned long tid = (unsigned long)thread_id;
+	struct RightTask * taskItem;
 	for(;;) {
 		if (server.shutdown) break;
-		TaskItem * task_item = (TaskItem *)task_right_list[tid];
-	    if (task_item != NULL) {
-			curl_request(task_item);
-			task_right_list[tid] = NULL;			
+		pthread_mutex_lock(&LOCK_right_task);
+		while(right_tasks == NULL){
+			pthread_cond_wait(&COND_right_task, &LOCK_right_task);
 		}
+		taskItem = right_tasks;
+		right_tasks = taskItem->next;
+		pthread_mutex_unlock(&LOCK_right_task);
+		TaskItem * task_item = (TaskItem *)taskItem->item;
+		curl_request(task_item);
+		free(taskItem);
 		usleep(TASK_STEP);
 	}
 }
@@ -742,9 +768,9 @@ void task_main(){
 	for(i=0; i<server.max_threads; i++) {
 		pthread_create(&tid[i], NULL, (void *) task_right, (void *)i);
 	}
-   	pthread_join(task_tid, NULL);
-   	pthread_join(config_tid, NULL);
-   	pthread_join(mail_tid, NULL);
+	pthread_join(task_tid, NULL);
+	pthread_join(config_tid, NULL);
+	pthread_join(mail_tid, NULL);
 	for(i=0; i<server.max_threads; i++) {
 		pthread_join(tid[i], NULL);
 	}

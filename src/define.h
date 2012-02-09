@@ -19,7 +19,7 @@
 #define SEND_MAIL_TIME (30 * 1000000 * 60)
 #define TIME_UNIT 60
 #define TASK_STEP   100000
-#define THREAD_MAX 100
+#define MAX_THREADS 100
 /* mysql连接相接相关数据 */
 typedef struct mysql_params{
 	char host[1024];
