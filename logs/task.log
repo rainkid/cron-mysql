@@ -1269,3 +1269,12 @@
 2012-02-06 13:25:45 kill worker with signal 2.
 2012-02-06 13:25:45 kill master with signal 2.
 2012-02-06 13:25:45 kill master with signal 15.
+2012-02-14 18:03:28 task list is null , 0x18ed030, 0
+2012-02-14 18:03:28 task list is null , 0x18ed030, 0
+2012-02-14 18:03:28 task list is null , 0x18ed030, 0
+2012-02-14 18:03:28 load 2 tasks from mysql.
+2012-02-14 18:04:00 http://cron.market.test/upgoods.php...success
+2012-02-14 18:04:34 kill worker with signal 2.
+2012-02-14 18:04:34 kill master with signal 2.
+2012-02-14 18:04:34 kill master with signal 15.
+2012-02-14 18:04:34 kill worker with signal 15.

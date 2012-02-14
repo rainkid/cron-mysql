@@ -367,8 +367,6 @@ void task_worker() {
 				}
 			}
 //			write_log("%d tasks in task list.", task_list->count);
-		}else{
-			write_log("task list is null , %p, %d", task_list, task_list->count);
 		}
 		pthread_mutex_unlock(&LOCK_task);
 		usleep(TASK_STEP);
