@@ -1892,3 +1892,5 @@
 2012-02-16 13:24:44 load 2 tasks from mysql.
 2012-02-16 13:25:00 http://localhost/test2.php...fails
 2012-02-16 13:25:00 http://cron.market.test/upgoods.php...success
+2012-02-16 13:26:00 http://localhost/test2.php...fails
+2012-02-16 13:26:00 http://cron.market.test/upgoods.php...success
