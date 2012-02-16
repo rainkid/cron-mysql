@@ -26,14 +26,14 @@
 #include "list.h"
 /*******************************************************************/
 /* 任务初始化 */
-void task_init(TaskList * task_list) {
+void task_init(l_task_list * task_list) {
     task_list->count = 0;
 	task_list->head = NULL;
 	task_list->tail = NULL;
 }
 /*******************************************************************/
 /* 添加节点到尾部 */
-void task_add(TaskList * task_list, TaskItem * task_item) {
+void task_add(l_task_list * task_list, s_task_item * task_item) {
     task_item->next = NULL;
     task_item->prev = NULL;
     
@@ -49,7 +49,7 @@ void task_add(TaskList * task_list, TaskItem * task_item) {
     (task_list->count)++;
 }
 /*******************************************************************/
-void task_copy(TaskItem *src, TaskItem *dsc){
+void task_copy(s_task_item *src, s_task_item *dsc){
 	dsc->startTime = src->startTime;
 	dsc->endTime = src->endTime;
 	dsc->nextTime = src->nextTime;
@@ -61,11 +61,11 @@ void task_copy(TaskItem *src, TaskItem *dsc){
 }
 /*******************************************************************/
 /* 更新节点 */
-void task_update(TaskItem * task_item, TaskList *task_list) {
+void task_update(s_task_item * task_item, l_task_list *task_list) {
     if (false == task_isempty(task_list)) {
         task_item->next = NULL;
         task_item->prev = NULL;
-        TaskItem *temp = task_list->head;
+        s_task_item *temp = task_list->head;
 
         if (task_item->nextTime >= task_list->head->nextTime) {
             if (task_item->nextTime < task_list->tail->nextTime) {
@@ -99,14 +99,14 @@ void task_update(TaskItem * task_item, TaskList *task_list) {
 }
 /*******************************************************************/
 /* 任务列表是否空 */
-bool task_isempty(const TaskList *task_list) {
+bool task_isempty(const l_task_list *task_list) {
     return (task_list->count == 0) ? true : false;
 }
 /*******************************************************************/
 /* 任务列表销毁 */
-void task_free(TaskList *task_list) {
+void task_free(l_task_list *task_list) {
     if (false == task_isempty(task_list)) {
-        TaskItem *temp;
+        s_task_item *temp;
         while(NULL != task_list->head) {
             temp = task_list->head->next;
             item_free(task_list->head, task_list);
@@ -120,7 +120,7 @@ void task_free(TaskList *task_list) {
 }
 /*******************************************************************/
 /* 任务节点销毁 */
-void item_free(TaskItem *task_item, TaskList *task_list) {
+void item_free(s_task_item *task_item, l_task_list *task_list) {
 	(task_list->count)--;
     free(task_item);
 }

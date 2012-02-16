@@ -10,7 +10,7 @@ extern "C" {
 #include <stdbool.h>
     
 //ITEM
-typedef struct _taskItem {
+typedef struct task_item {
     int task_id;
     time_t startTime;
     time_t endTime;
@@ -21,26 +21,26 @@ typedef struct _taskItem {
     int runTimes;
     bool mail;
     char command[BUFSIZ];
-    struct _taskItem *next;
-    struct _taskItem *prev;
-} TaskItem;
+    struct task_item *next;
+    struct task_item *prev;
+} s_task_item;
 
 //LIST
-typedef struct _taskList {
+typedef struct task_list {
     //头
-    TaskItem *head;
+    s_task_item *head;
     //尾
-    TaskItem *tail;
+    s_task_item *tail;
     //任务节点数量
     int count;
-} TaskList;
+} l_task_list;
 
-void task_init(TaskList *task_list);
-void task_add(TaskList *task_list, TaskItem *task_item);
-void task_update(TaskItem *, TaskList *task_list);
-bool task_isempty(const TaskList *task_list);
-void task_free(TaskList *task_list);
-void item_free(TaskItem *task_item, TaskList *task_list);
+void task_init(l_task_list *task_list);
+void task_add(l_task_list *task_list, s_task_item *task_item);
+void task_update(s_task_item *, l_task_list *task_list);
+bool task_isempty(const l_task_list *task_list);
+void task_free(l_task_list *task_list);
+void item_free(s_task_item *task_item, l_task_list *task_list);
 
 #ifdef	__cplusplus
 }
