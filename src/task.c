@@ -254,7 +254,7 @@ void curl_request(s_task_item *item) {
 		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, task_item->timeout * TIME_UNIT);
 		// 回调设置
 		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_callback);
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
+//		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
 
 		response = curl_easy_perform(curl_handle);
 	}else{
@@ -297,6 +297,7 @@ void task_worker() {
 		if (server.shutdown) break;
 		pthread_mutex_lock(&LOCK_task);
 		if (NULL != task_list && task_list->count > 0) {
+			temp = malloc(sizeof(s_task_item *));
 			while (NULL != (temp = task_list->head)) {
 				// 大于当前时间跳出
 				time_t nowTime = GetNowTime();
@@ -322,7 +323,7 @@ void task_worker() {
 					if (0 == temp->times || temp->runTimes < temp->times) {
 						temp->prev = NULL;
 						temp->next = NULL;
-						temp->nextTime += temp->frequency;
+						temp->nextTime = nowTime + temp->frequency;
 						task_update(temp, task_list);
 					} else {
 						item_free(temp, task_list);
@@ -340,7 +341,7 @@ void task_worker() {
 						task_free(task_list);
 						task_list = NULL;
 					} else {
-						temp->nextTime += temp->frequency;
+						temp->nextTime = nowTime + temp->frequency;
 					}
 				}
 			}
@@ -412,8 +413,8 @@ void task_file_load(const char *task_file) {
 
 		taskItem->frequency = taskItem->frequency * TIME_UNIT;
 
-		taskItem->startTime = mktime(&_stime);
-		taskItem->endTime = mktime(&_etime);
+		taskItem->startTime = my_mktime(&_stime);
+		taskItem->endTime = my_mktime(&_etime);
 
 		// 当前时间
 		time_t nowTime = GetNowTime();
@@ -437,17 +438,14 @@ void task_file_load(const char *task_file) {
 	pthread_mutex_unlock(&LOCK_task);
 	fclose(fp);
 }
+
+
 /*******************************************************************/
 void task_mysql_load() {
 	MYSQL mysql_conn;
 	MYSQL_RES *mysql_result;
 	MYSQL_ROW mysql_row;
-	char sql[BUFSIZE] = {0x00};
 	int row, row_num;
-
-	char start_time[BUFSIZE] = {0x00};
-	char end_time[BUFSIZE] = {0x00};
-	char command[BUFSIZE] = {0x00};
 
 	if (mysql_library_init(0, NULL, NULL)) {
 		write_log("could not initialize mysql library.");
@@ -460,11 +458,9 @@ void task_mysql_load() {
 	if(NULL == mysql_real_connect(&mysql_conn, g_mysql_params.host, g_mysql_params.username, g_mysql_params.passwd, g_mysql_params.dbname, g_mysql_params.port, NULL, 128)){
 		write_log("mysql connection fails.");
 	}	
-	// 查询sql
-	sprintf(sql, "%s", "SELECT * FROM mk_timeproc");
 
 	// 查询结果
-	if (mysql_query(&mysql_conn, sql) != 0) {
+	if (mysql_query(&mysql_conn, "SELECT * FROM mk_timeproc") != 0) {
 		write_log("mysql query fails.");
 	}
 
@@ -492,20 +488,15 @@ void task_mysql_load() {
 		taskItem->runTimes = 0;
 
 		// 格式化开始时间
-		sprintf(start_time, "%s", mysql_row[1]);
-		sscanf(start_time, "%04d-%02d-%02d %02d:%02d:%02d", &_stime.tm_year,
+		sscanf(mysql_row[1], "%04d-%02d-%02d %02d:%02d:%02d", &_stime.tm_year,
 				&_stime.tm_mon, &_stime.tm_mday, &_stime.tm_hour,
 				&_stime.tm_min, &_stime.tm_sec);
 
 		// 格式化结束时间
-		sprintf(end_time, "%s", mysql_row[2]);
-		sscanf(end_time, "%04d-%02d-%02d %02d:%02d:%02d", &_etime.tm_year,
+		sscanf(mysql_row[2], "%04d-%02d-%02d %02d:%02d:%02d", &_etime.tm_year,
 				&_etime.tm_mon, &_etime.tm_mday, &_etime.tm_hour,
 				&_etime.tm_min, &_etime.tm_sec);
-
-		// 格式化命令
-		sprintf(command, "%s", mysql_row[5]);
-		sprintf(taskItem->command, "%s", command);
+		sprintf(taskItem->command, "%s", mysql_row[5]);
 
 		taskItem->times = 0;
 		taskItem->frequency = atoi(mysql_row[3]) * TIME_UNIT;
@@ -518,8 +509,8 @@ void task_mysql_load() {
 		_stime.tm_mon -= 1;
 		_etime.tm_mon -= 1;
 
-		taskItem->startTime = mktime(&_stime);
-		taskItem->endTime = mktime(&_etime);
+		taskItem->startTime = my_mktime(&_stime);
+		taskItem->endTime = my_mktime(&_etime);
 
 		// 当前时间
 		time_t nowTime = GetNowTime();
@@ -674,11 +665,13 @@ void init_global_params(){
 		exit(0);
 	}
 	server.max_threads = c_get_int("main", "max_threads", g_config_file);
+	server.max_threads = 1;
 	server.shutdown = 0;
 }
 /*******************************************************************/
 void init_mysql_params(){
-	// 读取任务配置文件
+	char *host, *username, *passwd, *dbname;
+//	g_mysql_params = (s_mysql_params *)malloc(sizeof(struct s_mysql_params*));
 	if (strcmp(server.run_type, "file") == 0) {
 		sprintf(server.task_file, "%s", c_get_string("file", "file", g_config_file));
 		if (NULL == server.task_file || -1 == access(server.task_file, F_OK)) {
@@ -686,6 +679,22 @@ void init_mysql_params(){
 			exit(0);
 		}
 	} else if (strcmp(server.run_type, "mysql") == 0) {
+		/*host = c_get_string("mysql", "host", g_config_file);
+		g_mysql_params.host = malloc(strlen(host));
+		strcpy(g_mysql_params.host, host);
+
+		username = c_get_string("mysql", "username", g_config_file);
+		g_mysql_params.username = malloc(strlen(username));
+		strcpy(g_mysql_params.username, username);
+
+		passwd = c_get_string("mysql", "passwd", g_config_file);
+		g_mysql_params.passwd = malloc(strlen(passwd));
+		strcpy(g_mysql_params.passwd, passwd);
+
+		dbname = c_get_string("mysql", "dbname", g_config_file);
+		g_mysql_params.dbname = malloc(strlen(dbname));
+		strcpy(g_mysql_params.dbname, dbname);*/
+
 		sprintf(g_mysql_params.host, "%s", c_get_string("mysql", "host", g_config_file));
 		sprintf(g_mysql_params.username, "%s", c_get_string("mysql", "username", g_config_file));
 		sprintf(g_mysql_params.passwd, "%s", c_get_string("mysql", "passwd", g_config_file));

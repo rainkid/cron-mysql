@@ -66,3 +66,19 @@ void write_log(const char *fmt,  ...) {
 	fclose(fp);
 }
 
+long my_mktime (struct tm *tm) {
+  long res;
+  int year;
+  year = tm->tm_year - 70;
+  res = YEAR * year + DAY * ((year + 1) / 4);
+  res += month[tm->tm_mon];
+  if (tm->tm_mon > 1 && ((year + 2) % 4))
+    res -= DAY;
+  res += DAY * (tm->tm_mday - 1);
+  res += HOUR * tm->tm_hour;
+  res += MINUTE * tm->tm_min;
+  res += tm->tm_sec;
+  return res;
+
+}
+

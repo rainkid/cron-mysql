@@ -105,8 +105,9 @@ bool task_isempty(const l_task_list *task_list) {
 /*******************************************************************/
 /* 任务列表销毁 */
 void task_free(l_task_list *task_list) {
-    if (false == task_isempty(task_list)) {
+    if (NULL != task_list && false == task_isempty(task_list)) {
         s_task_item *temp;
+        temp = malloc(sizeof(s_task_item *));
         while(NULL != task_list->head) {
             temp = task_list->head->next;
             item_free(task_list->head, task_list);

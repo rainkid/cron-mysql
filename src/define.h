@@ -13,7 +13,7 @@
 #define BUFSIZE  8096
 #define LOG_FILE  "logs/task.log"
 #define BACK_LOG_FILE  "logs/task.log.bak"
-#define MAX_LOG_SIZE  (1024 * 1000)
+#define MAX_LOG_SIZE  (1 * 1024 * 1024)
 
 #define SYNC_CONFIG_TIME (5000000 * 60)
 #define SEND_MAIL_TIME (5 * 1000000 * 60)
