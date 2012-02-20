@@ -94,11 +94,11 @@ struct s_right_mail *l_right_mail = NULL;
 /*******************************************************************/
 /* 帮助信息 */
 void usage() {
-	printf("author raink.kid@gmail.com\n" \
-		 "-h, --help     display this message then exit.\n" \
-		 "-v, --version  display version information then exit.\n" \
-		 "-c, --config   <path>  task config file path.\n" \
-		 "-d, --daemon   run as a daemon.\n\n");
+	printf("author raink.kid@gmail.com\n"
+		"-h, --help     display this message then exit.\n"
+		"-v, --version  display version information then exit.\n"
+		"-c, --config   <path>  task config file path.\n"
+		"-d, --daemon   run as a daemon.\n\n");
 }
 /*******************************************************************/
 /* curl回调处理函数 */
@@ -117,29 +117,22 @@ size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data) {
 /*******************************************************************/
 /*发送通知邮件*/
 int send_notice_mail(char *subject, char *content) {
-    int ret = 0;
-
-    char *m_subject;
-    char *m_content;
-    m_subject = malloc(strlen(subject));
-    m_content = malloc(strlen(content));
-
-    strncpy(m_subject, subject, strlen(subject));
-    strncpy(m_content, content, strlen(content));
-
-    struct st_char_arry to_addrs[1];
+	int ret = 0;
+	struct st_char_arry to_addrs[1];
 	//收件人列表
-    	to_addrs[0].str_p = g_mail_params.to;
-    struct st_char_arry att_files[0];
+	to_addrs[0].str_p = g_mail_params.to;
+	struct st_char_arry att_files[0];
 	//附件列表
-  	att_files[0].str_p="";
+	att_files[0].str_p = "";
 	struct st_mail_msg_ mail;
 	init_mail_msg(&mail);
+	mail.subject = malloc(strlen(subject) + 1);
+	mail.content = malloc(strlen(content) + 1);
 	mail.authorization = AUTH_SEND_MAIL;
 	mail.server = g_mail_params.server;
 	mail.port = g_mail_params.port;
 	mail.auth_user = g_mail_params.user;
-	mail.auth_passwd= g_mail_params.passwd;
+	mail.auth_passwd = g_mail_params.passwd;
 	mail.from = g_mail_params.user;
 	mail.from_subject = "TaskError@163.com";
 	mail.to_address_ary = to_addrs;
@@ -148,22 +141,20 @@ int send_notice_mail(char *subject, char *content) {
 	mail.priority = 3;
 	mail.att_file_len = 2;
 	mail.att_file_ary = att_files;
-	mail.subject = m_subject;
-	mail.content = m_content;
+	sprintf(mail.subject,"%s", subject);
+	sprintf(mail.content,"%s", content);
 	ret = send_mail(&mail);
 	if (ret != 0) {
 		write_log("send mail with error : %d.", ret);
 	}
-	free(m_subject);
-	free(m_content);
 	return ret;
 }
 /*******************************************************************/
 //记录日志
 void task_log(int task_id, int ret, char* msg) {
 	MYSQL mysql_conn;
-	char sql[BUFSIZE] = {0x00};
-	char upsql[BUFSIZE] = {0x00};
+	char sql[2048] = { 0x00 };
+	char upsql[1024] = { 0x00 };
 	int mtask_id = task_id;
 	char *mmsg;
 
@@ -171,27 +162,36 @@ void task_log(int task_id, int ret, char* msg) {
 	time_t timep;
 	time(&timep);
 	p = localtime(&timep);
-	mmsg = malloc(strlen(msg)+1);
+	mmsg = malloc(strlen(msg) + 1);
 	sprintf(mmsg, "%s", msg);
 
 	my_init();
 
 	mysql_thread_init();
 	// mysql 初始化连接
-	if (NULL != mysql_init(&mysql_conn))
-	{
-		if(NULL != mysql_real_connect(&mysql_conn, g_mysql_params.host, g_mysql_params.username, g_mysql_params.passwd, g_mysql_params.dbname, g_mysql_params.port, NULL, 128)){
+	if (NULL != mysql_init(&mysql_conn)) {
+		if (NULL != mysql_real_connect(&mysql_conn, g_mysql_params.host,
+				g_mysql_params.username, g_mysql_params.passwd,
+				g_mysql_params.dbname, g_mysql_params.port, NULL, 0)) {
 			//更新执行时间
-			sprintf(upsql, "UPDATE mk_timeproc SET last_run_time='%04d-%02d-%02d %02d:%02d:%02d' WHERE id=%d", (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, task_id);
+			sprintf(
+					upsql,
+					"UPDATE mk_timeproc SET last_run_time='%04d-%02d-%02d %02d:%02d:%02d' WHERE id=%d",
+					(1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday,
+					p->tm_hour, p->tm_min, p->tm_sec, task_id);
 			if (mysql_query(&mysql_conn, upsql) != 0) {
 				write_log("update last_run_time fails.");
 			}
 			//添加日志
-			sprintf(sql, "INSERT INTO mk_timeproc_log VALUES('', %d,%d,'%s' ,'%04d-%02d-%02d %02d:%02d:%02d')", task_id, ret, msg, (1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+			sprintf(
+					sql,
+					"INSERT INTO mk_timeproc_log VALUES('', %d,%d,'%s' ,'%04d-%02d-%02d %02d:%02d:%02d')",
+					task_id, ret, msg, (1900 + p->tm_year), (1 + p->tm_mon),
+					p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
 			if (mysql_query(&mysql_conn, sql) != 0) {
 				write_log("insert logs fails.");
 			}
-		}else {
+		} else {
 			write_log("mysql connection fails.");
 		}
 	} else {
@@ -206,26 +206,29 @@ void task_log(int task_id, int ret, char* msg) {
 /*******************************************************************/
 
 //邮件队列
-void mail_worker(){
+void mail_worker() {
 	pthread_detach(pthread_self());
 	struct s_right_mail *right_mail;
+	char subject[BUFSIZE] = { 0x00 };
+	char content[BUFSIZE] = { 0x00 };
+
 	for (;;) {
-		if (server.shutdown) break;
-		pthread_mutex_lock(&LOCK_right_mail);
-		while(l_right_mail == NULL){
-			pthread_cond_wait(&COND_right_mail, &LOCK_right_mail);
+		if (server.shutdown) {
+			break;
 		}
-		right_mail = l_right_mail;
-		l_right_mail = right_mail->next;
-		pthread_mutex_unlock(&LOCK_right_mail);
-		char subject[BUFSIZE] = {0x00};
-		char content[BUFSIZE] = {0x00};
-		write_log("send an e-mail right now.");
-		sprintf(subject, "taskserver with some error!");
-		sprintf(content, "Error with [%s] \n", right_mail->content);
-		send_notice_mail(subject, content);
-		free(right_mail);
-		usleep(SEND_MAIL_TIME);
+		if (NULL != l_right_mail) {
+			pthread_mutex_lock(&LOCK_right_mail);
+			right_mail = l_right_mail;
+			l_right_mail = right_mail->next;
+			server.mail_count--;
+			pthread_mutex_unlock(&LOCK_right_mail);
+			sprintf(subject, "taskserver with some error!");
+			sprintf(content, "Error with [%s] \n", right_mail->content);
+			send_notice_mail(subject, content);
+			write_log("send an e-mail right now.");
+			free(right_mail);
+		}
+		sleep(SEND_MAIL_TIME);
 	}
 }
 /*******************************************************************/
@@ -251,32 +254,36 @@ void curl_request(s_task_item *item) {
 
 	if (curl_handle != NULL) {
 		curl_easy_setopt(curl_handle, CURLOPT_URL, task_item->command);
-		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, task_item->timeout * TIME_UNIT);
+		curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT,
+				task_item->timeout * TIME_UNIT);
 		// 回调设置
 		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_callback);
-//		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
+		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &chunk);
 
 		response = curl_easy_perform(curl_handle);
-	}else{
+	} else {
 		write_log("curl handler is null.");
 	}
 	// 请求响应处理
-	if ((response == CURLE_OK) && chunk.responsetext && (strstr(chunk.responsetext, "__programe_run_succeed__") != 0)) {
+	if ((response == CURLE_OK) && chunk.responsetext && (strstr(
+			chunk.responsetext, "__programe_run_succeed__") != 0)) {
 		write_log("%s...success", task_item->command);
 		ret = 1;
 	} else {
 		write_log("%s...fails", task_item->command);
-/*		right_mail = malloc(sizeof(struct s_right_mail));
-		sprintf(right_mail->content, "%s", task_item->command);
-		pthread_mutex_lock(&LOCK_right_mail);
-		right_mail->next = l_right_mail;
-		l_right_mail = right_mail;
-		pthread_mutex_unlock(&LOCK_right_mail);
-		pthread_cond_signal(&COND_right_mail);*/
+		if (server.mail_count < 6) {
+			right_mail = malloc(sizeof(struct s_right_mail));
+			sprintf(right_mail->content, "%s", task_item->command);
+			pthread_mutex_lock(&LOCK_right_mail);
+			right_mail->next = l_right_mail;
+			l_right_mail = right_mail;
+			server.mail_count++;
+			pthread_mutex_unlock(&LOCK_right_mail);
+		}
 	}
 	//记录日志
 	if (strcmp(server.run_type, "mysql") == 0) {
-		if(NULL != chunk.responsetext){
+		if (NULL != chunk.responsetext) {
 			task_log(task_item->task_id, ret, chunk.responsetext);
 		}
 	}
@@ -294,7 +301,9 @@ void task_worker() {
 	s_task_item *temp;
 	struct s_right_task *right_item;
 	for (;;) {
-		if (server.shutdown) break;
+		if (server.shutdown) {
+			break;
+		}
 		pthread_mutex_lock(&LOCK_task);
 		if (NULL != task_list && task_list->count > 0) {
 			temp = malloc(sizeof(s_task_item *));
@@ -355,7 +364,9 @@ void task_worker() {
 void load_worker() {
 	pthread_detach(pthread_self());
 	for (;;) {
-		if (server.shutdown) break;
+		if (server.shutdown) {
+			break;
+		}
 		// 加载任务到新建列表中
 		if (strcmp(server.run_type, "file") == 0) {
 			task_file_load(server.task_file);
@@ -397,7 +408,8 @@ void task_file_load(const char *task_file) {
 		taskItem->runTimes = 0;
 
 		// 按格式读取
-		sscanf(line,
+		sscanf(
+				line,
 				"%04d-%02d-%02d %02d:%02d:%02d,%04d-%02d-%02d %02d:%02d:%02d,%d,%d,%[^\n]",
 				&_stime.tm_year, &_stime.tm_mon, &_stime.tm_mday,
 				&_stime.tm_hour, &_stime.tm_min, &_stime.tm_sec,
@@ -420,14 +432,16 @@ void task_file_load(const char *task_file) {
 		time_t nowTime = GetNowTime();
 
 		// 如果已经结束直接下一个
-		if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
+		if (taskItem->endTime <= nowTime || taskItem->nextTime
+				> taskItem->endTime) {
 			item_free(taskItem, task_list);
 			continue;
 		}
 
 		// 计算下次运行点
 		int step = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
-		taskItem->nextTime = taskItem->startTime + ((step + 1) * taskItem->frequency);
+		taskItem->nextTime = taskItem->startTime + ((step + 1)
+				* taskItem->frequency);
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
@@ -438,7 +452,6 @@ void task_file_load(const char *task_file) {
 	pthread_mutex_unlock(&LOCK_task);
 	fclose(fp);
 }
-
 
 /*******************************************************************/
 void task_mysql_load() {
@@ -455,15 +468,15 @@ void task_mysql_load() {
 		write_log("mysql initialization fails.");
 	}
 	// mysql连接
-	if(NULL == mysql_real_connect(&mysql_conn, g_mysql_params.host, g_mysql_params.username, g_mysql_params.passwd, g_mysql_params.dbname, g_mysql_params.port, NULL, 128)){
+	if (NULL == mysql_real_connect(&mysql_conn, g_mysql_params.host,
+			g_mysql_params.username, g_mysql_params.passwd,
+			g_mysql_params.dbname, g_mysql_params.port, NULL, 0)) {
 		write_log("mysql connection fails.");
-	}	
-
+	}
 	// 查询结果
 	if (mysql_query(&mysql_conn, "SELECT * FROM mk_timeproc") != 0) {
 		write_log("mysql query fails.");
 	}
-
 	// 获取结果集和条数
 	mysql_result = mysql_store_result(&mysql_conn);
 	row_num = mysql_num_rows(mysql_result);
@@ -517,14 +530,16 @@ void task_mysql_load() {
 
 		// 计算下次运行点
 		int step = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
-		taskItem->nextTime = taskItem->startTime + ((step + 1) * taskItem->frequency);
+		taskItem->nextTime = taskItem->startTime + ((step + 1)
+				* taskItem->frequency);
 
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
 
 		// 如果已经结束直接下一个
-		if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
+		if (taskItem->endTime <= nowTime || taskItem->nextTime
+				> taskItem->endTime) {
 			continue;
 		}
 		// 更新到任务链表
@@ -539,7 +554,7 @@ void task_mysql_load() {
 	mysql_library_end();
 }
 /*******************************************************************/
-void free_resource(){
+void free_resource() {
 	//删除PID
 	if (0 == access(PIDFILE, F_OK)) {
 		remove(PIDFILE);
@@ -571,7 +586,7 @@ void signal_worker(const int signal) {
 	exit(0);
 }
 /*******************************************************************/
-void create_child(void){
+void create_child(void) {
 	// 派生子进程（工作进程）
 	pid_t worker_pid_wait;
 	pid_t worker_pid = fork();
@@ -651,103 +666,99 @@ void daemonize(void) {
 	}
 }
 /*******************************************************************/
-void init_global_params(){
+void init_global_params() {
 	// 配置选项检查-运行方式
 	sprintf(server.run_type, "%s", c_get_string("main", "run", g_config_file));
-	if (strcmp(server.run_type, "file") != 0 && strcmp(server.run_type, "mysql") !=0 ) {
-		fprintf(stderr, "error run type : %s, it's is mysql or file\n", server.run_type);
+	if (strcmp(server.run_type, "file") != 0
+			&& strcmp(server.run_type, "mysql") != 0) {
+		fprintf(stderr, "error run type : %s, it's is mysql or file\n",
+				server.run_type);
 		exit(0);
 	}
 	//是否开启通知
 	sprintf(server.notice, "%s", c_get_string("main", "notice", g_config_file));
-	if (strcmp(server.notice, "on") != 0 && strcmp(server.notice, "off") !=0 ) {
-		fprintf(stderr, "error notice value : %s, it's is on or off\n", server.notice);
+	if (strcmp(server.notice, "on") != 0 && strcmp(server.notice, "off") != 0) {
+		fprintf(stderr, "error notice value : %s, it's is on or off\n",
+				server.notice);
 		exit(0);
 	}
 	server.max_threads = c_get_int("main", "max_threads", g_config_file);
 	server.max_threads = 1;
 	server.shutdown = 0;
+	server.mail_count = 5;
 }
 /*******************************************************************/
-void init_mysql_params(){
+void init_mysql_params() {
 	char *host, *username, *passwd, *dbname;
-//	g_mysql_params = (s_mysql_params *)malloc(sizeof(struct s_mysql_params*));
 	if (strcmp(server.run_type, "file") == 0) {
-		sprintf(server.task_file, "%s", c_get_string("file", "file", g_config_file));
+		sprintf(server.task_file, "%s",
+				c_get_string("file", "file", g_config_file));
 		if (NULL == server.task_file || -1 == access(server.task_file, F_OK)) {
-			fprintf(stderr,	"task file is not exist.\n");
+			fprintf(stderr, "task file is not exist.\n");
 			exit(0);
 		}
 	} else if (strcmp(server.run_type, "mysql") == 0) {
-		/*host = c_get_string("mysql", "host", g_config_file);
-		g_mysql_params.host = malloc(strlen(host));
-		strcpy(g_mysql_params.host, host);
-
-		username = c_get_string("mysql", "username", g_config_file);
-		g_mysql_params.username = malloc(strlen(username));
-		strcpy(g_mysql_params.username, username);
-
-		passwd = c_get_string("mysql", "passwd", g_config_file);
-		g_mysql_params.passwd = malloc(strlen(passwd));
-		strcpy(g_mysql_params.passwd, passwd);
-
-		dbname = c_get_string("mysql", "dbname", g_config_file);
-		g_mysql_params.dbname = malloc(strlen(dbname));
-		strcpy(g_mysql_params.dbname, dbname);*/
-
-		sprintf(g_mysql_params.host, "%s", c_get_string("mysql", "host", g_config_file));
-		sprintf(g_mysql_params.username, "%s", c_get_string("mysql", "username", g_config_file));
-		sprintf(g_mysql_params.passwd, "%s", c_get_string("mysql", "passwd", g_config_file));
-		sprintf(g_mysql_params.dbname, "%s", c_get_string("mysql", "dbname", g_config_file));
+		sprintf(g_mysql_params.host, "%s",
+				c_get_string("mysql", "host", g_config_file));
+		sprintf(g_mysql_params.username, "%s",
+				c_get_string("mysql", "username", g_config_file));
+		sprintf(g_mysql_params.passwd, "%s",
+				c_get_string("mysql", "passwd", g_config_file));
+		sprintf(g_mysql_params.dbname, "%s",
+				c_get_string("mysql", "dbname", g_config_file));
 		g_mysql_params.port = c_get_int("mysql", "g_mysql_port", g_config_file);
 	}
 }
 /*******************************************************************/
-void init_mail_params(){
-	sprintf(g_mail_params.server, "%s", c_get_string("mail", "server", g_config_file));
-	sprintf(g_mail_params.user, "%s", c_get_string("mail", "user", g_config_file));
-	sprintf(g_mail_params.passwd, "%s", c_get_string("mail", "passwd", g_config_file));
+void init_mail_params() {
+	sprintf(g_mail_params.server, "%s",
+			c_get_string("mail", "server", g_config_file));
+	sprintf(g_mail_params.user, "%s",
+			c_get_string("mail", "user", g_config_file));
+	sprintf(g_mail_params.passwd, "%s",
+			c_get_string("mail", "passwd", g_config_file));
 	sprintf(g_mail_params.to, "%s", c_get_string("mail", "to", g_config_file));
 	g_mail_params.port = c_get_int("mail", "port", g_config_file);
 }
 /*******************************************************************/
-void task_right(){
-	pthread_detach(pthread_self());
+void task_right() {
 	struct s_right_task * taskItem;
-	for(;;) {
-		if (server.shutdown) break;
+	for (;;) {
+		if (server.shutdown) {
+			break;
+		}
 		pthread_mutex_lock(&LOCK_right_task);
-		while(l_right_task == NULL){
+		while (l_right_task == NULL) {
 			pthread_cond_wait(&COND_right_task, &LOCK_right_task);
 		}
 		taskItem = l_right_task;
 		l_right_task = taskItem->next;
 		pthread_mutex_unlock(&LOCK_right_task);
-		s_task_item * task_item = (s_task_item *)taskItem->item;
+		s_task_item * task_item = (s_task_item *) taskItem->item;
 		curl_request(task_item);
 		free(taskItem);
 		usleep(TASK_STEP);
 	}
 }
 /*******************************************************************/
-void task_main(){
+void task_main() {
 	unsigned long i = 0;
 	pthread_t tid[server.max_threads];
 	pthread_t task_tid, config_tid, mail_tid;
 	// 定时加载配置线程
 	pthread_create(&config_tid, NULL, (void *) load_worker, NULL);
 	// 邮件队列线程
-//	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
+	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
 	//任务分配线程
 	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
 	//创建即时任务线程
-	for(i=0; i<server.max_threads; i++) {
-		pthread_create(&tid[i], NULL, (void *) task_right, (void *)i);
+	for (i = 0; i < server.max_threads; i++) {
+		pthread_create(&tid[i], NULL, (void *) task_right, (void *) i);
 	}
 	pthread_join(task_tid, NULL);
 	pthread_join(config_tid, NULL);
-//	pthread_join(mail_tid, NULL);
-	for(i=0; i<server.max_threads; i++) {
+	pthread_join(mail_tid, NULL);
+	for (i = 0; i < server.max_threads; i++) {
 		pthread_join(tid[i], NULL);
 	}
 }
@@ -756,12 +767,9 @@ void task_main(){
 int main(int argc, char *argv[], char *envp[]) {
 	bool daemon = false;
 	// 输入参数格式定义
-	struct option long_options[] = {
-			{ "daemon", 0, 0, 'd' },
-			{ "config", 1, 0, 'c' },
-			{ "version", 0, 0, 'v' },
-			{ "help", 0, 0, 'h' },
-			{ NULL, 0, 0, 0 }};
+	struct option long_options[] = { { "daemon", 0, 0, 'd' }, { "config", 1, 0,
+			'c' }, { "version", 0, 0, 'v' }, { "help", 0, 0, 'h' }, { NULL, 0,
+			0, 0 } };
 
 	if (1 == argc) {
 		fprintf(stderr, "please use %s --help\n", argv[0]);
@@ -776,9 +784,9 @@ int main(int argc, char *argv[], char *envp[]) {
 			daemon = true;
 			break;
 		case 'c':
-			g_config_file = malloc(strlen(optarg)+1);
-			assert( NULL != g_config_file);
-			sprintf( g_config_file, "%s", optarg );
+			g_config_file = malloc(strlen(optarg) + 1);
+			assert(NULL != g_config_file);
+			sprintf(g_config_file, "%s", optarg);
 			break;
 		case 'v':
 			printf("%s\n", VERSION);
@@ -793,7 +801,9 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 	// 参数判断
 	if (optind != argc) {
-		fprintf(stderr,	"too many arguments\nTry `%s --help' for more information.\n", argv[0]);
+		fprintf(stderr,
+				"too many arguments\nTry `%s --help' for more information.\n",
+				argv[0]);
 		exit(0);
 	}
 	init_global_params();

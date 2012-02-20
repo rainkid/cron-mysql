@@ -71,7 +71,7 @@ int send_mail(struct st_mail_msg_ *msg_) {
 	}
 	//开始处理正文
 	//为了防止大附件在内存中builde时候产生内存崩溃，此处建立一个临时文件
-	char *tmp_file_str = "tmp_mail.eml";
+	char *tmp_file_str = "logs/tmp_mail.eml";
 	FILE *tmp_fp = fopen(tmp_file_str, "wb");
 	if (tmp_fp == NULL) {
 		return SEND_RESULT_FINAL;
@@ -145,7 +145,7 @@ int send_mail(struct st_mail_msg_ *msg_) {
 
 	//文件内容编码
 	char *content_b6 = NULL;
-	base64_encoder(msg_->content, strlen(msg_->content), &content_b6);
+	base64_encoder(msg_->content, strlen(msg_->content) + 1, &content_b6);
 	if (content_b6 == NULL) {
 		free(subject_b6);
 		return SEND_RESULT_FINAL;

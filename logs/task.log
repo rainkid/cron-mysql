@@ -6132,3 +6132,330 @@
 2012-02-17 18:09:15 kill worker with signal 2.
 2012-02-17 18:09:15 kill master with signal 2.
 2012-02-17 18:09:15 kill master with signal 15.
+2012-02-20 13:06:34 load 2 tasks from mysql.
+2012-02-20 13:07:29 kill worker with signal 2.
+2012-02-20 13:07:29 kill master with signal 2.
+2012-02-20 13:07:29 kill master with signal 15.
+2012-02-20 13:07:35 load 2 tasks from mysql.
+2012-02-20 13:09:00 http://localhost/test1.php...fails
+2012-02-20 13:09:00 send an e-mail right now.
+2012-02-20 13:10:00 http://localhost/test1.php...fails
+2012-02-20 13:11:01 http://localhost/test1.php...fails
+2012-02-20 13:12:01 http://localhost/test1.php...fails
+2012-02-20 13:12:35 load 2 tasks from mysql.
+2012-02-20 13:13:01 http://localhost/test1.php...fails
+2012-02-20 13:14:00 send an e-mail right now.
+2012-02-20 13:14:01 http://localhost/test1.php...fails
+2012-02-20 13:15:01 http://localhost/test1.php...fails
+2012-02-20 13:15:42 kill worker with signal 2.
+2012-02-20 13:15:42 kill master with signal 2.
+2012-02-20 13:15:42 kill master with signal 15.
+2012-02-20 13:15:44 load 2 tasks from mysql.
+2012-02-20 13:15:53 kill worker with signal 2.
+2012-02-20 13:15:53 kill master with signal 2.
+2012-02-20 13:15:53 kill master with signal 15.
+2012-02-20 13:16:07 load 2 tasks from mysql.
+2012-02-20 13:18:00 http://localhost/test1.php...fails
+2012-02-20 13:18:00 send an e-mail right now.
+2012-02-20 13:19:00 http://localhost/test1.php...fails
+2012-02-20 13:19:18 kill worker with signal 2.
+2012-02-20 13:19:18 kill master with signal 2.
+2012-02-20 13:19:18 kill master with signal 15.
+2012-02-20 13:19:28 load 2 tasks from mysql.
+2012-02-20 13:21:00 http://localhost/test.php...fails
+2012-02-20 13:21:00 send an e-mail right now.
+2012-02-20 13:21:00 restart worker.
+2012-02-20 13:21:00 load 2 tasks from mysql.
+2012-02-20 13:21:46 kill master with signal 2.
+2012-02-20 13:21:46 kill worker with signal 2.
+2012-02-20 13:21:46 kill master with signal 15.
+2012-02-20 13:21:46 kill worker with signal 15.
+2012-02-20 13:23:22 load 2 tasks from mysql.
+2012-02-20 13:25:00 http://localhost/test.php...fails
+2012-02-20 13:25:00 send an e-mail right now.
+2012-02-20 13:25:00 kill worker with signal 11.
+2012-02-20 13:25:00 restart worker.
+2012-02-20 13:25:00 load 2 tasks from mysql.
+2012-02-20 13:25:17 load 2 tasks from mysql.
+2012-02-20 13:25:21 kill worker with signal 2.
+2012-02-20 13:25:21 kill master with signal 2.
+2012-02-20 13:25:21 kill master with signal 15.
+2012-02-20 13:25:25 kill master with signal 2.
+2012-02-20 13:25:25 kill worker with signal 2.
+2012-02-20 13:25:25 kill master with signal 15.
+2012-02-20 13:25:25 kill worker with signal 15.
+2012-02-20 13:25:33 load 2 tasks from mysql.
+2012-02-20 13:27:00 http://localhost/test.php...fails
+2012-02-20 13:28:00 http://localhost/test.php...fails
+2012-02-20 13:28:55 load 2 tasks from mysql.
+2012-02-20 13:29:00 http://localhost/test.php...fails
+2012-02-20 13:29:12 kill worker with signal 2.
+2012-02-20 13:29:12 kill master with signal 2.
+2012-02-20 13:29:12 kill master with signal 15.
+2012-02-20 13:29:16 kill worker with signal 2.
+2012-02-20 13:29:16 kill master with signal 2.
+2012-02-20 13:29:16 kill master with signal 15.
+2012-02-20 13:29:16 kill worker with signal 15.
+2012-02-20 13:29:21 load 2 tasks from mysql.
+2012-02-20 13:30:20 kill worker with signal 2.
+2012-02-20 13:30:20 kill master with signal 2.
+2012-02-20 13:30:20 kill master with signal 15.
+2012-02-20 13:30:20 kill worker with signal 15.
+2012-02-20 13:30:25 load 2 tasks from mysql.
+2012-02-20 13:31:00 http://cron.market.test/upgoods.php...success
+2012-02-20 13:32:00 http://localhost/test.php...fails
+2012-02-20 13:32:32 kill worker with signal 2.
+2012-02-20 13:32:32 kill master with signal 2.
+2012-02-20 13:32:32 kill master with signal 15.
+2012-02-20 13:32:32 kill worker with signal 15.
+2012-02-20 13:32:37 load 2 tasks from mysql.
+2012-02-20 13:34:00 http://localhost/test.php...fails
+2012-02-20 13:34:00 send an e-mail right now.
+2012-02-20 13:34:00 kill worker with signal 11.
+2012-02-20 13:34:00 restart worker.
+2012-02-20 13:34:00 load 2 tasks from mysql.
+2012-02-20 13:34:45 kill master with signal 2.
+2012-02-20 13:34:45 kill worker with signal 2.
+2012-02-20 13:34:45 kill worker with signal 15.
+2012-02-20 13:34:45 kill master with signal 15.
+2012-02-20 13:35:56 load 2 tasks from mysql.
+2012-02-20 13:37:00 http://localhost/test.php...fails
+2012-02-20 13:37:00 restart worker.
+2012-02-20 13:37:00 load 2 tasks from mysql.
+2012-02-20 13:39:00 http://localhost/test.php...fails
+2012-02-20 13:39:00 restart worker.
+2012-02-20 13:39:00 load 2 tasks from mysql.
+2012-02-20 13:39:24 kill worker with signal 2.
+2012-02-20 13:39:24 kill master with signal 2.
+2012-02-20 13:39:24 kill master with signal 15.
+2012-02-20 13:39:24 kill worker with signal 15.
+2012-02-20 13:39:29 load 2 tasks from mysql.
+2012-02-20 13:40:00 http://cron.market.test/upgoods.php...success
+2012-02-20 13:41:00 http://localhost/test.php...fails
+2012-02-20 13:41:00 restart worker.
+2012-02-20 13:41:00 load 2 tasks from mysql.
+2012-02-20 13:41:45 kill master with signal 2.
+2012-02-20 13:41:45 kill worker with signal 2.
+2012-02-20 13:41:45 kill master with signal 15.
+2012-02-20 13:41:45 kill worker with signal 15.
+2012-02-20 13:41:45 kill worker with signal 15.
+2012-02-20 13:46:55 load 2 tasks from mysql.
+2012-02-20 13:48:00 http://localhost/test.php...fails
+2012-02-20 13:48:00 restart worker.
+2012-02-20 13:48:00 load 2 tasks from mysql.
+2012-02-20 13:48:06 kill master with signal 2.
+2012-02-20 13:48:06 kill worker with signal 2.
+2012-02-20 13:48:06 kill master with signal 15.
+2012-02-20 13:48:06 kill worker with signal 15.
+2012-02-20 13:48:31 load 2 tasks from mysql.
+2012-02-20 13:50:00 http://localhost/test.php...fails
+2012-02-20 13:51:00 http://localhost/test.php...fails
+2012-02-20 13:52:00 http://localhost/test.php...fails
+2012-02-20 13:52:05 load 2 tasks from mysql.
+2012-02-20 13:52:11 kill worker with signal 2.
+2012-02-20 13:52:11 kill master with signal 2.
+2012-02-20 13:52:11 kill master with signal 15.
+2012-02-20 13:52:16 kill worker with signal 2.
+2012-02-20 13:52:16 kill master with signal 2.
+2012-02-20 13:52:16 kill master with signal 15.
+2012-02-20 13:52:16 kill worker with signal 15.
+2012-02-20 13:52:21 load 2 tasks from mysql.
+2012-02-20 13:53:00 http://cron.market.test/upgoods.php...success
+2012-02-20 13:53:53 kill worker with signal 2.
+2012-02-20 13:53:53 kill master with signal 2.
+2012-02-20 13:53:53 kill master with signal 15.
+2012-02-20 13:53:53 kill worker with signal 15.
+2012-02-20 13:53:57 load 2 tasks from mysql.
+2012-02-20 13:54:00 http://localhost/test2.php...fails
+2012-02-20 13:54:00 restart worker.
+2012-02-20 13:54:00 load 2 tasks from mysql.
+2012-02-20 13:54:33 kill worker with signal 2.
+2012-02-20 13:54:33 kill master with signal 2.
+2012-02-20 13:54:33 kill master with signal 15.
+2012-02-20 13:54:33 kill worker with signal 15.
+2012-02-20 13:54:46 load 2 tasks from mysql.
+2012-02-20 13:55:00 http://localhost/test2.php...fails
+2012-02-20 13:55:00 http://cron.market.test/upgoods.php...success
+2012-02-20 13:56:00 http://localhost/test2.php...fails
+2012-02-20 13:56:00 http://cron.market.test/upgoods.php...success
+2012-02-20 13:56:03 kill worker with signal 2.
+2012-02-20 13:56:03 kill master with signal 2.
+2012-02-20 13:56:03 kill master with signal 15.
+2012-02-20 13:56:03 kill worker with signal 15.
+2012-02-20 13:56:07 load 2 tasks from mysql.
+2012-02-20 13:57:00 http://localhost/test2.php...fails
+2012-02-20 13:57:00 restart worker.
+2012-02-20 13:57:00 load 2 tasks from mysql.
+2012-02-20 13:58:00 http://localhost/test2.php...fails
+2012-02-20 13:58:00 restart worker.
+2012-02-20 13:58:00 load 2 tasks from mysql.
+2012-02-20 13:59:00 http://localhost/test2.php...fails
+2012-02-20 13:59:00 restart worker.
+2012-02-20 13:59:00 load 2 tasks from mysql.
+2012-02-20 14:00:00 http://localhost/test2.php...fails
+2012-02-20 14:00:00 restart worker.
+2012-02-20 14:00:00 load 2 tasks from mysql.
+2012-02-20 14:01:00 http://localhost/test2.php...fails
+2012-02-20 14:01:00 restart worker.
+2012-02-20 14:01:00 load 2 tasks from mysql.
+2012-02-20 14:02:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:02:00 http://localhost/test2.php...fails
+2012-02-20 14:02:00 restart worker.
+2012-02-20 14:02:00 load 2 tasks from mysql.
+2012-02-20 14:02:31 kill master with signal 2.
+2012-02-20 14:02:31 kill worker with signal 2.
+2012-02-20 14:02:31 kill master with signal 15.
+2012-02-20 14:02:31 kill worker with signal 15.
+2012-02-20 14:02:42 load 2 tasks from mysql.
+2012-02-20 14:03:00 http://localhost/test2.php...fails
+2012-02-20 14:03:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:04:00 http://localhost/test2.php...fails
+2012-02-20 14:04:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:05:00 http://localhost/test2.php...fails
+2012-02-20 14:05:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:06:00 http://localhost/test2.php...fails
+2012-02-20 14:06:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:07:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:07:00 http://localhost/test2.php...fails
+2012-02-20 14:07:42 load 2 tasks from mysql.
+2012-02-20 14:08:00 http://localhost/test2.php...fails
+2012-02-20 14:08:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:09:00 http://localhost/test2.php...fails
+2012-02-20 14:09:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:09:13 kill worker with signal 2.
+2012-02-20 14:09:13 kill master with signal 2.
+2012-02-20 14:09:13 kill master with signal 15.
+2012-02-20 14:09:13 kill worker with signal 15.
+2012-02-20 14:09:23 load 2 tasks from mysql.
+2012-02-20 14:10:00 http://localhost/test2.php...fails
+2012-02-20 14:13:30 kill worker with signal 2.
+2012-02-20 14:13:30 kill master with signal 2.
+2012-02-20 14:13:30 kill master with signal 15.
+2012-02-20 14:13:30 kill worker with signal 15.
+2012-02-20 14:13:38 load 2 tasks from mysql.
+2012-02-20 14:14:00 http://localhost/test2.php...fails
+2012-02-20 14:14:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:15:00 http://localhost/test2.php...fails
+2012-02-20 14:15:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:15:38 send an e-mail right now.
+2012-02-20 14:15:38 kill worker with signal 11.
+2012-02-20 14:15:38 restart worker.
+2012-02-20 14:15:38 load 2 tasks from mysql.
+2012-02-20 14:16:00 http://localhost/test2.php...fails
+2012-02-20 14:16:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:17:00 http://localhost/test2.php...fails
+2012-02-20 14:17:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:17:38 send an e-mail right now.
+2012-02-20 14:17:38 kill worker with signal 11.
+2012-02-20 14:17:38 restart worker.
+2012-02-20 14:17:38 load 2 tasks from mysql.
+2012-02-20 14:18:00 http://localhost/test2.php...fails
+2012-02-20 14:18:00 http://cron.market.test/upgoods.php...success
+2012-02-20 14:18:29 kill worker with signal 2.
+2012-02-20 14:18:29 kill master with signal 2.
+2012-02-20 14:18:29 kill master with signal 15.
+2012-02-20 14:18:29 kill worker with signal 15.
+2012-02-20 14:18:34 load 2 tasks from mysql.
+2012-02-20 14:19:00 http://localhost/test2.php...fails
+2012-02-20 14:19:34 send an e-mail right now.
+2012-02-20 14:21:29 kill worker with signal 2.
+2012-02-20 14:21:29 kill master with signal 2.
+2012-02-20 14:21:29 kill master with signal 15.
+2012-02-20 14:21:29 kill worker with signal 15.
+2012-02-20 14:23:12 load 2 tasks from mysql.
+2012-02-20 14:24:00 http://localhost/test2.php...fails
+2012-02-20 14:24:12 kill worker with signal 11.
+2012-02-20 14:24:12 restart worker.
+2012-02-20 14:24:12 load 2 tasks from mysql.
+2012-02-20 14:25:00 http://localhost/test2.php...fails
+2012-02-20 14:25:12 kill worker with signal 11.
+2012-02-20 14:25:12 restart worker.
+2012-02-20 14:25:12 load 2 tasks from mysql.
+2012-02-20 14:26:00 http://localhost/test2.php...fails
+2012-02-20 14:26:12 kill worker with signal 11.
+2012-02-20 14:26:12 restart worker.
+2012-02-20 14:26:12 load 2 tasks from mysql.
+2012-02-20 14:27:00 http://localhost/test2.php...fails
+2012-02-20 14:27:12 kill worker with signal 11.
+2012-02-20 14:27:12 restart worker.
+2012-02-20 14:27:12 load 2 tasks from mysql.
+2012-02-20 14:31:09 http://cron.market.test/upgoods.php...fails
+2012-02-20 14:31:09 http://localhost/test2.php...fails
+2012-02-20 14:31:12 kill worker with signal 11.
+2012-02-20 14:31:12 restart worker.
+2012-02-20 14:31:12 load 2 tasks from mysql.
+2012-02-20 14:32:00 http://localhost/test2.php...fails
+2012-02-20 14:32:12 kill worker with signal 11.
+2012-02-20 14:32:12 restart worker.
+2012-02-20 14:32:12 load 2 tasks from mysql.
+2012-02-20 14:32:34 kill master with signal 2.
+2012-02-20 14:32:34 kill master with signal 15.
+2012-02-20 14:32:34 kill worker with signal 15.
+2012-02-20 14:32:40 load 2 tasks from mysql.
+2012-02-20 14:33:00 http://localhost/test2.php...fails
+2012-02-20 14:33:40 send an e-mail right now.
+2012-02-20 14:36:09 http://cron.market.test/upgoods.php...fails
+2012-02-20 14:36:09 http://localhost/test2.php...fails
+2012-02-20 14:36:40 send an e-mail right now.
+2012-02-20 14:37:40 load 2 tasks from mysql.
+2012-02-20 14:39:19 http://cron.market.test/upgoods.php...fails
+2012-02-20 14:39:19 http://localhost/test2.php...fails
+2012-02-20 14:39:40 send an e-mail right now.
+2012-02-20 14:42:29 http://cron.market.test/upgoods.php...fails
+2012-02-20 14:42:29 http://localhost/test2.php...fails
+2012-02-20 14:42:40 load 2 tasks from mysql.
+2012-02-20 14:42:40 send an e-mail right now.
+2012-02-20 14:43:35 kill worker with signal 2.
+2012-02-20 14:43:35 kill master with signal 2.
+2012-02-20 14:43:35 kill master with signal 15.
+2012-02-20 14:43:35 kill worker with signal 15.
+2012-02-20 14:45:37 load 2 tasks from mysql.
+2012-02-20 14:49:09 http://cron.market.test/upgoods.php...fails
+2012-02-20 14:49:10 http://localhost/test2.php...fails
+2012-02-20 14:49:37 send an e-mail right now.
+2012-02-20 14:50:37 load 2 tasks from mysql.
+2012-02-20 14:52:19 http://cron.market.test/upgoods.php...fails
+2012-02-20 14:52:19 http://localhost/test2.php...fails
+2012-02-20 14:52:37 send an e-mail right now.
+2012-02-20 14:55:29 http://cron.market.test/upgoods.php...fails
+2012-02-20 14:55:29 http://localhost/test2.php...fails
+2012-02-20 14:55:37 load 2 tasks from mysql.
+2012-02-20 14:55:37 send an e-mail right now.
+2012-02-20 14:58:39 http://cron.market.test/upgoods.php...fails
+2012-02-20 14:58:39 http://localhost/test2.php...fails
+2012-02-20 14:59:37 send an e-mail right now.
+2012-02-20 15:00:07 kill worker with signal 2.
+2012-02-20 15:00:07 kill master with signal 2.
+2012-02-20 15:00:07 kill master with signal 15.
+2012-02-20 15:00:09 load 2 tasks from mysql.
+2012-02-20 15:00:19 kill worker with signal 2.
+2012-02-20 15:00:19 kill master with signal 2.
+2012-02-20 15:00:19 kill master with signal 15.
+2012-02-20 15:00:29 load 2 tasks from mysql.
+2012-02-20 15:01:00 http://localhost/test2.php...fails
+2012-02-20 15:01:28 send an e-mail right now.
+2012-02-20 15:04:09 http://cron.market.test/upgoods.php...fails
+2012-02-20 15:04:10 http://localhost/test2.php...fails
+2012-02-20 15:04:29 send an e-mail right now.
+2012-02-20 15:05:29 load 2 tasks from mysql.
+2012-02-20 15:07:19 http://cron.market.test/upgoods.php...fails
+2012-02-20 15:07:19 http://localhost/test2.php...fails
+2012-02-20 15:07:29 send an e-mail right now.
+2012-02-20 15:10:29 load 2 tasks from mysql.
+2012-02-20 15:10:29 http://cron.market.test/upgoods.php...fails
+2012-02-20 15:10:29 http://localhost/test2.php...fails
+2012-02-20 15:11:29 send an e-mail right now.
+2012-02-20 15:13:39 http://cron.market.test/upgoods.php...fails
+2012-02-20 15:13:39 http://localhost/test2.php...fails
+2012-02-20 15:14:29 send an e-mail right now.
+2012-02-20 15:15:29 load 2 tasks from mysql.
+2012-02-20 15:16:49 http://cron.market.test/upgoods.php...fails
+2012-02-20 15:16:49 http://localhost/test2.php...fails
+2012-02-20 15:17:29 send an e-mail right now.
+2012-02-20 15:19:58 http://cron.market.test/upgoods.php...fails
+2012-02-20 15:19:58 http://localhost/test2.php...fails
+2012-02-20 15:20:29 load 2 tasks from mysql.
+2012-02-20 15:20:29 send an e-mail right now.
+2012-02-20 15:20:35 kill worker with signal 2.
+2012-02-20 15:20:35 kill master with signal 2.
+2012-02-20 15:20:35 kill master with signal 15.

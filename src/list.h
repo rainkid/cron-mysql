@@ -20,7 +20,7 @@ typedef struct task_item {
     int times;
     int runTimes;
     bool mail;
-    char command[BUFSIZ];
+    char command[1024];
     struct task_item *next;
     struct task_item *prev;
 } s_task_item;
