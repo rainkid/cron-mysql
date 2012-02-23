@@ -147,6 +147,8 @@ int send_notice_mail(char *subject, char *content) {
 	if (ret != 0) {
 		write_log("send mail with error : %d.", ret);
 	}
+	free(mail.subject);
+	free(mail.content);
 	return ret;
 }
 /*******************************************************************/
@@ -226,7 +228,6 @@ void mail_worker() {
 			sprintf(content, "Error with [%s] \n", right_mail->content);
 			send_notice_mail(subject, content);
 			write_log("send an e-mail right now.");
-			free(right_mail);
 		}
 		sleep(SEND_MAIL_TIME);
 	}
@@ -493,7 +494,6 @@ void task_mysql_load() {
 		struct tm _stime, _etime;
 		s_task_item *taskItem;
 		taskItem = (s_task_item *) malloc(sizeof(s_task_item));
-		assert(NULL != taskItem);
 
 		taskItem->mail = false;
 		taskItem->next = NULL;

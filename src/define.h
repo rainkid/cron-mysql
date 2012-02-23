@@ -16,7 +16,7 @@
 #define MAX_LOG_SIZE  (1 * 1024 * 1024)
 
 #define SYNC_CONFIG_TIME (5000000 * 60)
-#define SEND_MAIL_TIME (10 * 60)
+#define SEND_MAIL_TIME (30 * 60)
 #define TIME_UNIT 60
 #define TASK_STEP   100000
 /* mysql连接相接相关数据 */

@@ -6459,3 +6459,187 @@
 2012-02-20 15:20:35 kill worker with signal 2.
 2012-02-20 15:20:35 kill master with signal 2.
 2012-02-20 15:20:35 kill master with signal 15.
+2012-02-21 16:20:17 load 2 tasks from mysql.
+2012-02-21 16:21:00 http://localhost/test2.php...fails
+2012-02-21 16:21:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:22:00 http://localhost/test2.php...fails
+2012-02-21 16:22:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:23:00 http://localhost/test2.php...fails
+2012-02-21 16:23:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:24:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:24:00 http://localhost/test2.php...fails
+2012-02-21 16:25:00 http://localhost/test2.php...fails
+2012-02-21 16:25:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:25:17 load 2 tasks from mysql.
+2012-02-21 16:26:00 http://localhost/test2.php...fails
+2012-02-21 16:26:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:27:00 http://localhost/test2.php...fails
+2012-02-21 16:27:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:28:00 http://localhost/test2.php...fails
+2012-02-21 16:28:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:29:00 http://localhost/test2.php...fails
+2012-02-21 16:29:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:30:00 http://localhost/test2.php...fails
+2012-02-21 16:30:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:30:17 send an e-mail right now.
+2012-02-21 16:30:17 load 2 tasks from mysql.
+2012-02-21 16:31:00 http://localhost/test2.php...fails
+2012-02-21 16:31:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:32:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:32:00 http://localhost/test2.php...fails
+2012-02-21 16:33:00 http://localhost/test2.php...fails
+2012-02-21 16:33:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:34:00 http://localhost/test2.php...fails
+2012-02-21 16:34:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:35:00 http://localhost/test2.php...fails
+2012-02-21 16:35:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:35:17 load 2 tasks from mysql.
+2012-02-21 16:36:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:36:00 http://localhost/test2.php...fails
+2012-02-21 16:37:00 http://localhost/test2.php...fails
+2012-02-21 16:37:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:38:00 http://localhost/test2.php...fails
+2012-02-21 16:38:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:39:00 http://localhost/test2.php...fails
+2012-02-21 16:39:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:40:00 http://localhost/test2.php...fails
+2012-02-21 16:40:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:40:17 load 2 tasks from mysql.
+2012-02-21 16:40:17 send an e-mail right now.
+2012-02-21 16:41:00 http://localhost/test2.php...fails
+2012-02-21 16:41:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:42:00 http://localhost/test2.php...fails
+2012-02-21 16:42:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:43:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:43:00 http://localhost/test2.php...fails
+2012-02-21 16:44:00 http://localhost/test2.php...fails
+2012-02-21 16:44:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:45:00 http://localhost/test2.php...fails
+2012-02-21 16:45:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:45:17 load 2 tasks from mysql.
+2012-02-21 16:46:00 http://localhost/test2.php...fails
+2012-02-21 16:46:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:47:00 http://localhost/test2.php...fails
+2012-02-21 16:47:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:48:00 http://localhost/test2.php...fails
+2012-02-21 16:48:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:49:00 http://localhost/test2.php...fails
+2012-02-21 16:49:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:50:00 http://localhost/test2.php...fails
+2012-02-21 16:50:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:50:17 load 2 tasks from mysql.
+2012-02-21 16:50:17 send an e-mail right now.
+2012-02-21 16:51:00 http://localhost/test2.php...fails
+2012-02-21 16:51:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:52:00 http://localhost/test2.php...fails
+2012-02-21 16:52:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:53:00 http://localhost/test2.php...fails
+2012-02-21 16:53:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:54:00 http://localhost/test2.php...fails
+2012-02-21 16:54:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:55:00 http://localhost/test2.php...fails
+2012-02-21 16:55:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:55:17 load 2 tasks from mysql.
+2012-02-21 16:56:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:56:00 http://localhost/test2.php...fails
+2012-02-21 16:57:00 http://localhost/test2.php...fails
+2012-02-21 16:57:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:58:00 http://cron.market.test/upgoods.php...success
+2012-02-21 16:58:00 http://localhost/test2.php...fails
+2012-02-21 16:59:00 http://localhost/test2.php...fails
+2012-02-21 16:59:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:00:00 http://localhost/test2.php...fails
+2012-02-21 17:00:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:00:17 load 2 tasks from mysql.
+2012-02-21 17:00:18 send an e-mail right now.
+2012-02-21 17:01:00 http://localhost/test2.php...fails
+2012-02-21 17:01:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:02:00 http://localhost/test2.php...fails
+2012-02-21 17:02:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:03:00 http://localhost/test2.php...fails
+2012-02-21 17:03:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:04:00 http://localhost/test2.php...fails
+2012-02-21 17:04:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:05:00 http://localhost/test2.php...fails
+2012-02-21 17:05:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:05:17 load 2 tasks from mysql.
+2012-02-21 17:06:00 http://localhost/test2.php...fails
+2012-02-21 17:06:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:07:00 http://localhost/test2.php...fails
+2012-02-21 17:07:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:08:00 http://localhost/test2.php...fails
+2012-02-21 17:08:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:08:41 kill worker with signal 2.
+2012-02-21 17:08:41 kill master with signal 2.
+2012-02-21 17:08:41 kill master with signal 15.
+2012-02-21 17:36:57 load 2 tasks from mysql.
+2012-02-21 17:37:00 http://localhost/test2.php...fails
+2012-02-21 17:37:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:38:00 http://localhost/test2.php...fails
+2012-02-21 17:38:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:39:00 http://localhost/test2.php...fails
+2012-02-21 17:39:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:40:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:40:00 http://localhost/test2.php...fails
+2012-02-21 17:41:00 http://localhost/test2.php...fails
+2012-02-21 17:41:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:41:57 load 2 tasks from mysql.
+2012-02-21 17:42:00 http://localhost/test2.php...fails
+2012-02-21 17:42:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:43:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:43:00 http://localhost/test2.php...fails
+2012-02-21 17:44:00 http://localhost/test2.php...fails
+2012-02-21 17:44:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:45:00 http://localhost/test2.php...fails
+2012-02-21 17:45:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:46:00 http://localhost/test2.php...fails
+2012-02-21 17:46:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:46:57 send an e-mail right now.
+2012-02-21 17:46:57 load 2 tasks from mysql.
+2012-02-21 17:47:00 http://localhost/test2.php...fails
+2012-02-21 17:47:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:48:00 http://localhost/test2.php...fails
+2012-02-21 17:48:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:49:00 http://localhost/test2.php...fails
+2012-02-21 17:49:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:50:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:50:00 http://localhost/test2.php...fails
+2012-02-21 17:51:00 http://localhost/test2.php...fails
+2012-02-21 17:51:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:51:57 load 2 tasks from mysql.
+2012-02-21 17:52:00 http://localhost/test2.php...fails
+2012-02-21 17:52:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:53:00 http://localhost/test2.php...fails
+2012-02-21 17:53:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:54:00 http://localhost/test2.php...fails
+2012-02-21 17:54:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:55:00 http://localhost/test2.php...fails
+2012-02-21 17:55:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:56:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:56:00 http://localhost/test2.php...fails
+2012-02-21 17:56:57 load 2 tasks from mysql.
+2012-02-21 17:56:57 send an e-mail right now.
+2012-02-21 17:57:00 http://localhost/test2.php...fails
+2012-02-21 17:57:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:58:00 http://localhost/test2.php...fails
+2012-02-21 17:58:00 http://cron.market.test/upgoods.php...success
+2012-02-21 17:59:00 http://localhost/test2.php...fails
+2012-02-21 17:59:00 http://cron.market.test/upgoods.php...success
+2012-02-21 18:00:00 http://cron.market.test/upgoods.php...success
+2012-02-21 18:00:00 http://localhost/test2.php...fails
+2012-02-21 18:01:00 http://localhost/test2.php...fails
+2012-02-21 18:01:00 http://cron.market.test/upgoods.php...success
+2012-02-21 18:01:57 load 2 tasks from mysql.
+2012-02-21 18:02:00 http://localhost/test2.php...fails
+2012-02-21 18:02:00 http://cron.market.test/upgoods.php...success
+2012-02-21 18:03:00 http://localhost/test2.php...fails
+2012-02-21 18:03:00 http://cron.market.test/upgoods.php...success
+2012-02-21 18:04:00 http://localhost/test2.php...fails
+2012-02-21 18:04:00 http://cron.market.test/upgoods.php...success
+2012-02-21 18:05:00 http://localhost/test2.php...fails
+2012-02-21 18:05:00 http://cron.market.test/upgoods.php...success
+2012-02-21 18:06:00 http://cron.market.test/upgoods.php...success
+2012-02-21 18:06:00 http://localhost/test2.php...fails
+2012-02-21 18:06:53 kill worker with signal 2.
+2012-02-21 18:06:53 kill master with signal 2.
+2012-02-21 18:06:53 kill master with signal 15.
