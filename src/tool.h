@@ -6,6 +6,7 @@ extern "C" {
 #endif
 time_t GetNowTime();
 void write_log(const char *fmt,  ...);
+char * string_copy(char *dest, const char *src);
 #ifdef	__cplusplus
 }
 #endif

@@ -21,27 +21,27 @@
 #define TASK_STEP   100000
 /* mysql连接相接相关数据 */
 typedef struct mysql_params{
-	char host[1024];
-	char username[1024];
-	char passwd[1024];
-	char dbname[1024];
+	char *host;
+	char *username;
+	char *passwd;
+	char *dbname;
 	int port;
 } s_mysql_params;
 
 /* 邮件相关数据 */
 typedef struct mail_params{
-	char server[1024];
-	char user[1024];
-	char passwd[1024];
-	char to[1024];
+	char *server;
+	char *user;
+	char *passwd;
+	char *to;
 	int port;
 } s_mail_params;
 
 //全局参数
 typedef struct server_params{
-	char run_type[1024];
-	char notice[1024];
-	char task_file[1024];
+	char *run_type;
+	char *notice;
+	char *task_file;
 	int max_threads;
 	int shutdown;
 	int mail_count;

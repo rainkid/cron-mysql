@@ -29,7 +29,7 @@
 
 #include "tool.h"
 #include "define.h"
-/*******************************************************************/
+
 /* 获取当前时间戳 */
 time_t GetNowTime() {
 	time_t nowTime;
@@ -37,7 +37,6 @@ time_t GetNowTime() {
 	return nowTime;
 }
 
-/*******************************************************************/
 //日志函数
 void write_log(const char *fmt,  ...) {
 	char msg[BUFSIZE];
@@ -82,3 +81,10 @@ long my_mktime (struct tm *tm) {
 
 }
 
+char * string_copy(char *dest, const char *src) {
+	int s_len;
+	s_len = strlen(src) + 1;
+	dest = malloc(s_len);
+	memcpy(dest, src, s_len);
+	return dest;
+}

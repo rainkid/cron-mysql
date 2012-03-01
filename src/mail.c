@@ -223,8 +223,6 @@ int send_mail(struct st_mail_msg_ *msg_) {
 	return SEND_RESULT_SUCCESS;
 }
 
-/*******************************************************************/
-
 /* 发送信体头信息 */
 int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 	//发件人为空
@@ -328,7 +326,6 @@ int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
 	return 1;
 }
 
-/*******************************************************************/
 //套接字接口，并判断返回值
 int cmd_msg(int sockfd, const char *cmd, const char *flag) {
 	int r_result;
@@ -352,7 +349,6 @@ int cmd_msg(int sockfd, const char *cmd, const char *flag) {
 	return 0;
 }
 
-/*******************************************************************/
 //初始化邮件结构体
 void init_mail_msg(struct st_mail_msg_ *msg) {
 	msg->att_file_len = 0;

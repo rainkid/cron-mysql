@@ -24,7 +24,7 @@
 #include <sys/types.h>
 
 #include "list.h"
-/*******************************************************************/
+
 /* 任务初始化 */
 void task_init(l_task_list * task_list) {
     task_list->count = 0;
@@ -48,7 +48,7 @@ void task_add(l_task_list * task_list, s_task_item * task_item) {
     task_list->tail = task_item;
     (task_list->count)++;
 }
-/*******************************************************************/
+
 void task_copy(s_task_item *src, s_task_item *dsc){
 	dsc->startTime = src->startTime;
 	dsc->endTime = src->endTime;
@@ -59,7 +59,7 @@ void task_copy(s_task_item *src, s_task_item *dsc){
 	dsc->runTimes = src->runTimes;
 	sprintf(dsc->command, "%s", src->command);
 }
-/*******************************************************************/
+
 /* 更新节点 */
 void task_update(s_task_item * task_item, l_task_list *task_list) {
     if (false == task_isempty(task_list)) {
@@ -97,12 +97,12 @@ void task_update(s_task_item * task_item, l_task_list *task_list) {
         task_add(task_list,task_item);
     }
 }
-/*******************************************************************/
+
 /* 任务列表是否空 */
 bool task_isempty(const l_task_list *task_list) {
     return (task_list->count == 0) ? true : false;
 }
-/*******************************************************************/
+
 /* 任务列表销毁 */
 void task_free(l_task_list *task_list) {
     if (NULL != task_list && false == task_isempty(task_list)) {
@@ -119,7 +119,7 @@ void task_free(l_task_list *task_list) {
     task_list->tail = NULL;
     free(task_list);
 }
-/*******************************************************************/
+
 /* 任务节点销毁 */
 void item_free(s_task_item *task_item, l_task_list *task_list) {
 	(task_list->count)--;
