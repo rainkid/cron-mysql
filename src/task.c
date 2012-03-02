@@ -45,7 +45,6 @@
 #include <curl/easy.h>
 #include <mysql/mysql.h>
 
-#include "http.h"
 #include "list.h"
 #include "tool.h"
 #include "config.h"
@@ -88,8 +87,8 @@ size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data);
 int send_notice_mail(char *subject, char *content);
 void task_log(int task_id, int ret, char* msg);
 void curl_request(s_task_item *item);
-void task_file_load(const char *task_file);
-void task_mysql_load();
+void load_file_tasks(const char *task_file);
+void load_mysql_tasks();
 void free_global_params();
 void free_mysql_params();
 void free_mail_params();
@@ -97,8 +96,8 @@ void free_resource();
 void init_global_params();
 void init_mysql_params();
 void init_mail_params();
-void task_right();
-void task_main();
+void deal_task();
+void create_threads();
 void signal_master(const int signal);
 void signal_worker(const int signal);
 void create_child(void);
@@ -325,14 +324,11 @@ void task_log(int task_id, int ret, char* msg) {
 	char sql[2048] = { 0x00 };
 	char upsql[1024] = { 0x00 };
 	int mtask_id = task_id;
-	char *mmsg;
 
 	struct tm *p;
 	time_t timep;
 	time(&timep);
 	p = localtime(&timep);
-	mmsg = malloc(strlen(msg) + 1);
-	sprintf(mmsg, "%s", msg);
 
 	my_init();
 
@@ -367,7 +363,6 @@ void task_log(int task_id, int ret, char* msg) {
 		write_log("mysql initialization fails.");
 	}
 	// mysql连接
-	free(mmsg);
 	mysql_close(&mysql_conn);
 	mysql_thread_end();
 }
@@ -381,16 +376,16 @@ void load_worker() {
 		}
 		// 加载任务到新建列表中
 		if (strcmp(server.run_type, "file") == 0) {
-			task_file_load(server.task_file);
+			load_file_tasks(server.task_file);
 		} else if (strcmp(server.run_type, "mysql") == 0) {
-			task_mysql_load();
+			load_mysql_tasks();
 		}
 		usleep(SYNC_CONFIG_TIME);
 	}
 }
 
 // 文件配置计划任务加载
-void task_file_load(const char *task_file) {
+void load_file_tasks(const char *task_file) {
 	FILE *fp;
 	fp = fopen(server.task_file, "r");
 	if (NULL == fp) {
@@ -465,7 +460,7 @@ void task_file_load(const char *task_file) {
 	fclose(fp);
 }
 
-void task_mysql_load() {
+void load_mysql_tasks() {
 	MYSQL mysql_conn;
 	MYSQL_RES *mysql_result;
 	MYSQL_ROW mysql_row;
@@ -660,7 +655,7 @@ void free_resource() {
 	free_mail_params();
 }
 
-void task_right() {
+void deal_task() {
 	struct s_right_task * taskItem;
 	for (;;) {
 		if (server.shutdown) {
@@ -680,7 +675,7 @@ void task_right() {
 	}
 }
 
-void task_main() {
+void create_threads() {
 	unsigned long i = 0;
 	pthread_t tid[server.max_threads];
 	pthread_t task_tid, config_tid, mail_tid;
@@ -692,7 +687,7 @@ void task_main() {
 	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
 	//创建即时任务线程
 	for (i = 0; i < server.max_threads; i++) {
-		pthread_create(&tid[i], NULL, (void *) task_right, (void *) i);
+		pthread_create(&tid[i], NULL, (void *) deal_task, (void *) i);
 	}
 	pthread_join(task_tid, NULL);
 	pthread_join(config_tid, NULL);
@@ -855,7 +850,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		write_log("tasklist malloc failed.");
 	};
 	curl_global_init(CURL_GLOBAL_ALL);
-	task_main();
+	create_threads();
 	free_resource();
 	return 0;
 }
