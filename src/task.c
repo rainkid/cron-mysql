@@ -62,13 +62,14 @@ s_mysql_params g_mysql_params;
 s_mail_params g_mail_params;
 //全局变量
 s_server_params server;
+
 //任务锁
-pthread_mutex_t LOCK_task = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t LOCK_right_task = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t LOCK_right_mail = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t LOCK_task = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t LOCK_right_task = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t LOCK_right_mail = PTHREAD_MUTEX_INITIALIZER;
 //信号量
-pthread_cond_t COND_right_task = PTHREAD_COND_INITIALIZER;
-pthread_cond_t COND_right_mail = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t COND_right_task = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t COND_right_mail = PTHREAD_COND_INITIALIZER;
 //即时任务
 struct s_right_task {
 	struct s_right_task *next;
@@ -850,7 +851,8 @@ int main(int argc, char *argv[], char *envp[]) {
 		write_log("tasklist malloc failed.");
 	};
 	curl_global_init(CURL_GLOBAL_ALL);
-	create_threads();
+//	create_threads();
+
 	free_resource();
 	return 0;
 }
