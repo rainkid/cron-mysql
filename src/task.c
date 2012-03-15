@@ -851,7 +851,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		write_log("tasklist malloc failed.");
 	};
 	curl_global_init(CURL_GLOBAL_ALL);
-//	create_threads();
+	create_threads();
 
 	free_resource();
 	return 0;
