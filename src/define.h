@@ -8,11 +8,11 @@
 #ifndef DEFINE_H_
 #define DEFINE_H_
 
-#define PIDFILE  "task.pid"
+#define PIDFILE  "/tmp/task.pid"
 #define VERSION  "1.0"
 #define BUFSIZE  4096
-#define LOG_FILE  "logs/task.log"
-#define BACK_LOG_FILE  "logs/task.log.bak"
+#define LOG_FILE  "/tmp/task.log"
+#define BACK_LOG_FILE  "/tmp/task.log.bak"
 #define MAX_LOG_SIZE  (1 * 1024 * 1024)
 
 #define SYNC_CONFIG_TIME (5000000 * 60)
