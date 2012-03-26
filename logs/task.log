@@ -10493,3 +10493,7 @@
 2012-03-26 11:39:05 kill worker with signal 2.
 2012-03-26 11:39:05 kill master with signal 2.
 2012-03-26 11:39:05 kill master with signal 15.
+2012-03-26 11:41:36 load 2 tasks from mysql.
+2012-03-26 11:41:38 kill worker with signal 2.
+2012-03-26 11:41:38 kill master with signal 2.
+2012-03-26 11:41:38 kill master with signal 15.
