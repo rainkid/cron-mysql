@@ -88,6 +88,7 @@ size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *data);
 int send_notice_mail(char *subject, char *content);
 void task_log(int task_id, int ret, char* msg);
 void curl_request(s_task_item *item);
+void shell_command(s_task_item *item);
 void load_file_tasks(const char *task_file);
 void load_mysql_tasks();
 void free_global_params();
@@ -303,6 +304,27 @@ void curl_request(s_task_item *item) {
 	}
 	free(task_item);
 	curl_easy_cleanup(curl_handle);
+}
+
+/* 命令管道 */
+void shell_command(s_task_item *item) {
+	FILE * fp;
+	int ret = 0;
+	s_task_item *task_item;
+	char response_text[1024];
+
+	task_item = malloc(sizeof(s_task_item));
+	pthread_mutex_lock(&LOCK_task);
+	sprintf(task_item->command, "%s", item->command);
+	task_item->task_id = item->task_id;
+	pthread_mutex_unlock(&LOCK_task);
+
+	fp = popen(task_item->command,"r");
+	fprintf(stderr, "%s\n", task_item->command);
+	if(NULL != fgets(response_text, sizeof(response_text), fp)){
+		fprintf(stderr, "%s\n", response_text);
+	}
+	pclose(fp);
 }
 
 /* curl回调处理函数 */
@@ -671,6 +693,7 @@ void deal_task() {
 		pthread_mutex_unlock(&LOCK_right_task);
 		s_task_item * task_item = (s_task_item *) taskItem->item;
 		curl_request(task_item);
+//		shell_command(task_item);
 		free(taskItem);
 		usleep(TASK_STEP);
 	}

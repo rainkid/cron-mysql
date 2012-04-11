@@ -6,6 +6,7 @@
 C_SRCS += \
 ../src/base64.c \
 ../src/config.c \
+../src/http.c \
 ../src/list.c \
 ../src/mail.c \
 ../src/task.c \
@@ -14,6 +15,7 @@ C_SRCS += \
 OBJS += \
 ./src/base64.o \
 ./src/config.o \
+./src/http.o \
 ./src/list.o \
 ./src/mail.o \
 ./src/task.o \
@@ -22,6 +24,7 @@ OBJS += \
 C_DEPS += \
 ./src/base64.d \
 ./src/config.d \
+./src/http.d \
 ./src/list.d \
 ./src/mail.d \
 ./src/task.d \

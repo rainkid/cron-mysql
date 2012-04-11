@@ -6,6 +6,7 @@
 O_SRCS += \
 ../base64.o \
 ../config.o \
+../http.o \
 ../list.o \
 ../mail.o \
 ../task.o \
