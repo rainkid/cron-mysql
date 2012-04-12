@@ -117,7 +117,7 @@ void usage() {
 
 //邮件队列
 void mail_worker() {
-	pthread_detach(pthread_self());
+//	pthread_detach(pthread_self());
 	struct s_right_mail *right_mail;
 	char subject[BUFSIZE] = { 0x00 };
 	char content[BUFSIZE] = { 0x00 };
@@ -180,7 +180,7 @@ int send_notice_mail(char *subject, char *content) {
 
 /* 任务处理线程 */
 void task_worker() {
-	pthread_detach(pthread_self());
+//	pthread_detach(pthread_self());
 	s_task_item *temp;
 	struct s_right_task *right_item;
 	for (;;) {
@@ -311,7 +311,7 @@ void shell_command(s_task_item *item) {
 	FILE * fp;
 	int ret = 0;
 	s_task_item *task_item;
-	char response_text[1024];
+	char responsetext[1024];
 
 	task_item = malloc(sizeof(s_task_item));
 	pthread_mutex_lock(&LOCK_task);
@@ -319,12 +319,34 @@ void shell_command(s_task_item *item) {
 	task_item->task_id = item->task_id;
 	pthread_mutex_unlock(&LOCK_task);
 
-	fp = popen(task_item->command,"r");
-	fprintf(stderr, "%s\n", task_item->command);
-	if(NULL != fgets(response_text, sizeof(response_text), fp)){
-		fprintf(stderr, "%s\n", response_text);
+	struct s_right_mail *right_mail;
+
+	fp = popen(task_item->command, "r");
+	if(NULL != fgets(responsetext, sizeof(responsetext), fp)){
+		if (responsetext && (strstr(responsetext, "__programe_run_succeed__") != 0)) {
+			ret = 1;
+			write_log("%s...success", task_item->command);
+		} else {
+			write_log("%s...fails", task_item->command);
+			if (server.mail_count < 6) {
+				right_mail = malloc(sizeof(struct s_right_mail));
+				sprintf(right_mail->content, "%s", task_item->command);
+				pthread_mutex_lock(&LOCK_right_mail);
+				right_mail->next = l_right_mail;
+				l_right_mail = right_mail;
+				server.mail_count++;
+				pthread_mutex_unlock(&LOCK_right_mail);
+			}
+		}
+	}
+	//记录日志
+	if (strcmp(server.run_type, "mysql") == 0) {
+		if (NULL != responsetext) {
+			task_log(task_item->task_id, ret, responsetext);
+		}
 	}
 	pclose(fp);
+	free(task_item);
 }
 
 /* curl回调处理函数 */
@@ -392,7 +414,7 @@ void task_log(int task_id, int ret, char* msg) {
 
 /* 同步配置线程 */
 void load_worker() {
-	pthread_detach(pthread_self());
+//	pthread_detach(pthread_self());
 	for (;;) {
 		if (server.shutdown) {
 			break;
@@ -679,6 +701,7 @@ void free_resource() {
 }
 
 void deal_task() {
+//	pthread_detach(pthread_self());
 	struct s_right_task * taskItem;
 	for (;;) {
 		if (server.shutdown) {
@@ -692,8 +715,8 @@ void deal_task() {
 		l_right_task = taskItem->next;
 		pthread_mutex_unlock(&LOCK_right_task);
 		s_task_item * task_item = (s_task_item *) taskItem->item;
-		curl_request(task_item);
-//		shell_command(task_item);
+//		curl_request(task_item);
+		shell_command(task_item);
 		free(taskItem);
 		usleep(TASK_STEP);
 	}
