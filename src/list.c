@@ -31,7 +31,6 @@ void task_init(l_task_list * task_list) {
 	task_list->head = NULL;
 	task_list->tail = NULL;
 }
-/*******************************************************************/
 /* 添加节点到尾部 */
 void task_add(l_task_list * task_list, s_task_item * task_item) {
     task_item->next = NULL;

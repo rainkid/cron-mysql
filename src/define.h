@@ -37,7 +37,7 @@ typedef struct mail_params{
 	int port;
 } s_mail_params;
 
-//全局参数
+/* 全局参数 */
 typedef struct server_params{
 	char *run_type;
 	char *notice;
@@ -47,7 +47,7 @@ typedef struct server_params{
 	int mail_count;
 } s_server_params;
 
-//请求返回数据
+/* CURL请求返回数据 */
 struct s_response {
 	char *responsetext;
 	size_t size;

@@ -9,7 +9,6 @@ extern "C" {
 #include <sys/types.h>
 #include <stdbool.h>
     
-//ITEM
 typedef struct task_item {
     int task_id;
     time_t startTime;
@@ -25,13 +24,10 @@ typedef struct task_item {
     struct task_item *prev;
 } s_task_item;
 
-//LIST
 typedef struct task_list {
-    //头
     s_task_item *head;
-    //尾
     s_task_item *tail;
-    //任务节点数量
+    /* 任务节点数量 */
     int count;
 } l_task_list;
 

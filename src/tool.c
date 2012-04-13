@@ -37,7 +37,7 @@ time_t GetNowTime() {
 	return nowTime;
 }
 
-//日志函数
+/* 日志函数 */
 void write_log(const char *fmt,  ...) {
 	char msg[BUFSIZE];
 	FILE * fp = NULL;
@@ -47,17 +47,17 @@ void write_log(const char *fmt,  ...) {
 		rename(LOG_FILE, BACK_LOG_FILE);
 	}
 
-	//时间
+	/* 时间 */
 	struct tm *p;
 	time_t timep;
 	time(&timep);
 	p=localtime(&timep);
-	//参数处理
+	/* 参数处理 */
 	va_list  va;
 	va_start(va, fmt);
 	vsprintf(msg, fmt, va);
 	va_end(va);
-	//日志写入
+	/* 日志写入 */
 	fp = fopen(LOG_FILE , "ab+" );
 	if (fp) {
 		fprintf(fp,"%04d-%02d-%02d %02d:%02d:%02d %s\n",(1900+p->tm_year),( 1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, msg);
@@ -65,6 +65,7 @@ void write_log(const char *fmt,  ...) {
 	fclose(fp);
 }
 
+/* 时间转换函数 */
 long my_mktime (struct tm *tm) {
   long res;
   int year;
@@ -81,6 +82,7 @@ long my_mktime (struct tm *tm) {
 
 }
 
+/* 字符拷贝 */
 char * string_copy(char *dest, const char *src) {
 	int s_len;
 	s_len = strlen(src) + 1;

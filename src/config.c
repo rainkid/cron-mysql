@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-//获取当前程序目录
+/* 获取当前程序目录 */
 int c_get_path(char buf[], char *pFileName) {
 	char pidfile[64];
 	int bytes;
@@ -51,7 +51,7 @@ int c_get_path(char buf[], char *pFileName) {
 	return 0;
 }
 
-//从配置文件读取字符串类型数据
+/* 从配置文件读取字符串类型数据 */
 char *c_get_string(char *title, char *key, char *filename) {
 	FILE *fp;
 	char szLine[1024];
@@ -104,7 +104,7 @@ char *c_get_string(char *title, char *key, char *filename) {
 	return "";
 }
 
-//从配置文件读取整类型数据
+/* 从配置文件读取整类型数据 */
 int c_get_int(char *title, char *key, char *filename) {
 	return atoi(c_get_string(title, key, filename));
 }

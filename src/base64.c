@@ -32,7 +32,7 @@ static const char rstr[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
 		48, 49, 50, 51, 0, 0, 0, 0, 0 };
 
-//使用完后要free(out_str);
+/* 字符串编码 使用完后要free(out_str); */
 void base64_encoder(const char *input, size_t len, char** out_str) {
 	size_t new_buf_len = len + len / 3;
 	new_buf_len += new_buf_len / 76 + 2;
@@ -66,7 +66,7 @@ void base64_encoder(const char *input, size_t len, char** out_str) {
 			tmp_out[p++] = cb64[((input[i + 1] << 2) & 0x3c) + ((input[i + 2]
 					>> 6) & 0x03)];
 			tmp_out[p++] = cb64[(input[i + 2] & 0x3f)];
-		}//end switch
+		}
 		i += 3;
 		o += 4;
 	}
@@ -77,6 +77,7 @@ void base64_encoder(const char *input, size_t len, char** out_str) {
 	strcpy(*out_str, tmp_out);
 }
 
+/* 文件编码 */
 void base64_encoder_file(FILE *fin, FILE *fout) {
 	size_t remain = 0;
 	size_t o = 0;
@@ -108,13 +109,13 @@ void base64_encoder_file(FILE *fin, FILE *fout) {
 					cb64[((input[i + 1] << 2) & 0x3c) + ((input[i + 2] >> 6)
 							& 0x03)], fout);
 			putc(cb64[(input[i + 2] & 0x3f)], fout);
-		} //end switch
+		}
 		o += 4;
 		remain = fread(input, 1, 3, fin);
-	}//end while
-}//end fun file..
+	}
+}
 
-
+/* 字符串解码 */
 void base64_decoder(const char *input, size_t len, char** out_str) {
 	size_t i = 0;
 	size_t new_buf_len = len;
@@ -138,12 +139,10 @@ void base64_decoder(const char *input, size_t len, char** out_str) {
 				tmp_out[p++] = b3;
 			}
 			i += 4;
-		}//end if...
-
-	}// end while..
+		}
+	}
 	tmp_out[p] = '\0';
 
-	//	printf("decoder in:[%s],out_str:[%s]\n",input,tmp_out);
 	*out_str = (char*) malloc(new_buf_len * sizeof(char));
 	memset(*out_str, 0x0, new_buf_len);
 	strcpy(*out_str, tmp_out);
