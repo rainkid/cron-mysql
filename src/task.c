@@ -841,6 +841,23 @@ void daemonize(void) {
 	}
 }
 
+void task_test(){
+	/* mysql配置尝试连接 */
+	MYSQL mysql_conn;
+	if (!task_mysql_connect(&mysql_conn)) {
+		fprintf(stderr, "mysql connect failed, please check mysql config.\n");
+		task_mysql_close(&mysql_conn);
+		exit(1);
+	}
+	task_mysql_close(&mysql_conn);
+	/* 邮件配置检测 */
+	/*int send = send_notice_mail("taskserver test mail.", "taskserver test mail.");
+	if (send) {
+		fprintf(stderr, "send mail failed, please check mail config:%d.\n", send);
+		exit(1);
+	}*/
+}
+
 /* 主模块 */
 int main(int argc, char *argv[], char *envp[]) {
 	bool daemon = false;
@@ -888,6 +905,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	if (strcmp(server.notice, "on") == 0) {
 		init_mail_params();
 	}
+	task_test();
 	if (daemon == true) {
 		daemonize();
 	}
