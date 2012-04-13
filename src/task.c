@@ -107,6 +107,7 @@ void signal_worker(const int signal);
 void create_child(void);
 void create_pid_file(void);
 void daemonize(void);
+void config_testing();
 
 /* 帮助信息 */
 void usage() {
@@ -841,7 +842,7 @@ void daemonize(void) {
 	}
 }
 
-void task_test(){
+void config_testing(){
 	/* mysql配置尝试连接 */
 	MYSQL mysql_conn;
 	if (!task_mysql_connect(&mysql_conn)) {
@@ -905,7 +906,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	if (strcmp(server.notice, "on") == 0) {
 		init_mail_params();
 	}
-	task_test();
+	config_testing();
 	if (daemon == true) {
 		daemonize();
 	}
