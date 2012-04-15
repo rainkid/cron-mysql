@@ -1,10 +1,3 @@
-/*
- * define.h
- *
- *  Created on: 2011-12-20
- *      Author: rainkid
- */
-
 #ifndef DEFINE_H_
 #define DEFINE_H_
 

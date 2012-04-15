@@ -1,10 +1,3 @@
-/*
- * task.h
- *
- *  Created on: 2012-4-15
- *      Author: rainkid
- */
-
 #ifndef TASK_H_
 #define TASK_H_
 

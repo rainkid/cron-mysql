@@ -1,10 +1,3 @@
-/*
- * config.h
- *
- *  Created on: 2011-11-16
- *      Author: rainkid
- */
-
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
