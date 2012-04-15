@@ -49,7 +49,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_taskserver_OBJECTS = task.$(OBJEXT) list.$(OBJEXT) mail.$(OBJEXT) \
-	base64.$(OBJEXT) tool.$(OBJEXT) config.$(OBJEXT)
+	base64.$(OBJEXT) util.$(OBJEXT) config.$(OBJEXT)
 taskserver_OBJECTS = $(am_taskserver_OBJECTS)
 taskserver_LDADD = $(LDADD)
 taskserver_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(taskserver_LDFLAGS) \
@@ -164,7 +164,7 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 AUTOMAKE_OPTIONS = foreign
-taskserver_SOURCES = src/task.c src/list.c src/list.h src/mail.c src/mail.h src/base64.c src/base64.h src/tool.c src/tool.h src/config.c src/config.h
+taskserver_SOURCES = src/task.c src/list.c src/list.h src/mail.c src/mail.h src/base64.c src/base64.h src/util.c src/util.h src/config.c src/config.h
 taskserver_LDFLAGS = -Lusr/local/lib
 INCLUDES = -I/usr/local/include/
 all: all-am
@@ -257,7 +257,7 @@ include ./$(DEPDIR)/config.Po
 include ./$(DEPDIR)/list.Po
 include ./$(DEPDIR)/mail.Po
 include ./$(DEPDIR)/task.Po
-include ./$(DEPDIR)/tool.Po
+include ./$(DEPDIR)/util.Po
 
 .c.o:
 	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -329,19 +329,19 @@ base64.obj: src/base64.c
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o base64.obj `if test -f 'src/base64.c'; then $(CYGPATH_W) 'src/base64.c'; else $(CYGPATH_W) '$(srcdir)/src/base64.c'; fi`
 
-tool.o: src/tool.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tool.o -MD -MP -MF $(DEPDIR)/tool.Tpo -c -o tool.o `test -f 'src/tool.c' || echo '$(srcdir)/'`src/tool.c
-	$(am__mv) $(DEPDIR)/tool.Tpo $(DEPDIR)/tool.Po
-#	source='src/tool.c' object='tool.o' libtool=no \
+util.o: src/util.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT util.o -MD -MP -MF $(DEPDIR)/util.Tpo -c -o util.o `test -f 'src/util.c' || echo '$(srcdir)/'`src/util.c
+	$(am__mv) $(DEPDIR)/util.Tpo $(DEPDIR)/util.Po
+#	source='src/util.c' object='util.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tool.o `test -f 'src/tool.c' || echo '$(srcdir)/'`src/tool.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o util.o `test -f 'src/util.c' || echo '$(srcdir)/'`src/util.c
 
-tool.obj: src/tool.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tool.obj -MD -MP -MF $(DEPDIR)/tool.Tpo -c -o tool.obj `if test -f 'src/tool.c'; then $(CYGPATH_W) 'src/tool.c'; else $(CYGPATH_W) '$(srcdir)/src/tool.c'; fi`
-	$(am__mv) $(DEPDIR)/tool.Tpo $(DEPDIR)/tool.Po
-#	source='src/tool.c' object='tool.obj' libtool=no \
+util.obj: src/util.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT util.obj -MD -MP -MF $(DEPDIR)/util.Tpo -c -o util.obj `if test -f 'src/util.c'; then $(CYGPATH_W) 'src/util.c'; else $(CYGPATH_W) '$(srcdir)/src/util.c'; fi`
+	$(am__mv) $(DEPDIR)/util.Tpo $(DEPDIR)/util.Po
+#	source='src/util.c' object='util.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tool.obj `if test -f 'src/tool.c'; then $(CYGPATH_W) 'src/tool.c'; else $(CYGPATH_W) '$(srcdir)/src/tool.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o util.obj `if test -f 'src/util.c'; then $(CYGPATH_W) 'src/util.c'; else $(CYGPATH_W) '$(srcdir)/src/util.c'; fi`
 
 config.o: src/config.c
 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT config.o -MD -MP -MF $(DEPDIR)/config.Tpo -c -o config.o `test -f 'src/config.c' || echo '$(srcdir)/'`src/config.c

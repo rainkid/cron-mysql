@@ -19,6 +19,9 @@
 #define SEND_MAIL_TIME (30 * 60)
 #define TIME_UNIT 60
 #define TASK_STEP   100000
+
+//#define __debug__ 1
+
 /* mysql连接相接相关数据 */
 typedef struct mysql_params{
 	char *host;
