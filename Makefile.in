@@ -164,7 +164,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-taskserver_SOURCES = src/task.c src/list.c src/list.h src/mail.c src/mail.h src/base64.c src/base64.h src/util.c src/util.h src/config.c src/config.h
+taskserver_SOURCES = src/task.c src/task.h src/list.c src/list.h src/mail.c src/mail.h src/base64.c src/base64.h src/util.c src/util.h src/config.c src/config.h
 taskserver_LDFLAGS = -Lusr/local/lib
 INCLUDES = -I/usr/local/include/
 all: all-am
