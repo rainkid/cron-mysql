@@ -65,7 +65,7 @@ void usage() {
 /* mysql连接 */
 bool task_mysql_connect(MYSQL *mysql_conn) {
 	/* 初始化mysql */
-	mysql_init(mysql_conn);
+	my_init();
 	/* 初始化mysql函数库 */
 	if (mysql_library_init(0, NULL, NULL)) {
 		write_log("could not initialize mysql library.");
