@@ -302,18 +302,14 @@ void task_log(int task_id, int ret, char* msg) {
 
 	if (task_mysql_connect(&mysql_conn)) {
 		/* 更新执行时间 */
-		sprintf(
-				upsql,
-				"UPDATE mk_timeproc SET last_run_time='%04d-%02d-%02d %02d:%02d:%02d' WHERE id=%d",
+		sprintf(upsql, "UPDATE mk_timeproc SET last_run_time='%04d-%02d-%02d %02d:%02d:%02d' WHERE id=%d",
 				(1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday,
 				p->tm_hour, p->tm_min, p->tm_sec, task_id);
 		if (mysql_query(&mysql_conn, upsql) != 0) {
 			write_log("update task last_run failed.");
 		}
 		/* 添加日志 */
-		sprintf(
-				sql,
-				"INSERT INTO mk_timeproc_log VALUES('', %d,%d,'%s' ,'%04d-%02d-%02d %02d:%02d:%02d')",
+		sprintf(sql, "INSERT INTO mk_timeproc_log VALUES('', %d,%d,'%s' ,'%04d-%02d-%02d %02d:%02d:%02d')",
 				task_id, ret, msg, (1900 + p->tm_year), (1 + p->tm_mon),
 				p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
 		if (mysql_query(&mysql_conn, sql) != 0) {
@@ -323,12 +319,12 @@ void task_log(int task_id, int ret, char* msg) {
 	task_mysql_close(&mysql_conn);
 }
 
-/* 同步配置线程 */
+/* 同步任务线程 */
 void load_worker() {
 	while (!server.shutdown) {
 		/* 加载任务到新建列表中 */
 		if (strcmp(server.run_type, "file") == 0) {
-			load_file_tasks(server.task_file);
+			load_file_tasks();
 		} else if (strcmp(server.run_type, "mysql") == 0) {
 			load_mysql_tasks();
 		}
@@ -337,7 +333,7 @@ void load_worker() {
 }
 
 /* 文件配置计划任务加载 */
-void load_file_tasks(const char *task_file) {
+void load_file_tasks() {
 	FILE *fp;
 	fp = fopen(server.task_file, "r");
 	if (NULL == fp) {

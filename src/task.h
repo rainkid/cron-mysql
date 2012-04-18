@@ -45,7 +45,7 @@ void task_log(int task_id, int ret, char* msg);
 void curl_request(s_task_item *item);
 void shell_command(s_task_item *item);
 void push_mail(s_task_item * item);
-void load_file_tasks(const char *task_file);
+void load_file_tasks();
 void load_mysql_tasks();
 void free_global_params();
 void free_mysql_params();
