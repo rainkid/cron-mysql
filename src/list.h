@@ -9,7 +9,7 @@ extern "C" {
 #include <sys/types.h>
 #include <stdbool.h>
     
-typedef struct task_item {
+struct task_item {
     int task_id;
     time_t startTime;
     time_t endTime;
@@ -22,14 +22,17 @@ typedef struct task_item {
     char *command;
     struct task_item *next;
     struct task_item *prev;
-} s_task_item;
+};
 
-typedef struct task_list {
-    s_task_item *head;
-    s_task_item *tail;
+struct task_list {
+    struct task_item *head;
+    struct task_item *tail;
     /* 任务节点数量 */
     int count;
-} l_task_list;
+};
+
+typedef struct task_item s_task_item;
+typedef struct task_list l_task_list;
 
 void init_task(l_task_list *task_list);
 void add_task(l_task_list *task_list, s_task_item *task_item);

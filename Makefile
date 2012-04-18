@@ -48,7 +48,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_taskserver_OBJECTS = task.$(OBJEXT) list.$(OBJEXT) mail.$(OBJEXT) \
+am_taskserver_OBJECTS = main.$(OBJEXT) list.$(OBJEXT) mail.$(OBJEXT) \
 	base64.$(OBJEXT) util.$(OBJEXT) config.$(OBJEXT)
 taskserver_OBJECTS = $(am_taskserver_OBJECTS)
 taskserver_LDADD = $(LDADD)
@@ -104,7 +104,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS = 
 LIBOBJS = 
-LIBS = -lcurl -lmysqlclient -lrt -lpthread -lm -lc -lz -O2 -Wall
+LIBS = -lcurl -lmysqlclient -lrt -lpthread -lm -lc -lz -O2
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/rainkid/workspace/cron-mysql/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
@@ -164,7 +164,7 @@ top_build_prefix =
 top_builddir = .
 top_srcdir = .
 AUTOMAKE_OPTIONS = foreign
-taskserver_SOURCES = src/task.c src/task.h src/list.c src/list.h src/mail.c src/mail.h src/base64.c src/base64.h src/util.c src/util.h src/config.c src/config.h
+taskserver_SOURCES = src/main.c src/list.c src/list.h src/mail.c src/mail.h src/base64.c src/base64.h src/util.c src/util.h src/config.c src/config.h
 taskserver_LDFLAGS = -Lusr/local/lib
 INCLUDES = -I/usr/local/include/
 all: all-am
@@ -256,7 +256,7 @@ include ./$(DEPDIR)/base64.Po
 include ./$(DEPDIR)/config.Po
 include ./$(DEPDIR)/list.Po
 include ./$(DEPDIR)/mail.Po
-include ./$(DEPDIR)/task.Po
+include ./$(DEPDIR)/main.Po
 include ./$(DEPDIR)/util.Po
 
 .c.o:
@@ -273,19 +273,19 @@ include ./$(DEPDIR)/util.Po
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
-task.o: src/task.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT task.o -MD -MP -MF $(DEPDIR)/task.Tpo -c -o task.o `test -f 'src/task.c' || echo '$(srcdir)/'`src/task.c
-	$(am__mv) $(DEPDIR)/task.Tpo $(DEPDIR)/task.Po
-#	source='src/task.c' object='task.o' libtool=no \
+main.o: src/main.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT main.o -MD -MP -MF $(DEPDIR)/main.Tpo -c -o main.o `test -f 'src/main.c' || echo '$(srcdir)/'`src/main.c
+	$(am__mv) $(DEPDIR)/main.Tpo $(DEPDIR)/main.Po
+#	source='src/main.c' object='main.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o task.o `test -f 'src/task.c' || echo '$(srcdir)/'`src/task.c
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o main.o `test -f 'src/main.c' || echo '$(srcdir)/'`src/main.c
 
-task.obj: src/task.c
-	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT task.obj -MD -MP -MF $(DEPDIR)/task.Tpo -c -o task.obj `if test -f 'src/task.c'; then $(CYGPATH_W) 'src/task.c'; else $(CYGPATH_W) '$(srcdir)/src/task.c'; fi`
-	$(am__mv) $(DEPDIR)/task.Tpo $(DEPDIR)/task.Po
-#	source='src/task.c' object='task.obj' libtool=no \
+main.obj: src/main.c
+	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT main.obj -MD -MP -MF $(DEPDIR)/main.Tpo -c -o main.obj `if test -f 'src/main.c'; then $(CYGPATH_W) 'src/main.c'; else $(CYGPATH_W) '$(srcdir)/src/main.c'; fi`
+	$(am__mv) $(DEPDIR)/main.Tpo $(DEPDIR)/main.Po
+#	source='src/main.c' object='main.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
-#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o task.obj `if test -f 'src/task.c'; then $(CYGPATH_W) 'src/task.c'; else $(CYGPATH_W) '$(srcdir)/src/task.c'; fi`
+#	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o main.obj `if test -f 'src/main.c'; then $(CYGPATH_W) 'src/main.c'; else $(CYGPATH_W) '$(srcdir)/src/main.c'; fi`
 
 list.o: src/list.c
 	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT list.o -MD -MP -MF $(DEPDIR)/list.Tpo -c -o list.o `test -f 'src/list.c' || echo '$(srcdir)/'`src/list.c

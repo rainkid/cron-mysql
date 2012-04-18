@@ -36,6 +36,9 @@ void * my_malloc(size_t size) {
 	return p;
 }
 
+#define malloc(s) my_malloc(s)
+#define free(p) my_free(p)
+
 /* 日志函数 */
 void write_log(const char *fmt, ...) {
 	char msg[BUFSIZE];
