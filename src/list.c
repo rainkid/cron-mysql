@@ -7,13 +7,13 @@
 #include "list.h"
 
 /* 任务初始化 */
-void task_init(l_task_list * task_list) {
+void init_task(l_task_list * task_list) {
 	task_list->count = 0;
 	task_list->head = NULL;
 	task_list->tail = NULL;
 }
 /* 添加节点到尾部 */
-void task_add(l_task_list * task_list, s_task_item * task_item) {
+void add_task(l_task_list * task_list, s_task_item * task_item) {
 	task_item->next = NULL;
 	task_item->prev = NULL;
 
@@ -28,19 +28,8 @@ void task_add(l_task_list * task_list, s_task_item * task_item) {
 	(task_list->count)++;
 }
 
-void task_copy(s_task_item *src, s_task_item *dsc) {
-	dsc->startTime = src->startTime;
-	dsc->endTime = src->endTime;
-	dsc->nextTime = src->nextTime;
-	dsc->frequency = src->frequency;
-	dsc->timeout = src->timeout;
-	dsc->times = src->times;
-	dsc->runTimes = src->runTimes;
-	sprintf(dsc->command, "%s", src->command);
-}
-
 /* 更新节点 */
-void task_update(s_task_item * task_item, l_task_list *task_list) {
+void update_task(s_task_item * task_item, l_task_list *task_list) {
 	if (false == task_isempty(task_list)) {
 		task_item->next = NULL;
 		task_item->prev = NULL;
@@ -70,7 +59,7 @@ void task_update(s_task_item * task_item, l_task_list *task_list) {
 		}
 		(task_list->count)++;
 	} else {
-		task_add(task_list, task_item);
+		add_task(task_list, task_item);
 	}
 }
 
@@ -80,13 +69,13 @@ bool task_isempty(const l_task_list *task_list) {
 }
 
 /* 任务列表销毁 */
-void task_free(l_task_list *task_list) {
+void free_task(l_task_list *task_list) {
 	if (NULL != task_list && false == task_isempty(task_list)) {
 		s_task_item *temp;
 		temp = malloc(sizeof(s_task_item *));
 		while (NULL != task_list->head) {
 			temp = task_list->head->next;
-			item_free(task_list->head, task_list);
+			free_item(task_list->head, task_list);
 			task_list->head = temp;
 		}
 	}
@@ -97,7 +86,23 @@ void task_free(l_task_list *task_list) {
 }
 
 /* 任务节点销毁 */
-void item_free(s_task_item *task_item, l_task_list *task_list) {
+void free_item(s_task_item *task_item, l_task_list *task_list) {
 	(task_list->count)--;
+	free(task_item->command);
 	free(task_item);
+}
+
+void init_task_item(s_task_item *task_item) {
+	task_item->task_id = 0;
+	task_item->startTime = 0;
+	task_item->endTime = 0;
+	task_item->nextTime = 0;
+	task_item-> frequency = 0;
+	task_item->timeout = 0;
+	task_item->times = 0;
+	task_item->runTimes = 0;
+	task_item->runTimes = false;
+	task_item->command = NULL;
+	task_item->next = NULL;
+	task_item->prev = NULL;
 }

@@ -10,7 +10,7 @@
 
 #define SYNC_CONFIG_TIME (5000000 * 60)
 #define SEND_MAIL_TIME (30 * 60)
-#define TIME_UNIT 60
+#define TIME_UNIT 10
 #define TASK_STEP   100000
 
 //#define __debug__ 1
@@ -50,10 +50,10 @@ struct s_response {
 };
 
 //即时邮件
-struct s_right_mail {
-	struct s_right_mail *next;
-	char content[1024];
-};
+typedef struct right_mail {
+	struct right_mail *next;
+	char *content;
+} s_right_mail;
 
 #endif /* DEFINE_H_ */
 

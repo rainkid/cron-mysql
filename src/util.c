@@ -93,10 +93,11 @@ long my_mktime(struct tm *tm) {
 }
 
 /* 字符拷贝 */
-char * string_copy(char *dest, const char *src) {
+char * string_copy(char *dest, char *src) {
 	int s_len;
 	s_len = strlen(src) + 1;
 	dest = malloc(s_len);
+	memset(dest, '\0', s_len);
 	memcpy(dest, src, s_len);
 	return dest;
 }

@@ -23,14 +23,14 @@ static pthread_mutex_t LOCK_right_mail = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t COND_right_task = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t COND_right_mail = PTHREAD_COND_INITIALIZER;
 /* 即时任务 */
-struct s_right_task {
-	struct s_right_task *next;
+typedef struct right_task {
+	struct right_task *next;
 	s_task_item * item;
-};
+}s_right_task;
 
 /* 即时任务链表 */
-struct s_right_task *l_right_task = NULL;
-struct s_right_mail *l_right_mail = NULL;
+struct right_task *l_right_task = NULL;
+struct right_mail *l_right_mail = NULL;
 
 void usage();
 bool task_mysql_connect(MYSQL *mysql_conn);

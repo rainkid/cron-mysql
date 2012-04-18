@@ -5,7 +5,7 @@ time_t GetNowTime();
 void my_free(void * p);
 void * my_malloc(size_t size);
 void write_log(const char *fmt,  ...);
-char * string_copy(char *dest, const char *src);
+char * string_copy(char *dest, char *src);
 
 #define MINUTE 60
 #define HOUR (60*MINUTE)
