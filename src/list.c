@@ -33,19 +33,19 @@ void update_task(s_task_item * task_item, l_task_list *task_list) {
 	if (false == task_isempty(task_list)) {
 		task_item->next = NULL;
 		task_item->prev = NULL;
-		s_task_item *temp = task_list->head;
+		s_task_item *item = task_list->head;
 
 		if (task_item->nextTime >= task_list->head->nextTime) {
 			if (task_item->nextTime < task_list->tail->nextTime) {
-				while (NULL != temp) {
-					if (task_item->nextTime < temp->nextTime) {
-						task_item->prev = temp->prev;
-						temp->prev->next = task_item;
-						temp->prev = task_item;
-						task_item->next = temp;
+				while (NULL != item) {
+					if (task_item->nextTime < item->nextTime) {
+						task_item->prev = item->prev;
+						item->prev->next = task_item;
+						item->prev = task_item;
+						task_item->next = item;
 						break;
 					}
-					temp = temp->next;
+					item = item->next;
 				}
 			} else {
 				task_item->prev = task_list->tail;
@@ -71,12 +71,12 @@ bool task_isempty(const l_task_list *task_list) {
 /* 任务列表销毁 */
 void free_task(l_task_list *task_list) {
 	if (NULL != task_list && false == task_isempty(task_list)) {
-		s_task_item *temp;
-		temp = malloc(sizeof(s_task_item *));
+		s_task_item *item;
+		item = malloc(sizeof(s_task_item *));
 		while (NULL != task_list->head) {
-			temp = task_list->head->next;
+			item = task_list->head->next;
 			free_item(task_list->head, task_list);
-			task_list->head = temp;
+			task_list->head = item;
 		}
 	}
 	task_list->count = 0;

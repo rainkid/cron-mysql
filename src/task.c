@@ -80,10 +80,7 @@ void mail_worker() {
 	char subject[BUFSIZE] = { 0x00 };
 	char content[BUFSIZE] = { 0x00 };
 
-	for (;;) {
-		if (server.shutdown) {
-			break;
-		}
+	while (!server.shutdown) {
 		if (NULL != l_right_mail) {
 			pthread_mutex_lock(&LOCK_right_mail);
 			right_mail = l_right_mail;
@@ -137,68 +134,63 @@ int send_notice_mail(char *subject, char *content) {
 
 /* 任务处理线程 */
 void task_worker() {
-//	pthread_detach(pthread_self());
-	s_task_item *temp;
-	s_right_task *right_task;
-	for (;;) {
-		if (server.shutdown) {
-			break;
-		}
-		pthread_mutex_lock(&LOCK_task);
+	s_task_item *item;
+	while (!server.shutdown) {
 		if (NULL != task_list && task_list->count > 0) {
-			temp = malloc(sizeof(s_task_item *));
-			while (NULL != (temp = task_list->head)) {
+			item = malloc(sizeof(s_task_item *));
+			while (NULL != (item = task_list->head)) {
 				/* 大于当前时间跳出 */
 				time_t nowTime = GetNowTime();
-				if (nowTime < temp->nextTime) {
+				if (nowTime < item->nextTime) {
 					break;
 				}
-				right_task = malloc(sizeof(s_right_task));
-				right_task->item = temp;
-				pthread_mutex_lock(&LOCK_right_task);
-				right_task->next = l_right_task;
-				l_right_task = right_task;
-				pthread_mutex_unlock(&LOCK_right_task);
-				pthread_cond_broadcast(&COND_right_task);
-
-				(temp->runTimes)++;
-				if (temp->next) {
-					task_list->head = temp->next;
-					temp->next->prev = NULL;
-					(task_list->count)--;
-					if (temp == task_list->tail) {
-						task_list->tail = temp->prev;
+				push_right_task(item);
+				pthread_mutex_lock(&LOCK_task);
+				(item->runTimes)++;
+				if (item->next) {
+					task_list->head = item->next;
+					item->next->prev = NULL;
+					if (item == task_list->tail) {
+						task_list->tail = item->prev;
 					}
-					if (0 == temp->times || temp->runTimes < temp->times) {
-						temp->prev = NULL;
-						temp->next = NULL;
-						temp->nextTime = nowTime + temp->frequency;
-						update_task(temp, task_list);
+					if (0 == item->times || item->runTimes < item->times) {
+						item->prev = NULL;
+						item->next = NULL;
+						item->nextTime = nowTime + item->frequency;
+						update_task(item, task_list);
 					} else {
-						free_item(temp, task_list);
-						temp = NULL;
+						free_item(item, task_list);
+						item = NULL;
 					}
 				} else {
 					/* 已经达到执行次数,抛出队列 */
-					if (temp->times > 0 && temp->runTimes > temp->times) {
-						free_item(temp, task_list);
-						temp = NULL;
-
-						(task_list->count)--;
-						task_list->head = NULL;
-						task_list->tail = NULL;
+					if (item->times > 0 && item->runTimes > item->times) {
+						free_item(item, task_list);
+						item = NULL;
 						free_task(task_list);
-						task_list = NULL;
 					} else {
-						temp->nextTime = nowTime + temp->frequency;
+						item->nextTime = nowTime + item->frequency;
 					}
 				}
+				pthread_mutex_unlock(&LOCK_task);
 			}
 		}
-		pthread_mutex_unlock(&LOCK_task);
 		usleep(TASK_STEP);
 	}
 }
+
+/* 推送到即时任务队列 */
+void push_right_task(s_task_item *item){
+	s_right_task *right_task;
+	right_task = malloc(sizeof(s_right_task));
+	right_task->item = item;
+	pthread_mutex_lock(&LOCK_right_task);
+	right_task->next = l_right_task;
+	l_right_task = right_task;
+	pthread_mutex_unlock(&LOCK_right_task);
+	pthread_cond_broadcast(&COND_right_task);
+}
+
 /* CURL请求处理 */
 void curl_request(s_task_item *item) {
 	int ret = 0;
@@ -210,8 +202,6 @@ void curl_request(s_task_item *item) {
 
 	CURLcode response;
 	curl_handle = curl_easy_init();
-
-	s_right_mail *right_mail;
 
 	if (curl_handle != NULL) {
 		curl_easy_setopt(curl_handle, CURLOPT_URL, item->command);
@@ -231,15 +221,7 @@ void curl_request(s_task_item *item) {
 		ret = 1;
 	} else {
 		write_log("%s...failed", item->command);
-		if (server.mail_count < 6) {
-			right_mail = malloc(sizeof(s_right_mail));
-			right_mail->content = string_copy(right_mail->content, item->command);
-			pthread_mutex_lock(&LOCK_right_mail);
-			right_mail->next = l_right_mail;
-			l_right_mail = right_mail;
-			server.mail_count++;
-			pthread_mutex_unlock(&LOCK_right_mail);
-		}
+		push_mail(item);
 	}
 	/* 记录日志 */
 	if (strcmp(server.run_type, "mysql") == 0) {
@@ -258,43 +240,39 @@ void curl_request(s_task_item *item) {
 void shell_command(s_task_item *item) {
 	FILE * fp;
 	int ret = 0;
-	s_task_item *task_item;
 	char responsetext[1024];
 
-	task_item = malloc(sizeof(s_task_item *));
-	init_task_item(task_item);
-	pthread_mutex_lock(&LOCK_task);
-	task_item->command = item->command;
-	task_item->task_id = item->task_id;
-	pthread_mutex_unlock(&LOCK_task);
-
-	s_right_mail *right_mail;
-
-	fp = popen(task_item->command, "r");
+	fp = popen(item->command, "r");
 	if(NULL != fgets(responsetext, sizeof(responsetext), fp)){
 		if (responsetext && (strstr(responsetext, "__programe_run_succeed__") != 0)) {
 			ret = 1;
-			write_log("%s...success", task_item->command);
+			write_log("%s...success", item->command);
 		} else {
-			write_log("%s...failed", task_item->command);
-			if (server.mail_count < 6) {
-				right_mail->content = string_copy(right_mail->content, task_item->command);
-				pthread_mutex_lock(&LOCK_right_mail);
-				right_mail->next = l_right_mail;
-				l_right_mail = right_mail;
-				server.mail_count++;
-				pthread_mutex_unlock(&LOCK_right_mail);
-			}
+			write_log("%s...failed", item->command);
+			push_mail(item);
 		}
 	}
 	/* 记录日志 */
 	if (strcmp(server.run_type, "mysql") == 0) {
 		if (NULL != responsetext) {
-			task_log(task_item->task_id, ret, responsetext);
+			task_log(item->task_id, ret, responsetext);
 		}
 	}
 	pclose(fp);
-	free(task_item);
+}
+
+/* 推送到邮件队列 */
+void push_mail(s_task_item * item) {
+	s_right_mail *right_mail;
+	if (server.mail_count < 6) {
+		right_mail = malloc(sizeof(s_right_mail));
+		right_mail->content = string_copy(right_mail->content, item->command);
+		pthread_mutex_lock(&LOCK_right_mail);
+		right_mail->next = l_right_mail;
+		l_right_mail = right_mail;
+		pthread_mutex_unlock(&LOCK_right_mail);
+		server.mail_count++;
+	}
 }
 
 /* curl回调处理函数 */
@@ -347,11 +325,7 @@ void task_log(int task_id, int ret, char* msg) {
 
 /* 同步配置线程 */
 void load_worker() {
-//	pthread_detach(pthread_self());
-	for (;;) {
-		if (server.shutdown) {
-			break;
-		}
+	while (!server.shutdown) {
 		/* 加载任务到新建列表中 */
 		if (strcmp(server.run_type, "file") == 0) {
 			load_file_tasks(server.task_file);
@@ -374,6 +348,7 @@ void load_file_tasks(const char *task_file) {
 	pthread_mutex_lock(&LOCK_task);
 	/* 初始化任务列表 */
 	init_task(task_list);
+	pthread_mutex_unlock(&LOCK_task);
 
 	while (NULL != fgets(line, BUFSIZE, fp)) {
 		/* 忽略空行和＃号开头的行 */
@@ -415,24 +390,24 @@ void load_file_tasks(const char *task_file) {
 		time_t nowTime = GetNowTime();
 
 		/* 如果已经结束直接下一个 */
-		if (taskItem->endTime <= nowTime || taskItem->nextTime
-				> taskItem->endTime) {
-			free_item(taskItem, task_list);
+		if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
+			free(taskItem);
+			free(taskItem->command);
 			continue;
 		}
 
 		/* 计算下次运行点 */
 		int step = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
-		taskItem->nextTime = taskItem->startTime + ((step + 1)
-				* taskItem->frequency);
+		taskItem->nextTime = taskItem->startTime + ((step + 1) * taskItem->frequency);
 		while (taskItem->nextTime <= nowTime) {
 			taskItem->nextTime += taskItem->frequency;
 		}
 		/* 更新到任务链表 */
+		pthread_mutex_lock(&LOCK_task);
 		update_task(taskItem, task_list);
+		pthread_mutex_unlock(&LOCK_task);
 	}
 	write_log("load tasks form file.");
-	pthread_mutex_unlock(&LOCK_task);
 	fclose(fp);
 }
 
@@ -454,6 +429,7 @@ void load_mysql_tasks() {
 		pthread_mutex_lock(&LOCK_task);
 		/* 初始化任务列表 */
 		init_task(task_list);
+		pthread_mutex_unlock(&LOCK_task);
 
 		for (row = 0; row < row_num; row++) {
 			mysql_row = mysql_fetch_row(mysql_result);
@@ -496,24 +472,25 @@ void load_mysql_tasks() {
 
 			/* 计算下次运行点 */
 			int step = ceil((nowTime - taskItem->startTime) / taskItem->frequency);
-			taskItem->nextTime = taskItem->startTime + ((step + 1)
-					* taskItem->frequency);
+			taskItem->nextTime = taskItem->startTime + ((step + 1) * taskItem->frequency);
 
 			while (taskItem->nextTime <= nowTime) {
 				taskItem->nextTime += taskItem->frequency;
 			}
 
 			/* 如果已经结束直接下一个 */
-			if (taskItem->endTime <= nowTime || taskItem->nextTime
-					> taskItem->endTime) {
+			if (taskItem->endTime <= nowTime || taskItem->nextTime > taskItem->endTime) {
+				free(taskItem->command);
+				free(taskItem);
 				continue;
 			}
+			pthread_mutex_lock(&LOCK_task);
 			/* 更新到任务链表 */
 			update_task(taskItem, task_list);
+			pthread_mutex_unlock(&LOCK_task);
 		}
 		write_log("load %d tasks from mysql.", task_list->count);
 
-		pthread_mutex_unlock(&LOCK_task);
 		/* 释放结果集 */
 		mysql_free_result(mysql_result);
 	}
@@ -544,7 +521,6 @@ void init_global_params() {
 	}
 
 	server.max_threads = get_config_int("main", "max_threads");
-	server.max_threads = 1;
 	server.shutdown = 0;
 	server.mail_count = 5;
 }
@@ -616,24 +592,21 @@ void free_resource() {
 
 /* 任务处理 */
 void deal_task() {
-//	pthread_detach(pthread_self());
 	struct right_task * right_task;
 	s_task_item * task_item;
-	for (;;) {
-		if (server.shutdown) {
-			break;
-		}
+
+	while (!server.shutdown) {
+		right_task = malloc(sizeof(struct right_task *));
 		pthread_mutex_lock(&LOCK_right_task);
 		while (l_right_task == NULL) {
 			pthread_cond_wait(&COND_right_task, &LOCK_right_task);
 		}
-		right_task = malloc(sizeof(struct right_task *));
 		right_task = l_right_task;
 		l_right_task = right_task->next;
 		pthread_mutex_unlock(&LOCK_right_task);
 		task_item = right_task->item;
-		curl_request(task_item);
-//		shell_command(task_item);
+//		curl_request(task_item);
+		shell_command(task_item);
 		free(right_task);
 		usleep(TASK_STEP);
 	}
@@ -647,7 +620,7 @@ void create_threads() {
 	/* 定时加载配置线程 */
 	pthread_create(&config_tid, NULL, (void *) load_worker, NULL);
 	/* 邮件队列线程 */
-//	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
+	pthread_create(&mail_tid, NULL, (void *) mail_worker, NULL);
 	/* 任务分配线程 */
 	pthread_create(&task_tid, NULL, (void *) task_worker, NULL);
 	/* 创建即时任务线程 */
@@ -656,7 +629,7 @@ void create_threads() {
 	}
 	pthread_join(task_tid, NULL);
 	pthread_join(config_tid, NULL);
-//	pthread_join(mail_tid, NULL);
+	pthread_join(mail_tid, NULL);
 	for (i = 0; i < server.max_threads; i++) {
 		pthread_join(tid[i], NULL);
 	}
@@ -770,12 +743,6 @@ void config_testing(){
 		exit(1);
 	}
 	task_mysql_close(&mysql_conn);
-	/* 邮件配置检测 */
-	/*int send = send_notice_mail("taskserver test mail.", "taskserver test mail.");
-	if (send) {
-		print_error("send mail failed, please check mail config:%d.\n", send);
-		exit(1);
-	}*/
 }
 
 /* 主模块 */
