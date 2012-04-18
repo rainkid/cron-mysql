@@ -78,6 +78,7 @@ void free_task(l_task_list *task_list) {
 			free_item(task_list->head, task_list);
 			task_list->head = item;
 		}
+		free_item(item, task_list);
 	}
 	task_list->count = 0;
 	task_list->head = NULL;
@@ -89,6 +90,7 @@ void free_task(l_task_list *task_list) {
 void free_item(s_task_item *task_item, l_task_list *task_list) {
 	(task_list->count)--;
 	free(task_item->command);
+	task_item->command = NULL;
 	free(task_item);
 }
 

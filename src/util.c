@@ -22,7 +22,8 @@ void my_free(void * p) {
 #ifdef __debug__
 	printf("%s:%d:%s free(%lx)\n", __FILE__, __LINE__, __func__, (unsigned long)p);
 #endif
-	if (p) free(p);
+	free(p);
+	p = NULL;
 }
 
 /* 内存分配函数 */

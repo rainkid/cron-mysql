@@ -588,21 +588,23 @@ void free_resource() {
 
 /* 任务处理 */
 void deal_task() {
-	struct right_task * right_task;
+	s_right_task * right_task;
 	s_task_item * task_item;
 
 	while (!server.shutdown) {
-		right_task = malloc(sizeof(struct right_task *));
 		pthread_mutex_lock(&LOCK_right_task);
 		while (l_right_task == NULL) {
 			pthread_cond_wait(&COND_right_task, &LOCK_right_task);
 		}
+		right_task = malloc(sizeof(s_right_task *));
 		right_task = l_right_task;
 		l_right_task = right_task->next;
 		pthread_mutex_unlock(&LOCK_right_task);
 		task_item = right_task->item;
 //		curl_request(task_item);
 		shell_command(task_item);
+		right_task->item = NULL;
+		right_task->next = NULL;
 		free(right_task);
 		usleep(TASK_STEP);
 	}
@@ -635,7 +637,7 @@ void signal_master(const int signal) {
 	write_log("kill master with signal %d.", signal);
 	/* 给进程组发送SIGTERM信号，结束子进程 */
 	server.shutdown = 1;
-	free_resource();
+//	free_resource();
 	kill(0, SIGTERM);
 	exit(0);
 }
