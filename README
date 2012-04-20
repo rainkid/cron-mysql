@@ -8,6 +8,7 @@
   4.计划任务文件输出内容中包含'__programe_run_succeed__'字符为计划任务执行成功
 
 2.安装：
+./INSTALL.SH
 ./configure --with-mysql=/usr/local/mysql --with-curl=/usr/local/curl
 make && make install
 
