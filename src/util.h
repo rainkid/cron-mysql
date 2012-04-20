@@ -1,16 +1,19 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
-time_t GetNowTime();
-void my_free(void * p);
-void * my_malloc(size_t size);
 void write_log(const char *fmt,  ...);
-char * string_copy(char *dest, char *src);
+void p_strcpy(char **dest, const char *src);
+void spr_strcpy(char **dest, char *src);
+void spr_strcpy_fmt(char **dest, const char *fmt, ...);
+void print_error(const char *fmt, ...);
+
+#define var_free(p) var_free(p)
+#define var_malloc(p) var_malloc(p)
 
 #define MINUTE 60
-#define HOUR (60*MINUTE)
-#define DAY (24*HOUR)
-#define YEAR (365*DAY)
+#define HOUR (60 * MINUTE)
+#define DAY (24 * HOUR)
+#define YEAR (365 * DAY)
 static int month[12] = {
   0,
   DAY * (31),

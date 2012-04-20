@@ -1,9 +1,5 @@
-#ifndef TASK_H
-#define	TASK_H
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
+#ifndef LIST_H_
+#define	LIST_H_
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -25,9 +21,8 @@ struct task_item {
 };
 
 struct task_list {
-    struct task_item *head;
-    struct task_item *tail;
-    /* 任务节点数量 */
+	struct task_item *head;
+	struct task_item *tail;
     int count;
 };
 
@@ -40,11 +35,6 @@ void update_task(s_task_item *, l_task_list *task_list);
 bool task_isempty(const l_task_list *task_list);
 void free_task(l_task_list *task_list);
 void free_item(s_task_item *task_item, l_task_list *task_list);
-void init_task_item(s_task_item * task_item);
+void init_task_item(s_task_item *task_item);
 
-#ifdef	__cplusplus
-}
-#endif
-
-#endif	/* TASK_H */
-
+#endif	/* LIST_H_ */

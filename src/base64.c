@@ -12,7 +12,6 @@ static const char rstr[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
 		48, 49, 50, 51, 0, 0, 0, 0, 0 };
 
-/* 字符串编码 使用完后要free(out_str); */
 void base64_encoder(const char *input, size_t len, char** out_str) {
 	size_t new_buf_len = len + len / 3;
 	new_buf_len += new_buf_len / 76 + 2;
@@ -57,7 +56,6 @@ void base64_encoder(const char *input, size_t len, char** out_str) {
 	strcpy(*out_str, tmp_out);
 }
 
-/* 文件编码 */
 void base64_encoder_file(FILE *fin, FILE *fout) {
 	size_t remain = 0;
 	size_t o = 0;
@@ -95,7 +93,7 @@ void base64_encoder_file(FILE *fin, FILE *fout) {
 	}
 }
 
-/* 字符串解码 */
+
 void base64_decoder(const char *input, size_t len, char** out_str) {
 	size_t i = 0;
 	size_t new_buf_len = len;
@@ -120,6 +118,7 @@ void base64_decoder(const char *input, size_t len, char** out_str) {
 			}
 			i += 4;
 		}
+
 	}
 	tmp_out[p] = '\0';
 
@@ -127,4 +126,3 @@ void base64_decoder(const char *input, size_t len, char** out_str) {
 	memset(*out_str, 0x0, new_buf_len);
 	strcpy(*out_str, tmp_out);
 }
-

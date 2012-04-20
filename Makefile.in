@@ -35,7 +35,7 @@ POST_UNINSTALL = :
 bin_PROGRAMS = taskserver$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(top_srcdir)/configure depcomp \
+	$(srcdir)/Makefile.in $(top_srcdir)/configure INSTALL depcomp \
 	install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
@@ -104,7 +104,7 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
-LIBS = -lcurl -lmysqlclient -lrt -lpthread -lm -lc -lz -O2
+LIBS = -lcurl -lmysqlclient -lrt -lpthread -lm -lc -lz -O2 -Wall
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
