@@ -11,7 +11,7 @@
 #define SYNC_CONFIG_TIME (5000000 * 60)
 #define SEND_MAIL_TIME (30 * 60)
 #define TIME_UNIT 60
-#define TASK_STEP   100000
+#define TASK_STEP   100000 * 5
 
 // mysql连接相接相关数据
 struct mysql_params{

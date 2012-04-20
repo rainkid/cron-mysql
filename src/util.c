@@ -54,19 +54,10 @@ long my_mktime (struct tm *tm) {
 
 }
 
-void p_strcpy(char **dest, const char *src) {
-	int s_len;
-	s_len = strlen(src) + 1;
-	*dest = malloc(s_len);
-	memset(*dest, 0x0, s_len);
-	strncpy(*dest, src, s_len);
-}
-
 void spr_strcpy(char **dest, char *src){
-	int s_len = strlen(src) + 1;
-	*dest = malloc(s_len);
-	memset(*dest, 0x0, s_len);
-	sprintf(*dest, "%s", src);
+	int s_len = (strlen(src) + 1) * sizeof(char);
+	*dest = (char *)calloc(1, s_len);
+	strncpy(*dest, src, s_len);
 }
 
 void spr_strcpy_fmt(char **dest, const char *fmt, ...){
@@ -90,13 +81,12 @@ void print_error(const char *fmt, ...) {
 
 /* 内存释放函数 */
 void var_free(void *p) {
-	if (p) free(p);
+	/*if (p) */free(p);
 	p = NULL;
 }
 
 /* 内存分配函数 */
-void *var_malloc(size_t size) {
-	void *p;
-	p = malloc(size);
+void *struct_calloc(size_t size) {
+	void *p = calloc(size, 1);
 	return p;
 }

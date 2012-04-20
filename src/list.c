@@ -76,9 +76,8 @@ bool task_isempty(const l_task_list *task_list) {
 void free_task(l_task_list *task_list) {
     if (NULL != task_list && false == task_isempty(task_list)) {
         s_task_item *temp;
-        temp = malloc(sizeof(s_task_item *));
         while(NULL != task_list->head) {
-            temp = task_list->head->next;
+            temp = (s_task_item *)task_list->head->next;
             free_item(task_list->head, task_list);
             task_list->head = temp;
         }
