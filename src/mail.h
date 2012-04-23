@@ -19,7 +19,7 @@
 struct st_char_arry{
   char *str_p;
 };
-struct st_mail_msg_{
+struct mail_msg{
  //接收地址个数
  int to_addr_len;
  int bc_addr_len;
@@ -61,11 +61,14 @@ struct st_mail_msg_{
  //接收人地址
  struct st_char_arry *to_address_ary;
 };
-//初始化结构
-void init_mail_msg(struct st_mail_msg_ *msg);
-//发送mail
-int send_mail(struct st_mail_msg_ *msg_);
 
-int send_mail_header(int sockfd,struct st_mail_msg_ *msg);
+typedef struct mail_msg st_mail_msg;
+
+//初始化结构
+void init_mail_msg(st_mail_msg *msg);
+//发送mail
+int send_mail(st_mail_msg *msg_);
+
+int send_mail_header(int sockfd, st_mail_msg *msg);
 int cmd_msg(int sockfd,const char *cmd,const char *flag);
 #endif	//__MAIL_H

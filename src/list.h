@@ -7,13 +7,13 @@
     
 struct task_item {
     int task_id;
-    time_t startTime;
-    time_t endTime;
-    time_t nextTime;
-    int  frequency;
+    time_t start_time;
+    time_t end_time;
+    time_t next_time;
+    int  step;
     int timeout;
     int times;
-    int runTimes;
+    int run_times;
     bool mail;
     char *command;
     struct task_item *next;
@@ -26,15 +26,17 @@ struct task_list {
     int count;
 };
 
-typedef struct task_item s_task_item;
-typedef struct task_list l_task_list;
+typedef struct task_item st_task_item;
+typedef struct task_list lt_task_list;
 
-void init_task(l_task_list *task_list);
-void add_task(l_task_list *task_list, s_task_item *task_item);
-void update_task(s_task_item *, l_task_list *task_list);
-bool task_isempty(const l_task_list *task_list);
-void free_task(l_task_list *task_list);
-void free_item(s_task_item *task_item, l_task_list *task_list);
-void init_task_item(s_task_item *task_item);
+void init_task(lt_task_list *task_list);
+void add_task(lt_task_list *task_list, st_task_item *task_item);
+void update_task(st_task_item *, lt_task_list *task_list);
+bool task_isempty(const lt_task_list *task_list);
+void free_task(lt_task_list *task_list);
+st_task_item * copy_item(st_task_item * src);
+void free_item(st_task_item *task_item);
+void delete_item(st_task_item *task_item, lt_task_list *task_list);
+void init_task_item(st_task_item *task_item);
 
 #endif	/* LIST_H_ */

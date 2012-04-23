@@ -80,13 +80,13 @@ void print_error(const char *fmt, ...) {
 }
 
 /* 内存释放函数 */
-void var_free(void *p) {
-	/*if (p) */free(p);
+void free_var(void *p) {
+	if (p) free(p);
 	p = NULL;
 }
 
 /* 内存分配函数 */
-void *struct_calloc(size_t size) {
+void *malloc_var(size_t size) {
 	void *p = calloc(size, 1);
 	return p;
 }

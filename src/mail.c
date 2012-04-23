@@ -16,7 +16,7 @@
 #include "base64.h"
 
 /* 发送邮件 */
-int send_mail(struct st_mail_msg_ *msg_) {
+int send_mail(st_mail_msg *msg_) {
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
 	struct protoent *protocol;
@@ -51,7 +51,7 @@ int send_mail(struct st_mail_msg_ *msg_) {
 	}
 	//开始处理正文
 	//为了防止大附件在内存中builde时候产生内存崩溃，此处建立一个临时文件
-	char *tmp_file_str = "logs/tmp_mail.eml";
+	char *tmp_file_str = "/tmp/tmp_mail.eml";
 	FILE *tmp_fp = fopen(tmp_file_str, "wb");
 	if (tmp_fp == NULL) {
 		return SEND_RESULT_FINAL;
@@ -206,7 +206,7 @@ int send_mail(struct st_mail_msg_ *msg_) {
 }
 
 /* 发送信体头信息 */
-int send_mail_header(int sockfd, struct st_mail_msg_ *msg) {
+int send_mail_header(int sockfd, st_mail_msg *msg) {
 	//发件人为空
 	if (!msg->from) {
 		return 0;
@@ -332,7 +332,7 @@ int cmd_msg(int sockfd, const char *cmd, const char *flag) {
 }
 
 //初始化邮件结构体
-void init_mail_msg(struct st_mail_msg_ *msg) {
+void init_mail_msg(st_mail_msg *msg) {
 	msg->att_file_len = 0;
 	msg->to_addr_len = 0;
 	msg->bc_addr_len = 0;

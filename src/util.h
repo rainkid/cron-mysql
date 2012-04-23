@@ -7,8 +7,8 @@ void spr_strcpy(char **dest, char *src);
 void spr_strcpy_fmt(char **dest, const char *fmt, ...);
 void print_error(const char *fmt, ...);
 
-#define var_free(p) var_free(p)
-#define var_malloc(p) var_malloc(p)
+#define free_var(p) free_var(p)
+#define malloc_var(p) malloc_var(p)
 
 #define MINUTE 60
 #define HOUR (60 * MINUTE)

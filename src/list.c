@@ -7,13 +7,13 @@
 #include "list.h"
 
 /* 任务初始化 */
-void init_task(l_task_list * task_list) {
+void init_task(lt_task_list * task_list) {
     task_list->count = 0;
 	task_list->head = NULL;
 	task_list->tail = NULL;
 }
 /* 添加节点到尾部 */
-void add_task(l_task_list * task_list, s_task_item * task_item) {
+void add_task(lt_task_list * task_list, st_task_item * task_item) {
     task_item->next = NULL;
     task_item->prev = NULL;
 
@@ -30,16 +30,16 @@ void add_task(l_task_list * task_list, s_task_item * task_item) {
 }
 
 /* 更新节点 */
-void update_task(s_task_item * task_item, l_task_list *task_list) {
+void update_task(st_task_item * task_item, lt_task_list *task_list) {
     if (false == task_isempty(task_list)) {
         task_item->next = NULL;
         task_item->prev = NULL;
-        s_task_item *temp = task_list->head;
+        st_task_item *temp = task_list->head;
 
-        if (task_item->nextTime >= task_list->head->nextTime) {
-            if (task_item->nextTime < task_list->tail->nextTime) {
+        if (task_item->next_time >= task_list->head->next_time) {
+            if (task_item->next_time < task_list->tail->next_time) {
                 while(NULL != temp) {
-                    if (task_item->nextTime < temp->nextTime) {
+                    if (task_item->next_time < temp->next_time) {
                         task_item->prev = temp->prev;
                         temp->prev->next = task_item;
                         temp->prev = task_item;
@@ -68,44 +68,76 @@ void update_task(s_task_item * task_item, l_task_list *task_list) {
 }
 
 /* 任务列表是否空 */
-bool task_isempty(const l_task_list *task_list) {
+bool task_isempty(const lt_task_list *task_list) {
     return (task_list->count == 0) ? true : false;
 }
 
 /* 任务列表销毁 */
-void free_task(l_task_list *task_list) {
+void free_task(lt_task_list *task_list) {
     if (NULL != task_list && false == task_isempty(task_list)) {
-        s_task_item *temp;
+        st_task_item *temp;
         while(NULL != task_list->head) {
-            temp = (s_task_item *)task_list->head->next;
-            free_item(task_list->head, task_list);
+            temp = (st_task_item *)task_list->head->next;
+            free_item(task_list->head);
             task_list->head = temp;
         }
-        var_free(temp);
+        free_item(temp);
     }
     task_list->count = 0;
     task_list->head = NULL;
     task_list->tail = NULL;
-    var_free(task_list);
+    free_var(task_list);
 }
 
 /* 任务节点销毁 */
-void free_item(s_task_item *task_item, l_task_list *task_list) {
-	(task_list->count)--;
-	var_free(task_item->command);
+void free_item(st_task_item *task_item) {
+	free_var(task_item->command);
 	task_item->command = NULL;
-	var_free(task_item);
+	free_var(task_item);
 }
 
-void init_task_item(s_task_item *task_item) {
+
+void delete_item(st_task_item *task_item, lt_task_list *task_list)	{
+	 if (NULL != task_list && false == task_isempty(task_list)) {
+		st_task_item *temp;
+		while(NULL != task_list->head) {
+			temp = (st_task_item *)task_list->head->next;
+			if (task_item == task_list->head) {
+				free_item(task_item);
+				task_list->head = temp;
+				(task_list->count)--;
+			}
+		}
+	}
+};
+
+st_task_item * copy_item(st_task_item * src){
+	st_task_item *dest = calloc(1, sizeof(st_task_item));
+	dest->task_id = src->task_id;
+	dest->start_time = src->start_time;
+	dest->end_time = src->end_time;
+	dest->next_time = src->next_time;
+	dest-> step = src->step;
+	dest->timeout = src->timeout;
+	dest->times = src->times;
+	dest->run_times = src->run_times;
+	dest->mail = false;
+	spr_strcpy(&dest->command, src->command);
+	dest->next = src->next;
+	dest->prev = src->prev;
+	return dest;
+}
+
+
+void init_task_item(st_task_item *task_item) {
 	task_item->task_id = 0;
-	task_item->startTime = 0;
-	task_item->endTime = 0;
-	task_item->nextTime = 0;
-	task_item-> frequency = 0;
+	task_item->start_time = 0;
+	task_item->end_time = 0;
+	task_item->next_time = 0;
+	task_item-> step = 0;
 	task_item->timeout = 0;
 	task_item->times = 0;
-	task_item->runTimes = 0;
+	task_item->run_times = 0;
 	task_item->mail = false;
 	task_item->command = NULL;
 	task_item->next = NULL;

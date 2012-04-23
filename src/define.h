@@ -8,13 +8,13 @@
 #define BACK_LOG_FILE  "/tmp/task.log.bak"
 #define MAX_LOG_SIZE  (1 * 1024 * 1024)
 
-#define SYNC_CONFIG_TIME (5000000 * 60)
-#define SEND_MAIL_TIME (30 * 60)
 #define TIME_UNIT 60
+#define SYNC_CONFIG_TIME (1000000 * TIME_UNIT * 5)
+#define SEND_MAIL_TIME (30 * TIME_UNIT)
 #define TASK_STEP   100000 * 5
 
 // mysql连接相接相关数据
-struct mysql_params{
+struct mysql{
 	char *host;
 	char *username;
 	char *passwd;
@@ -23,7 +23,7 @@ struct mysql_params{
 };
 
 // 邮件相关数据
-struct mail_params{
+struct mail{
 	char *server;
 	char *user;
 	char *passwd;
@@ -32,13 +32,15 @@ struct mail_params{
 };
 
 //全局参数
-struct server_params{
-	char *run_type;
-	char *notice;
+struct server{
+	char *run_from;
+	char *notice_mail;
 	char *task_file;
+	char *cmd_type;
 	int max_threads;
 	int shutdown;
 	int mail_count;
+	int daemon;
 };
 
 //即时任务
@@ -48,8 +50,8 @@ struct right_task {
 };
 
 //请求返回数据
-struct s_response {
-	char *responsetext;
+struct curl_response {
+	char *text;
 	size_t size;
 };
 
@@ -59,10 +61,11 @@ struct right_mail {
 	char *content;
 };
 
-typedef struct right_task s_right_task;
-typedef struct mysql_params s_mysql_params;
-typedef struct server_params s_server_params;
-typedef struct mail_params s_mail_params;
-typedef struct right_mail s_right_mail;
+typedef struct curl_response st_curl_response;
+typedef struct right_task st_right_task;
+typedef struct mysql st_mysql;
+typedef struct server st_server;
+typedef struct mail st_mail;
+typedef struct right_mail st_right_mail;
 
 #endif /* DEFINE_H_ */
