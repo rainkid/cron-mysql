@@ -20,7 +20,6 @@ taskserver -c task.conf
 5.目录结构
 doc/ 文档，数据库表结构
 src/程序目录
-logs/日志目录
 task.conf 应用配置文件
 tasks.conf 文件计划任务文件
 
@@ -30,4 +29,4 @@ tasks.conf 文件计划任务文件
 -c, --config   <path>  task config file path.
 -d, --daemon   run as a daemon.
 
-7.mail:raink.kid@gmail.com
+7.mail:rainkide@gmail.com
