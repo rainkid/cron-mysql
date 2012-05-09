@@ -36,7 +36,6 @@ struct server{
 	char *run_from;
 	char *notice_mail;
 	char *task_file;
-	char *cmd_type;
 	int max_threads;
 	int shutdown;
 	int mail_count;
