@@ -4,7 +4,11 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <stdbool.h>
-    
+
+typedef struct task_item st_task_item;
+typedef struct task_list lt_task_list;
+typedef void(*deal_func)(st_task_item *);
+
 struct task_item {
     int task_id;
     time_t start_time;
@@ -18,6 +22,7 @@ struct task_item {
     char *command;
     struct task_item *next;
     struct task_item *prev;
+    deal_func deal_func;
 };
 
 struct task_list {
@@ -25,9 +30,6 @@ struct task_list {
 	struct task_item *tail;
     int count;
 };
-
-typedef struct task_item st_task_item;
-typedef struct task_list lt_task_list;
 
 void init_task(lt_task_list *task_list);
 void add_task(lt_task_list *task_list, st_task_item *task_item);

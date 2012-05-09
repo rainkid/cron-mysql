@@ -125,6 +125,7 @@ st_task_item * copy_item(st_task_item * src){
 	spr_strcpy(&dest->command, src->command);
 	dest->next = src->next;
 	dest->prev = src->prev;
+	dest->deal_func = src->deal_func;
 	return dest;
 }
 
@@ -134,7 +135,7 @@ void init_task_item(st_task_item *task_item) {
 	task_item->start_time = 0;
 	task_item->end_time = 0;
 	task_item->next_time = 0;
-	task_item-> step = 0;
+	task_item->step = 0;
 	task_item->timeout = 0;
 	task_item->times = 0;
 	task_item->run_times = 0;
@@ -142,4 +143,5 @@ void init_task_item(st_task_item *task_item) {
 	task_item->command = NULL;
 	task_item->next = NULL;
 	task_item->prev = NULL;
+	task_item->deal_func = NULL;
 }
