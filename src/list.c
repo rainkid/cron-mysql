@@ -111,8 +111,7 @@ void delete_item(st_task_item *task_item, lt_task_list *task_list)	{
 	}
 };
 
-st_task_item * copy_item(st_task_item * src){
-	st_task_item *dest = calloc(1, sizeof(st_task_item));
+void copy_item(st_task_item *dest, st_task_item * src){
 	dest->task_id = src->task_id;
 	dest->start_time = src->start_time;
 	dest->end_time = src->end_time;
@@ -126,7 +125,6 @@ st_task_item * copy_item(st_task_item * src){
 	dest->next = src->next;
 	dest->prev = src->prev;
 	dest->deal_func = src->deal_func;
-	return dest;
 }
 
 

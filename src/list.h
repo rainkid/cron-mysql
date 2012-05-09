@@ -36,7 +36,7 @@ void add_task(lt_task_list *task_list, st_task_item *task_item);
 void update_task(st_task_item *, lt_task_list *task_list);
 bool task_isempty(const lt_task_list *task_list);
 void free_task(lt_task_list *task_list);
-st_task_item * copy_item(st_task_item * src);
+void copy_item(st_task_item *dest, st_task_item * src);
 void free_item(st_task_item *task_item);
 void delete_item(st_task_item *task_item, lt_task_list *task_list);
 void init_task_item(st_task_item *task_item);
