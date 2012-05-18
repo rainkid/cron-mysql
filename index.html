@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>基于Mysql C Api 的多线程计划任务服务 by rainkid</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      <header>
+        <h1>基于Mysql C Api 的多线程计划任务服务</h1>
+        <p></p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/rainkid/cron-mysql" class="button fork"><strong>View On GitHub</strong></a>
+        <div class="downloads">
+          <span>Downloads:</span>
+          <ul>
+            <li><a href="https://github.com/rainkid/cron-mysql/zipball/master" class="button">ZIP</a></li>
+            <li><a href="https://github.com/rainkid/cron-mysql/tarball/master" class="button">TAR</a></li>
+          </ul>
+        </div>
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <p>0.计划任务服务
+解决生产环境中遇到的大量计划任务维护难问题，所有计划任务可实现后台管理，即时记录计划任务执行结束，执行失败的计划定时发送报警邮件通知，后台维护的计划任务会在五分钟内生效，可定义计划任务的开始时间，结束时间，执行间隔，执行次数，基于http协议的计划任务，大大提高计划任务的灵活性。</p>
+
+<p>1.特性
+  1.计划任务支持的类型: 数据库(mysql)、文件(file)
+  2.计划任务执行失败邮件消息通知
+  3.实时计划任务日志
+  4.计划任务文件输出内容中包含'<strong>programe_run_succeed</strong>'字符为计划任务执行成功</p>
+
+<p>2.安装：
+sh ./install-server.sh
+./configure --with-mysql=/usr/local/mysql --with-curl=/usr/local/curl
+make &amp;&amp; make install</p>
+
+<p>3.建立数据库（sql文件在doc目录下）或者计划任务配置文件（tasks.conf）</p>
+
+<p>4.启动服务(-c 必选参数：配置文件路径)：
+taskserver -c task.conf</p>
+
+<p>5.目录结构
+doc/ 文档，数据库表结构
+src/程序目录
+task.conf 应用配置文件
+tasks.conf 文件计划任务文件</p>
+
+<p>6.参数说明(task --help)
+-h, --help     display this message then exit.
+-v, --version  display version information then exit.
+-c, --config     task config file path.
+-d, --daemon   run as a daemon.</p>
+
+<p>接收定制化服务，请联系E-mail:<a href="mailto:rainkide@gmail.com">rainkide@gmail.com</a>.
+QQ：289712388</p>
+      </section>
+      <footer>
+        <p>Project maintained by <a href="https://github.com/rainkid">rainkid</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("rainkide@gmail.com");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
