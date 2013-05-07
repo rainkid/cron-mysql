@@ -1,0 +1,32 @@
+0.计划任务服务
+解决生产环境中遇到的大量计划任务维护难问题，所有计划任务可实现后台管理，即时记录计划任务执行结束，执行失败的计划定时发送报警邮件通知，后台维护的计划任务会在五分钟内生效，可定义计划任务的开始时间，结束时间，执行间隔，执行次数，基于http协议的计划任务，大大提高计划任务的灵活性。
+
+1.特性
+  1.计划任务支持的类型: 数据库(mysql)、文件(file)
+  2.计划任务执行失败邮件消息通知
+  3.实时计划任务日志
+  4.计划任务文件输出内容中包含'__programe_run_succeed__'字符为计划任务执行成功
+
+2.安装：
+sh ./install-server.sh
+./configure --with-mysql=/usr/local/mysql --with-curl=/usr/local/curl
+make && make install
+
+3.建立数据库（sql文件在doc目录下）或者计划任务配置文件（tasks.conf）
+
+4.启动服务(-c 必选参数：配置文件路径)：
+taskserver -c task.conf
+
+5.目录结构
+doc/ 文档，数据库表结构
+src/程序目录
+task.conf 应用配置文件
+tasks.conf 文件计划任务文件
+
+6.参数说明(task --help)
+-h, --help     display this message then exit.
+-v, --version  display version information then exit.
+-c, --config   <path>  task config file path.
+-d, --daemon   run as a daemon.
+
+7.mail:rainkide@gmail.com
